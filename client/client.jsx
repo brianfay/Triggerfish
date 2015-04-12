@@ -6,7 +6,6 @@ var socket = io();
 //parGroupList -> parGroup -> synthList -> synth
 App = React.createClass({
   addGroup: function(){
-    console.log('user clickedd addsynth');
     socket.emit('addGroup');
   },
   render: function() {
@@ -32,12 +31,16 @@ ParGroup = React.createClass({
   addSynth: function(){
     socket.emit('addSynth', this.props.instance);
   },
+  removeGroup: function(){
+    socket.emit('removeGroup', this.props.instance);
+  },
   render: function(){
     return <div className="cell">
         Group # {this.props.instance.index}<br/>
         NodeID: {this.props.instance.nodeId}<br/>
         <SynthList synths={this.props.instance.synthList} />
         <button onClick={this.addSynth}>addSynth</button> 
+        <button onClick={this.removeGroup}>removeGroup</button>
       </div>
   }
 });

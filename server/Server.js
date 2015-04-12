@@ -17,6 +17,12 @@ var inc = (function(){
   return doInc;
 })();
 
+function updateGroupIndexes(){
+  for(var i=0; i < appState.parGroupList.length; i++){
+    appState.parGroupList[i].index = i;
+  }
+}
+
 callSC = {};
 co(function *(next){
   var options = yield scjs.resolveOptions();
@@ -76,6 +82,17 @@ app.io.route('addGroup', function* (message) {
   // console.log("triggerfish.testReply response " + res);
   this.socket.emit('appState', appState);
   this.broadcast.emit('appState', appState);
+});
+
+app.io.route('removeGroup', function* (next, req) {
+  console.log('removeGroup received by server');
+  var res = yield callSC('triggerfish.removeNode', parseInt(req.nodeId.toString()));
+  //remove parGroup from list
+  appState.parGroupList.splice(req.index, 1);
+  updateGroupIndexes();
+  this.socket.emit('appState', appState);
+  this.broadcast.emit('appState', appState);
+  console.log("finished removing group");
 });
 
 app.listen(3000);
