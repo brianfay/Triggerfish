@@ -1,0 +1,31 @@
+body {
+  box-sizing: border-box;
+  /* background-color: #668968; */
+  /* background-color: #5B9295; */
+  flex-
+}
+.column-grid {
+  display: flex;
+  flex-direction: column;
+}
+.row-grid {
+  display: flex; 
+  flex-direction: row;
+  /* width: 1920px; */
+  overflow: auto;
+}
+
+.cell {
+  /* height: 250px; */ 
+  flex: 1;
+  border-style: solid;
+  border-width: 1px;
+  /* background-color: #A84E1F; */
+  /* background-color: #5B9295; */
+}
+
+.wide {
+  /* background-color: #75B1D2; */
+  /* background-color: #668968; */
+  /* background-color: #CE7E25; */
+}

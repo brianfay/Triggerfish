@@ -1,0 +1,13 @@
+{
+  "name": "triggerfish",
+  "version": "0.0.0",
+  "author": "Brian Fay",
+  "dependencies": {
+    "supercolliderjs": "*",
+    "koa-static": "*",
+    "koa.io": "*",
+    "co": "*",
+    "socket.io-client": "*",
+    "react": "*"
+  }
+}
