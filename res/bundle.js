@@ -11,10 +11,9 @@ App = React.createClass({displayName: "App",
   },
   render: function() {
     return React.createElement("div", null, 
-      React.createElement("h1", null, "app"), 
+      React.createElement("button", {onClick: this.addGroup}, "addGroup"), 
       React.createElement(ParGroupList, {groups: this.props.appProps.parGroupList}), 
-      React.createElement(BusList, {buses: this.props.appProps.busList}), 
-      React.createElement("button", {onClick: this.addGroup}, "addGroup")
+      React.createElement(BusList, {buses: this.props.appProps.busList})
     );
   }
 });
@@ -22,7 +21,7 @@ App = React.createClass({displayName: "App",
 ParGroupList = React.createClass({displayName: "ParGroupList",
   render: function() {
     var createParGroup = function(instance){
-      return React.createElement(ParGroup, {instance: instance, key: instance.index});
+      return React.createElement(ParGroup, {instance: instance, key: instance.nodeID});
     }
     return React.createElement("div", {className: "column-grid"}, this.props.groups.map(createParGroup));
   }
@@ -36,12 +35,12 @@ ParGroup = React.createClass({displayName: "ParGroup",
     socket.emit('removeGroup', this.props.instance);
   },
   render: function(){
-    return React.createElement("div", {className: "cell"}, 
+    return React.createElement("div", {className: "par-group"}, 
         "Group # ", this.props.instance.index, React.createElement("br", null), 
         "NodeID: ", this.props.instance.nodeId, React.createElement("br", null), 
-        React.createElement(SynthList, {synths: this.props.instance.synthList}), 
         React.createElement("button", {onClick: this.addSynth}, "addSynth"), 
-        React.createElement("button", {onClick: this.removeGroup}, "removeGroup")
+        React.createElement("button", {onClick: this.removeGroup}, "removeGroup"), 
+        React.createElement(SynthList, {synths: this.props.instance.synthList})
       )
   }
 });
@@ -49,7 +48,7 @@ ParGroup = React.createClass({displayName: "ParGroup",
 SynthList = React.createClass({displayName: "SynthList",
   render: function(){
     var createSynth = function(instance){
-      return React.createElement(Synth, {instance: instance, key: instance.index});
+      return React.createElement(Synth, {instance: instance, key: instance.nodeID});
     }
     return React.createElement("div", {className: "row-grid"}, this.props.synths.map(createSynth));
   }
@@ -57,7 +56,7 @@ SynthList = React.createClass({displayName: "SynthList",
 
 Synth = React.createClass({displayName: "Synth",
   render: function(){
-    return React.createElement("div", {className: "cell"}, "Synth index: ", this.props.instance.index, React.createElement("br", null), 
+    return React.createElement("div", {className: "synth"}, "Synth index: ", this.props.instance.index, React.createElement("br", null), 
       "NodeId: ", this.props.instance.nodeId
     )
   }
@@ -24439,7 +24438,7 @@ function isBuf(obj) {
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],"/home/brian/devel/triggerfish/node_modules/socket.io-client/node_modules/socket.io-parser/node_modules/isarray/index.js":[function(require,module,exports){
-arguments[4]["/home/brian/devel/triggerfish/node_modules/socket.io-client/node_modules/engine.io-client/node_modules/engine.io-parser/node_modules/has-binary/node_modules/isarray/index.js"][0].apply(exports,arguments)
+arguments[4]["/home/brian/devel/triggerfish/node_modules/socket.io-client/node_modules/has-binary/node_modules/isarray/index.js"][0].apply(exports,arguments)
 },{}],"/home/brian/devel/triggerfish/node_modules/socket.io-client/node_modules/socket.io-parser/node_modules/json3/lib/json3.js":[function(require,module,exports){
 /*! JSON v3.2.6 | http://bestiejs.github.io/json3 | Copyright 2012-2013, Kit Cambridge | http://kit.mit-license.org */
 ;(function (window) {

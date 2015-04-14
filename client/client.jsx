@@ -10,10 +10,9 @@ App = React.createClass({
   },
   render: function() {
     return <div>
-      <h1>app</h1>
+      <button onClick={this.addGroup}>addGroup</button>
       <ParGroupList groups={this.props.appProps.parGroupList} />
       <BusList buses={this.props.appProps.busList} />
-      <button onClick={this.addGroup}>addGroup</button>
     </div>;
   }
 });
@@ -21,7 +20,7 @@ App = React.createClass({
 ParGroupList = React.createClass({
   render: function() {
     var createParGroup = function(instance){
-      return <ParGroup instance={instance} key={instance.index} />;
+      return <ParGroup instance={instance} key={instance.nodeID} />;
     }
     return <div className="column-grid">{this.props.groups.map(createParGroup)}</div>;
   }
@@ -35,12 +34,12 @@ ParGroup = React.createClass({
     socket.emit('removeGroup', this.props.instance);
   },
   render: function(){
-    return <div className="cell">
+    return <div className="par-group">
         Group # {this.props.instance.index}<br/>
         NodeID: {this.props.instance.nodeId}<br/>
-        <SynthList synths={this.props.instance.synthList} />
         <button onClick={this.addSynth}>addSynth</button> 
         <button onClick={this.removeGroup}>removeGroup</button>
+        <SynthList synths={this.props.instance.synthList} />
       </div>
   }
 });
@@ -48,7 +47,7 @@ ParGroup = React.createClass({
 SynthList = React.createClass({
   render: function(){
     var createSynth = function(instance){
-      return <Synth instance={instance} key={instance.index} />;
+      return <Synth instance={instance} key={instance.nodeID} />;
     }
     return <div className="row-grid">{this.props.synths.map(createSynth)}</div>;
   }
@@ -56,7 +55,7 @@ SynthList = React.createClass({
 
 Synth = React.createClass({
   render: function(){
-    return <div className="cell">Synth index: {this.props.instance.index}<br/>
+    return <div className="synth">Synth index: {this.props.instance.index}<br/>
       NodeId: {this.props.instance.nodeId}
     </div>
   }

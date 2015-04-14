@@ -66,7 +66,8 @@ app.io.use(function* (next) {
 //socket event
 app.io.route('addSynth', function* (next, req) {
   console.log('addSynth received by server');
-  var res = yield callSC('triggerfish.newSynth', [parseInt(req.nodeId.toString()), '\default']);
+  // var res = yield callSC('triggerfish.newSynth', [parseInt(req.nodeId.toString()), '\default', 'freq', (Math.floor(Math.random()*15)+1)*50]);
+  var res = yield callSC('triggerfish.newSynth', [parseInt(req.nodeId.toString()), '\default', 'amp', Math.random()*0.4, 'freq', Math.floor(Math.random()*15)*59]);
   appState.parGroupList[req.index].synthList.push({index: appState.parGroupList[req.index].synthList.length, nodeId: res.result});
   this.socket.emit('appState', appState);
   this.broadcast.emit('appState', appState);

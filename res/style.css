@@ -7,6 +7,7 @@ body {
 .column-grid {
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 .row-grid {
   display: flex; 
@@ -14,18 +15,29 @@ body {
   /* width: 1920px; */
   overflow: auto;
 }
-
-.cell {
-  /* height: 250px; */ 
-  flex: 1;
+.par-group {
+  background-color: #DDD;
+  height: 200px;
   border-style: solid;
+  border-radius: 4px;
+  border-width: 2px;
+  margin-bottom: 7px;
+}
+.synth {
+  height: 40px; */ 
+  width: 30px; 
+  margin: 7px;
+  flex: 1;
+  border-style: inset;
   border-width: 1px;
-  /* background-color: #A84E1F; */
-  /* background-color: #5B9295; */
+  padding: 30px;
+  background-color: #3EF2AB;
 }
 
-.wide {
-  /* background-color: #75B1D2; */
-  /* background-color: #668968; */
-  /* background-color: #CE7E25; */
+button {
+    width: 131px;
+    height: 28px;
+    border-radius: 10px;
+    border-style: solid;
+    background-color: #39B;
 }

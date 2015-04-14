@@ -7,18 +7,24 @@ newParGroup: { arg reply;
     reply.value(g.nodeID);
   },
 
-newSynth: { arg reply, targetGroup, defName ... args;    
-    var synth = Synth(defName, target:nodeDict.at(targetGroup), addAction:'addToHead');
+newSynth: { arg reply, targetGroup, defName ...argsFromJs;
+    /* var processedArgs = Array.new(argsFromJs.size); */
+    /* argsFromJs.do{arg i, idx; */
+    /*   if(idx.even, */
+    /*     {processedArgs.add(i.asSymbol)}, */
+    /*     {processedArgs.add(i)}) */
+    /* }; */
+    var synth = Synth(defName, target:nodeDict.at(targetGroup), args: argsFromJs, addAction:'addToHead');
     nodeDict.put(synth.nodeID, synth);
     reply.value(synth.nodeID);
   },
 
 removeNode: { arg reply, targetNode;
     nodeDict.at(targetNode).free;
-    /* nodeDict.removeAt(g.nodeID); */
-    /* //kinda hacky way to remove any synths belonging to a group from the dict */
-    /* nodeDict.select{|item| item.group.nodeID == targetNode}.keys.do{|idx| */
-    /* nodeDict.removeAt(idx)}; */
+    nodeDict.removeAt(targetNode);
+    //kinda hacky way to remove any synths belonging to a group from the dict
+    nodeDict.select{|item| item.group.nodeID == targetNode}.keys.do{|idx|
+    nodeDict.removeAt(idx)};
     reply.value();
   }
 );
