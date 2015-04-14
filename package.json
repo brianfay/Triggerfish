@@ -9,5 +9,10 @@
     "co": "*",
     "socket.io-client": "*",
     "react": "*"
+  },
+  "devDependencies": {
+    "reactify": "*",
+    "watchify": "*",
+    "nodemon": "*"
   }
 }
