@@ -8,6 +8,7 @@
     "koa.io": "*",
     "co": "*",
     "socket.io-client": "*",
+    "nexusui": "*",
     "react": "*"
   },
   "devDependencies": {

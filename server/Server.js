@@ -1,28 +1,35 @@
-var koa = require('koa.io'),
-    app = koa(),
-    co = require('co'),
-    fs = require('fs'),
-    serve = require('koa-static'),
-    scjs = require('supercolliderjs'),
-    SCAPI = scjs.scapi;
-    SCLang = scjs.sclang;
+var koa = require('koa.io');
+var app = koa();
+var co = require('co');
+var fs = require('fs');
+var serve = require('koa-static');
+var scjs = require('supercolliderjs');
+var SCAPI = scjs.scapi;
+var SCLang = scjs.sclang;
 
+//state
 var appState = {
   parGroupList: [],
+  hardwareBuses: [],
   busList: [],
-  synthDefNames: []
 };
 
+var synthDefs = {};
+var synthDescs = {};
+var hardwareBuses = [];
+
+//helper
 //increments every time we call api
 var inc = (function(){
   var count = -1;
   function doInc(){
     count++;
     return count;
-  } 
+  }
   return doInc;
 })();
 
+//helper
 function updateGroupIndexes(){
   for(var i=0; i < appState.parGroupList.length; i++){
     appState.parGroupList[i].index = i;
@@ -50,46 +57,60 @@ co(function *(next){
   yield callSC('server.boot');
   console.log('booted scsynth');
 
-  var synthDefNames = yield callSC('triggerfish.getSynthDefNames'); 
-  synthDefNames = synthDefNames.result
-  for(var i = 0; i < synthDefNames.length; i++){
-    synthDefNames[i] = synthDefNames[i].split('.')[0];
-  }
-  console.log('got synth names: ', synthDefNames);
-  synthDefNames.push('default');
-  appState.synthDefNames = synthDefNames;
+  var defs = yield callSC('triggerfish.getSynthDefs');
+  synthDefs = defs.result;
+  console.log('whoa synthDefs: ' + synthDefs);
+
+  var specs = yield callSC('triggerfish.getSpecs');
+  synthDescs = specs.result;
+  var hwBusInfo = yield callSC('triggerfish.getHardwareBuses');
+  hardwareBuses = hwBusInfo.result;
 }).catch(function(err){console.error(err.stack)});
 
 
+//middleware
 app.use(serve('../res'));
 
+//middleware
 app.io.use(function* (next) {
   // on connect
   console.log('client connected to socket');
-
-
+  this.socket.emit('synthDefs', synthDefs);
+  this.broadcast.emit('synthDefs', synthDefs);
+  this.socket.emit('synthDescs', synthDescs);
+  this.broadcast.emit('synthDescs', synthDescs);
+  this.socket.emit('hardwareBuses', hardwareBuses);
+  this.broadcast.emit('hardwareBuses', hardwareBuses);
   this.socket.emit('appState', appState);
   this.broadcast.emit('appState', appState);
   yield* next;
   // on disconnect
 });
 
-//socket event
+//middleware
 app.io.route('addSynth', function* (next, req) {
   console.log('addSynth received by server');
-  // var res = yield callSC('triggerfish.newSynth', [parseInt(req.nodeId.toString()), 'default', 'amp', Math.random()*0.4, 'freq', Math.floor(Math.random()*15)*59]);
-  var request = [req[0].nodeId, req[1]];
-  for(var i = 2; i < req.length; i++){
-    request.push(req[i]);
+  console.log('req: ' + JSON.stringify(req));
+  var request = [req.instance.nodeId, req.synth];
+  for(var i = 0; i < req.args.length; i++){
+    request.push(req.args[i]);
   }
-  var res = yield callSC('triggerfish.newSynth', request);
-  appState.parGroupList[req[0].index].synthList.push({index: appState.parGroupList[req[0].index].synthList.length, nodeId: res.result});
+  console.log('request: ' + JSON.stringify(request));
+  // var res = yield callSC('triggerfish.newSynth', [parseInt(req.nodeId.toString()), 'default', 'amp', Math.random()*0.4, 'freq', Math.floor(Math.random()*15)*59]);
+  var res = yield callSC('triggerfish.newSynth',request);
+  //var res = yield callSC('triggerfish.testThis', request);
+  //var res = yield callSC('triggerfish.newSynth',[1000, "default", "inputBuses", [0, 1]]);
+  console.log("response: " + JSON.stringify(res));
+
+  appState.parGroupList[req.instance.index].synthList.push({index: appState.parGroupList[req.instance.index].synthList.length, nodeId: res.result});
   this.socket.emit('appState', appState);
   this.broadcast.emit('appState', appState);
   console.log('addSynth done.');
   console.log(res);
+
 });
 
+//middleware
 app.io.route('addGroup', function* (next) {
   console.log('addGroup received by server');
   var res = yield callSC('triggerfish.newParGroup');
@@ -100,6 +121,7 @@ app.io.route('addGroup', function* (next) {
   this.broadcast.emit('appState', appState);
 });
 
+//middleware
 app.io.route('addGroupAfter', function* (next, req) {
   console.log('addGroupAfter received by server');
   var res = yield callSC('triggerfish.placeGroupAfter', req.nodeID);
@@ -112,6 +134,7 @@ app.io.route('addGroupAfter', function* (next, req) {
   }
 });
 
+//middleware
 app.io.route('addGroupBefore', function* (next, req) {
   console.log('addGroupBefore received by server');
   var res = yield callSC('triggerfish.placeGroupBefore', req.nodeID);
@@ -122,6 +145,7 @@ app.io.route('addGroupBefore', function* (next, req) {
   this.broadcast.emit('appState', appState);
 });
 
+//middleware
 app.io.route('removeGroup', function* (next, req) {
   console.log('removeGroup received by server');
   var res = yield callSC('triggerfish.removeNode', parseInt(req.nodeId.toString()));
@@ -134,5 +158,3 @@ app.io.route('removeGroup', function* (next, req) {
 });
 
 app.listen(3000);
-
-console.log('listening on port 3000')

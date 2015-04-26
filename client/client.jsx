@@ -1,9 +1,11 @@
 React = require('react');
 var io = require('socket.io-client');
-
 var socket = io();
 
-globalAppState = {};
+//global objects that aren't going to change often (don't want to send from server constantly)
+synthDefs = {};
+synthDescs = {};
+hardwareBuses = {};
 
 //parGroupList -> parGroup -> synthList -> synth
 App = React.createClass({
@@ -15,10 +17,9 @@ App = React.createClass({
       return <option value={val}>{val}</option>;
     }
     return <div>
-      <p>SynthDefNames: {globalAppState.synthDefNames}</p>
       <button onClick={this.addGroup}>addGroup</button>
       <select id="synthSelect">
-        {globalAppState.synthDefNames.map(createOption)}
+      {Object.keys(this.props.synthDefs).map(createOption)}
       </select>
       <ParGroupList groups={this.props.appProps.parGroupList} />
       <BusList buses={this.props.appProps.busList} />
@@ -37,7 +38,13 @@ ParGroupList = React.createClass({
 
 ParGroup = React.createClass({
   addSynth: function(){
-    socket.emit('addSynth', [this.props.instance, document.getElementById('synthSelect').value, 'inBus', 0, 'outBus', 1]);
+    var req = {
+     instance: this.props.instance,
+     synth: document.getElementById('synthSelect').value,
+      //args: ['inBus', 1, 'outBus', 1]
+      args: []
+    }
+    socket.emit('addSynth', req);
   },
   removeGroup: function(){
     socket.emit('removeGroup', this.props.instance);
@@ -48,8 +55,12 @@ ParGroup = React.createClass({
   addGroupBefore: function(){
     socket.emit('addGroupBefore', this.props.instance);
   },
+  componentDidMount: function(){
+    nx.add('dial',
+      {parent: this.props.instance.nodeId});
+  },
   render: function(){
-    return <div className="par-group">
+    return <div className="par-group" id={this.props.instance.nodeId}>
         Group # {this.props.instance.index}<br/>
         NodeID: {this.props.instance.nodeId}<br/>
         <button onClick={this.addGroupBefore}>addGroupBefore</button>
@@ -95,8 +106,22 @@ Bus = React.createClass({
 });
 
 function renderApp(data){
-  globalAppState = data; //for stuff I don't want to explicitly pass down to children, like synthDefNames (this is probably a terrible idea but #yoloswagwhatever)
-  React.render(<App appProps={data} />, document.getElementById("app"));
+  React.render(<App appProps={data} synthDefs={synthDefs} synthDescs={synthDescs} hardwareBuses={hardwareBuses} />, document.getElementById("app"));
 }
 
+function setSynthDefs(data){
+  synthDefs = data;
+}
+
+function setSynthDescs(data){
+  synthDescs = data;
+}
+
+function setHardwareBuses(data){
+  hardwareBuses = data;
+}
+
+socket.on('synthDefs', setSynthDefs);
+socket.on('synthDescs', setSynthDescs);
+socket.on('hardwareBuses', setHardwareBuses);
 socket.on('appState', renderApp);
