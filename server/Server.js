@@ -58,11 +58,12 @@ co(function *(next){
   console.log('booted scsynth');
 
   var defs = yield callSC('triggerfish.getSynthDefs');
-  synthDefs = defs.result;
-  console.log('whoa synthDefs: ' + synthDefs);
+    synthDefs = defs.result;
+    console.log('whoa synthDefs: ' + JSON.stringify(synthDefs));
 
-  var specs = yield callSC('triggerfish.getSpecs');
-  synthDescs = specs.result;
+  // var specs = yield callSC('triggerfish.getSpecs');
+  // synthDescs = specs.result;
+  synthDescs = {};
   var hwBusInfo = yield callSC('triggerfish.getHardwareBuses');
   hardwareBuses = hwBusInfo.result;
 }).catch(function(err){console.error(err.stack)});
@@ -155,6 +156,16 @@ app.io.route('removeGroup', function* (next, req) {
   this.socket.emit('appState', appState);
   this.broadcast.emit('appState', appState);
   console.log("finished removing group");
+});
+
+//middleware
+app.io.route('controlSynth', function* (next, req) {
+    console.log('controlSynth received by server');
+    console.log('req.nodeId: ' + req.nodeId);
+    console.log('req.paramName: ' + req.paramName);
+    console.log('req.value: ' + req.value);
+    var res = yield callSC('triggerfish.controlSynth',[parseInt(req.nodeId.toString()), req.paramName, req.value]);
+    console.log(res);
 });
 
 app.listen(3000);

@@ -56,8 +56,8 @@ ParGroup = React.createClass({
     socket.emit('addGroupBefore', this.props.instance);
   },
   componentDidMount: function(){
-    nx.add('dial',
-      {parent: this.props.instance.nodeId});
+    // nx.add('dial',
+    //   {parent: this.props.instance.nodeId});
   },
   render: function(){
     return <div className="par-group" id={this.props.instance.nodeId}>
@@ -82,8 +82,25 @@ SynthList = React.createClass({
 });
 
 Synth = React.createClass({
+    componentDidMount: function(){
+        var that = this;
+        var dial = nx.add('dial',
+               {parent: String(this.props.instance.nodeId)});
+        dial.transmit({value: dial.val, name: dial.name});
+        dial.sendsTo(function(data){
+            console.log(data.value);
+            console.log(String(that.props.instance.nodeId))
+            var req = {
+                nodeId: that.props.instance.nodeId,
+                paramName: 'delTime',
+                value: (data.value * 2 + 0.02)
+            };
+            socket.emit('controlSynth', req);
+        });
+    // socket.emit('addSynth', req);
+    },
   render: function(){
-    return <div className="synth">Synth index: {this.props.instance.index}<br/>
+      return <div className="synth" id={this.props.instance.nodeId}>Synth index: {this.props.instance.index}<br/>
       NodeId: {this.props.instance.nodeId}
     </div>
   }
