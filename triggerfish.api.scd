@@ -67,5 +67,10 @@ getHardwareBuses: { arg reply;
 	hardwareBuses.put('numInputBusChannels', Server.local.options.numInputBusChannels);
 	hardwareBuses.put('numOutputBusChannels', Server.local.options.numOutputBusChannels);
 	reply.value(JSON.stringify(hardwareBuses));
+ },
+
+controlSynth: { arg reply, targetNodeID, param, val;
+	nodeDict.at(targetNodeID).set(param, val);
+  reply.value(val);
  }
 );
