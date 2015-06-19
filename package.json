@@ -1,19 +1,25 @@
 {
-  "name": "triggerfish",
+  "name": "Triggerfish",
   "version": "0.0.0",
   "author": "Brian Fay",
+  "repository": {
+    "type": "git",
+    "url" : "https://github.com/YottaSecond/Triggerfish.git"
+  },
   "dependencies": {
     "supercolliderjs": "*",
     "koa-static": "*",
     "koa.io": "*",
     "co": "*",
     "socket.io-client": "*",
-    "nexusui": "*",
-    "react": "*"
+    "nexusui": "lsu-emdm/nexusUI", 
+    "react": "*",
+    "react-draggable": "*",
+    "react-pure-render": "*"
   },
   "devDependencies": {
-    "reactify": "*",
     "watchify": "*",
+    "babelify": "*",
     "nodemon": "*"
   }
 }
