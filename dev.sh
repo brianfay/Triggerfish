@@ -1,7 +1,4 @@
 #!/bin/zsh
-# I know that gulp and grunt were made for this sort of thing but I mean come'on do I really need all of that?
-
-# live-reload res/index.html res/bundle.js --port=9999 &
-watchify -t reactify client/client.jsx -o res/bundle.js -v &
-cd server
-nodemon Server.js
+# stage 0 is used for the pure render plugin, can find another method later
+watchify -t [ babelify --stage 0 ] client/client.jsx -o client/build/app.js &
+nodemon server/Server.js
