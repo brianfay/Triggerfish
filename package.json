@@ -11,6 +11,7 @@
     "koa-static": "*",
     "koa.io": "*",
     "co": "*",
+    "flux": "*",
     "socket.io-client": "*",
     "nexusui": "lsu-emdm/nexusUI", 
     "react": "*",
