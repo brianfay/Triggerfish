@@ -10,7 +10,6 @@
     "supercolliderjs": "*",
     "koa-static": "*",
     "koa.io": "*",
-    "co": "*",
     "flux": "*",
     "socket.io-client": "*",
     "nexusui": "lsu-emdm/nexusUI", 
@@ -21,6 +20,11 @@
   "devDependencies": {
     "watchify": "*",
     "babelify": "*",
-    "nodemon": "*"
+    "nodemon": "*",
+    "vinyl-source-stream": "*",
+    "browserify": "*"
+  },
+  "scripts": {
+      "babel-node": "babel-node --stage 0"
   }
 }
