@@ -3,7 +3,8 @@
 
 //nodeMap is a flattened version of the RootNode, which allows each node to be accessed by id.
 //I don't know for sure that this is a good idea... but it does seem easier and possibly more efficient than deep searches
-var NodeMap = new Map();
+let NodeMap = new Map();
+import callSC from '../SCServer.js'
 
 class Node{
   constructor(nodeId, type){

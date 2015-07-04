@@ -14,6 +14,7 @@ const startSCLang = new Promise(function(resolve, reject){
     });
     sclang.on('stderr', function(d){
       console.log('STDERR: ' + d);
+      throw d;
     });
     sclang.boot().then(function(){
       console.log('booted sclang');
@@ -21,6 +22,11 @@ const startSCLang = new Promise(function(resolve, reject){
       sc.log.dbug(options);
       sc.connect();
       resolve(sc);
+    })
+    .catch(function(err){
+      console.log('There was a problem starting sclang.');
+      console.log(err);
+      process.exit(1);
     });
   });
 });
@@ -34,6 +40,11 @@ const startSCSynth = new Promise(function(resolve, reject){
     callWrapper('server.boot').then(function(){
       console.log('server booted');
       resolve(callWrapper);
+    })
+    .catch(function(err){
+      console.log('There was a problem starting scsynth.');
+      console.log(err);
+      process.exit(1);
     });
   });
 });
