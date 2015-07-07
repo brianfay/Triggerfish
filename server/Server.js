@@ -5,36 +5,36 @@ var app = koa();
 var serve = require('koa-static');
 
 //state
-var appState = {};
-// appState.nodes = [];
-// appState.nodes.push({
-//   type: "synth",
-//   key: 1000
-// });
-// appState.nodes.push({
-//   type: "parGroup",
-//   key: 1003,
-//   nodes: [
-//     {type: "synth",
-//     key: 1004}
-//   ]
-// });
-// appState.nodes.push({
-//   type: "group",
-//   key: 1005,
-//   nodes: [
-//     {type: "synth",
-//     key: 1006}
-//   ]
-// });
-// appState.nodes.push({
-//   type: "synth",
-//   key: 1001
-// });
-// appState.nodes.push({
-//   type: "synth",
-//   key: 1002
-// });
+var nodeState= {};
+nodeState.nodes = [];
+nodeState.nodes.push({
+  type: "synth",
+  key: 1000
+});
+nodeState.nodes.push({
+  type: "parGroup",
+  key: 1003,
+  nodes: [
+    {type: "synth",
+    key: 1004}
+  ]
+});
+nodeState.nodes.push({
+  type: "group",
+  key: 1005,
+  nodes: [
+    {type: "synth",
+    key: 1006}
+  ]
+});
+nodeState.nodes.push({
+  type: "synth",
+  key: 1001
+});
+nodeState.nodes.push({
+  type: "synth",
+  key: 1002
+});
 
 //middleware
 app.use(serve('client'));
@@ -43,8 +43,8 @@ app.use(serve('client'));
 app.io.use(function* (next) {
   // on connect
   console.log('client connected to socket');
-  this.socket.emit('appState', appState);
-  this.broadcast.emit('appState', appState);
+  this.socket.emit('nodeState',nodeState);
+  this.broadcast.emit('nodeState',nodeState);
   yield* next;
   // on disconnect
 });

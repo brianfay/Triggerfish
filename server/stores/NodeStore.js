@@ -54,7 +54,10 @@ class RootNode extends ContainerNode{
     this.nodes.splice(idx, 1);
   }
   logNodeMap(){
-    console.log(NodeMap);
+    console.log(JSON.stringify(NodeMap));
+  }
+  getNodeMap(){
+    return NodeMap;
   }
 }
 
@@ -71,8 +74,9 @@ class ParGroup extends ContainerNode{
 }
 
 class Synth extends Node{
-  constructor(nodeId){
+  constructor(nodeId, defName){
     super(nodeId, 'Synth');
+    this.defName = defName;
   }
 }
 

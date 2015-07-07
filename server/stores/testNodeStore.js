@@ -1,5 +1,4 @@
 import NodeStore from './NodeStore'
-// var nodeStore = NodeStore();
 
 NodeStore.logNodeMap();
 NodeStore.addSynth(1001);
@@ -22,3 +21,5 @@ NodeStore.logNodeMap();
 NodeStore.logNodeMap();
 
 console.log(NodeStore.nodes[1].nodes[1]);
+
+console.log('NodeMap: ' + JSON.stringify(NodeStore.getNodeMap()));

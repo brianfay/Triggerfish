@@ -32,5 +32,5 @@ gulp.task('serve', function(){
 
 gulp.task('default', ['watch', 'buildClient', 'serve']);
 gulp.task('watch', function(){
-  gulp.watch('./client/*', ['build']);
+  gulp.watch('./client/*', ['buildClient']);
 });
