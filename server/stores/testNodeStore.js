@@ -1,25 +1,28 @@
-import NodeStore from './NodeStore'
+'use strict';
+const NodeStore= require('./NodeStore');
 
-NodeStore.logNodeMap();
-NodeStore.addSynth(1001);
+// NodeStore.logNodeMap();
+// NodeStore.addSynth(1001);
+console.log('NodeMap size: ' + NodeStore.getNodeMap().size);
 
-console.log('getting node 1001: ');
-console.log(NodeStore.getNode(1001));
-
-console.log('getting node 1002: ');
-console.log(NodeStore.getNode(1002));
-
-
-NodeStore.addGroup(1002);
-
-NodeStore.getNode(1002).addSynth(1003);
-NodeStore.getNode(1002).addParGroup(1004);
-NodeStore.getNode(1004).addSynth(1005);
-
-NodeStore.logNodeMap();
-// NodeStore.deleteNode(0);
-NodeStore.logNodeMap();
-
-console.log(NodeStore.nodes[1].nodes[1]);
-
-console.log('NodeMap: ' + JSON.stringify(NodeStore.getNodeMap()));
+NodeStore.addNode('Synth', 0, 'addToHead', 'default', ['freq', 660])
+  .then(function(){
+    console.log('NodeMap size: ' + NodeStore.getNodeMap().size);
+    console.log('Node 1000: ' + NodeStore.getNodeMap().get('1000'));
+    console.log('Node 1001: ' + NodeStore.getNodeMap().get('1001'));
+    console.log('Node 1002: ' + NodeStore.getNodeMap().get('1002'));
+  });
+NodeStore.addNode('Synth', 0, 'addToHead', 'default', ['freq', 880])
+  .then(function(){
+    console.log('NodeMap size: ' + NodeStore.getNodeMap().size);
+    console.log('Node 1000: ' + NodeStore.getNodeMap().get('1000'));
+    console.log('Node 1001: ' + NodeStore.getNodeMap().get('1001'));
+    console.log('Node 1002: ' + NodeStore.getNodeMap().get('1002'));
+  });
+NodeStore.addNode('Synth', 0, 'addToHead', 'default', ['freq', 1110])
+  .then(function(){
+    console.log('NodeMap size: ' + NodeStore.getNodeMap().size);
+    console.log('Node 1000: ' + NodeStore.getNodeMap().get('1000'));
+    console.log('Node 1001: ' + NodeStore.getNodeMap().get('1001'));
+    console.log('Node 1002: ' + NodeStore.getNodeMap().get('1002'));
+  });

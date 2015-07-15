@@ -1,13 +1,16 @@
 import React from 'react';
-import { Group, Synth, ParGroup } from './Components';
+import NodeStore from './stores/NodeStore';
+import { Group, Synth, ParGroup } from './components/Components';
 
-export function renderNode(node){
-  if(node.type == 'group'){ return <Group {...node} id={node.key}></Group>
+export function renderNode(nodeID){
+  const node = NodeStore.getNode(nodeID);
+  if(node.get('type') == 'Group'){ 
+    return <Group id={nodeID} nodes={node.get('nodes')} key={nodeID}></Group>
   }
-  else if(node.type == 'parGroup'){
-    return <ParGroup {...node} id={node.key}></ParGroup>
+  else if(node.get('type') == 'ParGroup'){ 
+    return <ParGroup {...NodeStore.getNode(nodeID)} nodes={node.get('nodes')} key={nodeID} id={nodeID}></ParGroup>
   }
-  else if(node.type == 'synth'){
-    return <Synth {...node} id={node.key}></Synth>
+  else if(node.get('type') == 'Synth'){ 
+    return <Synth {...NodeStore.getNode(nodeID)} key={nodeID} id={nodeID}></Synth>
   }
 }

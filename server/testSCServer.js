@@ -1,4 +1,4 @@
-import callSC from './SCServer'
+const callSC = require('./SCServer');
 
 // setInterval(function(){
 //   callSC('API.apis', [])

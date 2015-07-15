@@ -1,7 +1,7 @@
-var nodeDict = Dictionary.new();
+var nodeDict = Dictionary.new().put(s.defaultGroup().nodeID, s.defaultGroup());
 
 (
-addNode: {arg reply, nodeType, targetNodeID, addAction, defName ...args;
+addNode: {arg reply, nodeType, targetNodeID, addAction, defName, args;
 	var g;
 	switch(nodeType,
 		'Group', {
@@ -18,53 +18,6 @@ addNode: {arg reply, nodeType, targetNodeID, addAction, defName ...args;
 	nodeDict.put(g.nodeID, g);
 	reply.value(g.nodeID);
 },
-// addGroupToHead: {arg reply, targetNodeID;
-// 	var g = ParGroup.new(target:nodeDict.at(targetNodeID), addAction:'addToHead');
-// 	nodeDict.put(g.nodeID, g);
-// 	reply.value(g.nodeID);aj
-// },
-//
-// addGroupToTail: {arg reply, targetNodeID;
-// 	var g = ParGroup.new(target:nodeDict.at(targetNodeID), addAction:'addToTail');
-// 	nodeDict.put(g.nodeID, g);
-// 	reply.value(g.nodeID);
-// },
-//
-// addGroupBefore: { arg reply, targetNodeID;
-// 	var g = ParGroup.new(target:nodeDict.at(targetNodeID), addAction:'addBefore');
-// 	nodeDict.put(g.nodeID, g);
-// 	reply.value(g.nodeID);
-// },
-//
-// addGroupAfter: { arg reply, targetNodeID;
-// 	var g = ParGroup.new(target:nodeDict.at(targetNodeID), addAction:'addAfter');
-// 	nodeDict.put(g.nodeID, g);
-// 	reply.value(g.nodeID);
-// },
-//
-// addSynthToHead: { arg reply, targetNodeID, defName ...argsFromJs;
-// 	var synth = Synth(defName, target:nodeDict.at(targetNodeID), args: argsFromJs, addAction:'addToHead');
-// 	nodeDict.put(synth.nodeID, synth);
-// 	reply.value(synth.nodeID);
-// },
-//
-// addSynthToTail: { arg reply, targetNodeID, defName ...argsFromJs;
-// 	var synth = Synth(defName, target:nodeDict.at(targetNodeID), args: argsFromJs, addAction:'addToTail');
-// 	nodeDict.put(synth.nodeID, synth);
-// 	reply.value(synth.nodeID);
-// },
-//
-// addSynthBefore: { arg reply, targetNodeID, defName ...argsFromJs;
-// 	var synth = Synth(defName, target:nodeDict.at(targetNodeID), args: argsFromJs, addAction:'addBefore');
-// 	nodeDict.put(synth.nodeID, synth);
-// 	reply.value(synth.nodeID);
-// },
-//
-// addSynthAfter: { arg reply, targetNodeID, defName ...argsFromJs;
-// 	var synth = Synth(defName, target:nodeDict.at(targetNodeID), args: argsFromJs, addAction:'addAfter');
-// 	nodeDict.put(synth.nodeID, synth);
-// 	reply.value(synth.nodeID);
-// },
 
 removeNode: { arg reply, targetNode;
     nodeDict.at(targetNode).free;
@@ -109,5 +62,9 @@ getHardwareBuses: { arg reply;
 controlSynth: { arg reply, targetNodeID, param, val;
 	nodeDict.at(targetNodeID).set(param, val);
 	reply.value(val);
+},
+
+queryAllNodes: { arg reply;
+	reply.value(JSON.stringify(s.queryAllNodes));
 }
 );

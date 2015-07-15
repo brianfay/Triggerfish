@@ -7,20 +7,17 @@ var child_process = require('child_process');
 
 gulp.task('buildClient', function(){
     browserify({
-      entries: ['client/Client.js', 'client/Components.js', 'client/Utils.js'],
+      entries: ['client/Client.js'],
       debug: true
     })
-  // )
-  .transform(babelify.configure({
-     stage: 0
-  }))
+  .transform(babelify)
   .bundle()
   .pipe(source('app.js'))
-  .pipe(gulp.dest('./client/build'));
+  .pipe(gulp.dest('./client/build'))
 });
 
 gulp.task('serve', function(){
-  var server = child_process.spawn('nodemon', ['--harmony', 'server/Server.js']);
+  var server = child_process.spawn('nodemon', ['--exec', 'babel-node', '--', 'Server.js'], {cwd: './server'});
   server.stdout.on('data', function(data){
     console.log(data.toString());
   });
@@ -28,9 +25,15 @@ gulp.task('serve', function(){
     console.warn(data.toString());
   });
 });
-  
 
-gulp.task('default', ['watch', 'buildClient', 'serve']);
 gulp.task('watch', function(){
-  gulp.watch('./client/*', ['buildClient']);
+  var watchFiles = ['client/index.html', 'client.css', 'client/Utils.js', 'client/stores/*.js',
+    'client/actions/*.js', 'client/dispatcher/*.js', 'client/components/*.js', 'client/constants/*.js'];
+  gulp.watch(watchFiles, ['buildClient']);
 });
+
+gulp.task('copyTriggerfishAPIFile', function(){
+  child_process.spawn('npm', ['run', 'copy-triggerfishAPI']);
+});
+
+gulp.task('default', ['copyTriggerfishAPIFile', 'watch', 'buildClient', 'serve']);

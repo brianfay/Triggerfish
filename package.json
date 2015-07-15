@@ -7,24 +7,25 @@
     "url" : "https://github.com/YottaSecond/Triggerfish.git"
   },
   "dependencies": {
-    "supercolliderjs": "*",
-    "koa-static": "*",
-    "koa.io": "*",
     "flux": "*",
-    "socket.io-client": "*",
+    "immutable": "*",
     "nexusui": "lsu-emdm/nexusUI", 
+    "node-static": "*",
     "react": "*",
-    "react-draggable": "*",
-    "react-pure-render": "*"
+    "socket.io-client": "*",
+    "socket.io": "*",
+    "supercolliderjs": "*"
   },
   "devDependencies": {
-    "watchify": "*",
+    "babel": "*",
     "babelify": "*",
+    "browserify": "*",
     "nodemon": "*",
     "vinyl-source-stream": "*",
-    "browserify": "*"
+    "watchify": "*"
   },
   "scripts": {
-      "babel-node": "babel-node --stage 0"
+    "babel-node": "babel-node --ignore='client'",
+    "copy-triggerfishAPI": "cp /home/brian/devel/Triggerfish/triggerfish.api.scd /home/brian/.local/share/SuperCollider/downloaded-quarks/TriggerfishAPI/apis/" 
   }
 }

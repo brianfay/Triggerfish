@@ -1,5 +1,5 @@
 //Returns a Promise that resolves to a function that allows API calls to supercollider
-import scjs from 'supercolliderjs';
+var scjs = require('supercolliderjs');
 
 const startSCLang = new Promise(function(resolve, reject){
   console.log('starting sclang');
@@ -8,7 +8,7 @@ const startSCLang = new Promise(function(resolve, reject){
     echo: false
   })
   .then(function(options){
-    let sclang = new scjs.sclang(options);
+    var sclang = new scjs.sclang(options);
     sclang.on('stdout', function(d){
       console.log('STDOUT: ' + d);
     });
@@ -18,7 +18,7 @@ const startSCLang = new Promise(function(resolve, reject){
     });
     sclang.boot().then(function(){
       console.log('booted sclang');
-      let sc = new scjs.scapi(options.host, options.langPort);
+      var sc = new scjs.scapi(options.host, options.langPort);
       sc.log.dbug(options);
       sc.connect();
       resolve(sc);
@@ -33,8 +33,8 @@ const startSCLang = new Promise(function(resolve, reject){
 
 const startSCSynth = new Promise(function(resolve, reject){
   startSCLang.then(function(sc){
-    let count = 0;
-    let callWrapper = function(url, param){
+    var count = 0;
+    var callWrapper = function(url, param){
       return sc.call(count++,url,param);
     }
     callWrapper('server.boot').then(function(){
@@ -59,4 +59,4 @@ function callSC(url, param){
   });
 }
 
-export default callSC;
+module.exports = callSC;
