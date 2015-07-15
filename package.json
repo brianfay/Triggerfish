@@ -27,6 +27,6 @@
   },
   "scripts": {
     "babel-node": "babel-node --ignore='client'",
-    "copy-triggerfishAPI": "cp /home/brian/devel/Triggerfish/triggerfish.api.scd /home/brian/.local/share/SuperCollider/downloaded-quarks/TriggerfishAPI/apis/" 
+    "copy-triggerfishAPI": "cp ./triggerfish.api.scd ~/.local/share/SuperCollider/downloaded-quarks/TriggerfishAPI/apis/" 
   }
 }
