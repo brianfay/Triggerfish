@@ -19,6 +19,7 @@
   "devDependencies": {
     "babel": "*",
     "babelify": "*",
+    "gulp": "*",
     "browserify": "*",
     "nodemon": "*",
     "vinyl-source-stream": "*",
