@@ -1,19 +1,32 @@
 {
-  "name": "triggerfish",
+  "name": "Triggerfish",
   "version": "0.0.0",
   "author": "Brian Fay",
+  "repository": {
+    "type": "git",
+    "url" : "https://github.com/YottaSecond/Triggerfish.git"
+  },
   "dependencies": {
-    "supercolliderjs": "*",
-    "koa-static": "*",
-    "koa.io": "*",
-    "co": "*",
+    "flux": "*",
+    "immutable": "*",
+    "nexusui": "lsu-emdm/nexusUI", 
+    "node-static": "*",
+    "react": "*",
     "socket.io-client": "*",
-    "nexusui": "*",
-    "react": "*"
+    "socket.io": "*",
+    "supercolliderjs": "*"
   },
   "devDependencies": {
-    "reactify": "*",
-    "watchify": "*",
-    "nodemon": "*"
+    "babel": "*",
+    "babelify": "*",
+    "gulp": "*",
+    "browserify": "*",
+    "nodemon": "*",
+    "vinyl-source-stream": "*",
+    "watchify": "*"
+  },
+  "scripts": {
+    "babel-node": "babel-node --ignore='client'",
+    "copy-triggerfishAPI": "cp ./triggerfish.api.scd ~/.local/share/SuperCollider/downloaded-quarks/TriggerfishAPI/apis/" 
   }
 }
