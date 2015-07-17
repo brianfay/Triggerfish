@@ -1,6 +1,5 @@
 import React from 'react';
-import { App } from './components/Components';
-import Immutable from 'immutable';
+import App from './components/App';
 React.initializeTouchEvents(true);
 
 React.render(
