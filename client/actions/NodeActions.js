@@ -1,11 +1,10 @@
-import ClientDispatcher from '../dispatcher/ClientDispatcher';
+import NodeDispatcher from '../dispatcher/NodeDispatcher';
 import NodeConstants from '../constants/NodeConstants';
 import SocketConstants from '../../shared/constants/SocketConstants';
-const io = require('socket.io-client');
-const socket = io();
+import Socket from '../utils/Socket';
 
-socket.on(SocketConstants.SET_NODE_MAP, function(nodeMap){
-  ClientDispatcher.dispatch({
+Socket.on(SocketConstants.SET_NODE_MAP, function(nodeMap){
+  NodeDispatcher.dispatch({
     actionType: NodeConstants.SET_NODE_MAP,
     nodeMap: nodeMap
   }); 
@@ -13,7 +12,7 @@ socket.on(SocketConstants.SET_NODE_MAP, function(nodeMap){
 
 const NodeActions = {
   addGroup: function(targetNodeID, position){
-    socket.emit(SocketConstants.ADD_NODE, {
+    Socket.emit(SocketConstants.ADD_NODE, {
       nodeType: NodeConstants.GROUP,
       targetNodeID: targetNodeID,
       addAction: NodeConstants.ADD_TO_HEAD

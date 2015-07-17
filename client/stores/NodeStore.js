@@ -1,4 +1,4 @@
-import ClientDispatcher from '../dispatcher/ClientDispatcher';
+import NodeDispatcher from '../dispatcher/NodeDispatcher';
 import { EventEmitter } from 'events';
 import NodeConstants from '../constants/NodeConstants';
 import Immutable from 'immutable';
@@ -25,7 +25,7 @@ class NodeStore extends EventEmitter{
     return this.NodeMap.get(id);
   }
   getDefaultGroup(){
-    return this.getNode('1');
+    return this.getNode(NodeConstants.DEFAULT_GROUP_ID);
   }
   setNodeMap(mapFromJS){
     this.NodeMap = Immutable.fromJS(mapFromJS);
@@ -45,13 +45,13 @@ class NodeStore extends EventEmitter{
   }
 }
 
-ClientDispatcher.register(function(action) {
+NodeDispatcher.register(function(action) {
   switch(action.actionType){
     case NodeConstants.SET_NODE_MAP:
       NodeStoreSingleton.setNodeMap(action.nodeMap);
       break;
     default:
-      console.log('actionType: ' + actionType + ' not recognized'); 
+      console.error('actionType: ' + action.actionType + ' not recognized'); 
   }
 });
 
