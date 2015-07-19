@@ -1,7 +1,6 @@
 import React from 'react';
 import NodeStore from '../stores/NodeStore';
 import NodeActions from '../actions/NodeActions';
-import ClientStore from '../stores/ClientStore';
 import DefaultGroup from './DefaultGroup';
 import Inspector from './Inspector';
 
