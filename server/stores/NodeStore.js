@@ -1,9 +1,12 @@
-//NodeStore is a reflection of the supercollider server's node tree, and is the single source of truth for Triggerfish clients
-//Clients will receive a copy of the NodeStore on any change, and will never mutate their own local copy
+/*
+ * NodeStore is a reflection of the supercollider server's node tree, and is the single source of truth for Triggerfish clients
+ * Clients will receive a copy of the NodeStore on any change, and will never mutate their own local copy
+ */
 
-// const callSC = require('../SCServer.js');
 import callSC from '../SCServer';
 import Immutable from 'immutable';
+import NodeConstants from '../constants/NodeConstants';
+import NodeDispatcher from '../dispatcher/NodeDispatcher';
 import { EventEmitter } from 'events';
 
 const CHANGE_EVENT = 'change';
@@ -31,19 +34,16 @@ class NodeStore extends EventEmitter{
     args = args || null;
  
     //keys will be converted to strings when we serialize to json, should adhere to that here
-    console.log('nodeType: ' + nodeType);
     const targetKey = targetNodeID.toString();
     const targetNode = this.NodeMap.get(targetKey);
     if(!targetNode){
-      throw 'there was no node at ID ' + targetKey;
+      throw Error(`there was no node at ID ${targetKey}`);
     }
 
-    const _this = this;
     return(
       callSC.apply(this, ['triggerfish.addNode', [nodeType, targetNodeID, addAction, defName].concat(args)])
       .then((resp) => {
         const nodeID = resp.result;
-        // console.log('setting NodeMap at nodeID.toString(): ' + nodeID.toString());
         this._setNodeMap(
           this.NodeMap
           .set(nodeID.toString(), {type: nodeType, nodes: []})
@@ -51,12 +51,6 @@ class NodeStore extends EventEmitter{
                 {type: targetNode.type, nodes: [nodeID.toString()].concat(targetNode.nodes)}
           )
         );
-        // this.NodeMap = this.NodeMap.set(nodeID.toString(), {type: nodeType});
-        // this.NodeMap = this.NodeMap.set(targetKey,
-        //   {type: targetNode.type, nodes: [nodeID.toString()].concat(targetNode.nodes)}
-        // );
-        console.log(this.NodeMap.get(targetKey));
-        console.log(this.NodeMap.get(nodeID.toString()));
         return;
       })
       .catch((err) => {
@@ -71,10 +65,23 @@ class NodeStore extends EventEmitter{
     this.removeListener(CHANGE_EVENT, callback);
   }
   emitChange(){
-    console.log('store is emitting a change');
     this.emit(CHANGE_EVENT);
   }
 }
+
+NodeDispatcher.register(function(action) {
+  switch(action.actionType){
+    case NodeConstants.ADD_NODE:
+      NodeStoreSingleton.addNode(
+        action.nodeType,
+        action.targetNodeID,
+        action.addAction 
+      );
+      break;
+    default: 
+      console.error(`actionType: ${action.actionType} not recognized`);
+  }
+});
 
 const NodeStoreSingleton = new NodeStore();
 export default NodeStoreSingleton;

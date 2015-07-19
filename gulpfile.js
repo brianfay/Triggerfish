@@ -28,7 +28,7 @@ gulp.task('serve', function(){
 
 gulp.task('watch', function(){
   var watchFiles = ['client/index.html', 'client.css', 'client/utils/*.js', 'client/stores/*.js',
-    'client/actions/*.js', 'client/dispatcher/*.js', 'client/components/*.js', 'client/constants/*.js'];
+    'client/actions/*.js', 'client/dispatcher/*.js', 'client/components/*.js', 'client/constants/*.js', 'client/socket/*.js'];
   gulp.watch(watchFiles, ['buildClient']);
 });
 

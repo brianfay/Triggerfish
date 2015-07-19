@@ -1,5 +1,7 @@
-//Returns a Promise that resolves to a function that allows API calls to supercollider
-var scjs = require('supercolliderjs');
+/*
+ * Returns a function that calls supercollider after Promise to start sclang and scsynth is resolved
+ */
+import scjs from 'supercolliderjs';
 
 const startSCLang = new Promise((resolve, reject) => {
   console.log('starting sclang');
@@ -13,7 +15,7 @@ const startSCLang = new Promise((resolve, reject) => {
       console.log('STDOUT: ' + d);
     });
     sclang.on('stderr', (d) => {
-      console.log('STDERR: ' + d);
+      console.error('STDERR: ' + d);
       throw d;
     });
     sclang.boot().then(() => {
@@ -51,7 +53,7 @@ const startSCSynth = new Promise((resolve, reject) => {
       resolve(callWrapper);
     })
     .catch((err) =>{
-      console.err('There was a problem loading synth defs');
+      console.error('There was a problem loading SynthDefs');
       console.error(err);
       process.exit(1);
     })
@@ -68,4 +70,4 @@ function callSC(url, param){
   });
 }
 
-module.exports = callSC;
+export default callSC;
