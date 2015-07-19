@@ -39,13 +39,22 @@ const startSCSynth = new Promise(function(resolve, reject){
     }
     callWrapper('server.boot').then(function(){
       console.log('server booted');
-      resolve(callWrapper);
     })
     .catch(function(err){
       console.log('There was a problem starting scsynth.');
       console.log(err);
       process.exit(1);
-    });
+    })
+    .then(() => {
+      callWrapper('triggerfish.loadSynthDefs');
+      console.log('loaded SynthDefs');
+      resolve(callWrapper);
+    })
+    .catch((err) =>{
+      console.err('There was a problem loading synth defs');
+      console.error(err);
+      process.exit(1);
+    })
   });
 });
 

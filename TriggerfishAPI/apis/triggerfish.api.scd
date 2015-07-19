@@ -36,6 +36,12 @@ getSynthDefNames: { arg reply;
     reply.value((PathName.new(SynthDef.synthDefDir).files.collect{arg item; item.fileName.split(46.asAscii).at(0)}.asSet).asArray);
 },
 
+loadSynthDefs: { arg reply;
+	Main.packages.do({arg i;
+		if('TriggerfishAPI' == i.key, {(i.value +/+ 'synthdefs.scd').load;})
+	});
+},
+
 getSynthDefs: { arg reply;
     var synthDict = Dictionary.new;
     var synthDefNames = (PathName.new(SynthDef.synthDefDir).files.collect{arg item; item.fileName.split(46.asAscii).at(0)}.asSet).asArray;

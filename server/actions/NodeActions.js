@@ -22,9 +22,6 @@ class NodeActions{
         .catch((err) => {
           console.log(err);
         });
-        // NodeStore.addNode('Synth', req.targetNodeID, req.addAction,'default', ['freq', 220]).then(() =>{
-        //   this.io.emit(SocketConstants.SET_NODE_MAP, NodeStore.getNodeMap());
-        // });
       });
     });
   }
