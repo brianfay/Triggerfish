@@ -1,29 +1,29 @@
 //Returns a Promise that resolves to a function that allows API calls to supercollider
 var scjs = require('supercolliderjs');
 
-const startSCLang = new Promise(function(resolve, reject){
+const startSCLang = new Promise((resolve, reject) => {
   console.log('starting sclang');
   scjs.resolveOptions(null, {
     stdin: false,
     echo: false
   })
-  .then(function(options){
+  .then((options) => {
     var sclang = new scjs.sclang(options);
-    sclang.on('stdout', function(d){
+    sclang.on('stdout', (d) => {
       console.log('STDOUT: ' + d);
     });
-    sclang.on('stderr', function(d){
+    sclang.on('stderr', (d) => {
       console.log('STDERR: ' + d);
       throw d;
     });
-    sclang.boot().then(function(){
+    sclang.boot().then(() => {
       console.log('booted sclang');
       var sc = new scjs.scapi(options.host, options.langPort);
       sc.log.dbug(options);
       sc.connect();
       resolve(sc);
     })
-    .catch(function(err){
+    .catch((err) => {
       console.log('There was a problem starting sclang.');
       console.log(err);
       process.exit(1);
@@ -31,16 +31,16 @@ const startSCLang = new Promise(function(resolve, reject){
   });
 });
 
-const startSCSynth = new Promise(function(resolve, reject){
-  startSCLang.then(function(sc){
+const startSCSynth = new Promise((resolve, reject) => {
+  startSCLang.then((sc) => {
     var count = 0;
-    var callWrapper = function(url, param){
+    var callWrapper = (url, param) => {
       return sc.call(count++,url,param);
     }
-    callWrapper('server.boot').then(function(){
+    callWrapper('server.boot').then(() => {
       console.log('server booted');
     })
-    .catch(function(err){
+    .catch((err) => {
       console.log('There was a problem starting scsynth.');
       console.log(err);
       process.exit(1);
@@ -59,9 +59,9 @@ const startSCSynth = new Promise(function(resolve, reject){
 });
 
 function callSC(url, param){
-  return new Promise(function(resolve, reject){
-    startSCSynth.then(function(cb){
-      cb(url, param).then(function(data){
+  return new Promise((resolve, reject) => {
+    startSCSynth.then((cb) => {
+      cb(url, param).then((data) => {
         resolve(data);
       });
     });

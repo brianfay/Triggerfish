@@ -38,11 +38,10 @@ class NodeStore extends EventEmitter{
       throw 'there was no node at ID ' + targetKey;
     }
 
-    //tried arrow functions but it seems that iojs isn't supporting binding that way
     const _this = this;
     return(
       callSC.apply(this, ['triggerfish.addNode', [nodeType, targetNodeID, addAction, defName].concat(args)])
-      .then(function(resp){
+      .then((resp) => {
         const nodeID = resp.result;
         // console.log('setting NodeMap at nodeID.toString(): ' + nodeID.toString());
         this._setNodeMap(
@@ -59,8 +58,8 @@ class NodeStore extends EventEmitter{
         console.log(this.NodeMap.get(targetKey));
         console.log(this.NodeMap.get(nodeID.toString()));
         return;
-      }.bind(_this))
-      .catch(function(err){
+      })
+      .catch((err) => {
         console.log(err);
       })
     )
