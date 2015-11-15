@@ -12,7 +12,8 @@
 
   :npm {:dependencies [[express "4.13.3"]
                        [serve-static "1.10.0"]
-                       [ws "0.8.0"]]}
+                       [ws "0.8.0"]
+                       [osc-min "0.2.0"]]}
 
   :clean-targets ^{:protect false} ["target"]
 
@@ -28,6 +29,7 @@
                      :source-map true}}
         {:id "server-dev"
             :source-paths ["src/server"]
+            :figwheel true
             :compiler {:main "triggerfish-server.core"
                     :output-to "out/server_out/triggerfish_server_with_figwheel.js"
                     :output-dir "out/server_out"

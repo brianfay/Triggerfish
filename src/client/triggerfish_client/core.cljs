@@ -6,4 +6,4 @@
    [:h1 (repeat n text)]
    [:p "One day, this will be lovely music."]])
 
-(rum/mount (label 2 "TRIGGERFISH! ") js/document.body)
+(rum/mount (label 3 "TRIGGERFISH! ") js/document.body)
