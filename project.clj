@@ -7,7 +7,7 @@
                  [org.clojure/clojurescript "1.7.48"]
                  [rum "0.5.0"]]
 
-  :plugins [[lein-figwheel "0.4.1"]
+  :plugins [[lein-figwheel "0.5.0-2"]
             [lein-npm "0.6.1"]]
 
   :npm {:dependencies [[express "4.13.3"]
@@ -21,16 +21,15 @@
     :builds
         [{:id "client-dev"
             :source-paths ["src/client"]
-            :figwheel {
-                     :on-jsload "triggerfish-client.core/render!"}
-          :compiler {:main "triggerfish-client.core"
+            :figwheel true
+          :compiler {:main "client.core"
                      :output-to "out/client_out/client.js"
                      :output-dir "out/client_out"
                      :source-map true}}
         {:id "server-dev"
             :source-paths ["src/server"]
             :figwheel true
-            :compiler {:main "triggerfish-server.core"
+            :compiler {:main "server.core"
                     :output-to "out/server_out/triggerfish_server_with_figwheel.js"
                     :output-dir "out/server_out"
                     :target :nodejs

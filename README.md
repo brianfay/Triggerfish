@@ -9,4 +9,8 @@ To run this, do
     rlwrap lein figwheel server-dev client-dev
     node out/server_out/triggerfish_server_with_figwheel.js 
 
+and load localhost:3000 in a browser
+
 ...and probably some other stuff
+
+For a reason I have yet to discover, the repl will focus on client-dev first. To switch focus, type ":cljs/quit" and choose server-dev. Then you can (in-ns 'server.core).

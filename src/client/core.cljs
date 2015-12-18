@@ -1,4 +1,4 @@
-(ns triggerfish-client.core
+(ns client.core
   (:require [rum.core :as rum]))
 
 (rum/defc label [n text]
@@ -6,4 +6,8 @@
    [:h1 (repeat n text)]
    [:p "One day, this will be lovely music."]])
 
-(rum/mount (label 3 "TRIGGERFISH! ") js/document.body)
+(rum/mount (label 30 "TRIGGERFISH! ") js/document.body)
+
+(defn hello
+  []
+  (println "hello from client!"))

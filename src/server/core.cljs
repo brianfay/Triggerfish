@@ -1,5 +1,6 @@
-(ns ^:fig-always triggerfish-server.core
-  (:require [cljs.nodejs :as nodejs]))
+(ns server.core
+  (:require
+   [cljs.nodejs :as nodejs]))
 
 (nodejs/enable-util-print!)
 
@@ -13,7 +14,7 @@
 (defonce scsynth
   (let [scsynth (spawn "scsynth" #js["-u" "57110"])]
    (.on (.-stdout scsynth) "data" #(println (str "stdout: " %)))
-   (.on (.-stderr scsynth) "data" #(println (str "stder: " %)))))
+   (.on (.-stderr scsynth) "data" #(println (str "stderr: " %)))))
 
 (defn create-socket []
   (let [socket (.createSocket dgram "udp4")]
@@ -25,6 +26,8 @@
       (.on socket "close" #(println (str "closing udp socket " %)))
     socket)))
 
+(defonce udp-socket (create-socket))
+
 ;; (.on udp-server "listening" #(defonce address (.address udp-server)))
 
 ;; (.on udp-server "message"
@@ -33,13 +36,15 @@
 
 ;; (defonce udp-instance (.bind udp-server 57110 "localhost"))
 
+(defn hello
+  []
+  (println "Hi from nodejs!!"))
+
 (defn call-scsynth [message]
-  (let [socket (create-socket)]
-    (.send socket message 0 (count message) 57110 "localhost"
-          (fn [err bytes]
+  (.send udp-socket message 0 (count message) 57110 "localhost"
+         (fn [err bytes]
             (if (not (= 0 err)) (console.log (str "There was an error: " (.toString err)))
-                (do (console.log "UDP messge sent to localhost:57110")
-                        (.close socket)))))))
+                (do (console.log "UDP messge sent to localhost:57110"))))))
 
 (def app (express))
 
@@ -51,13 +56,8 @@
 
 (set! *main-cli-fn* -main)
 
-(def child-process (nodejs/require "child_process"))
-
-(defn hi
-  []
-  (println "Hi"))
-
-
 ;; (call-scsynth "/d_load synthdefs/default.scsyndef")
 ;; (call-scsynth "/s_new default")
-(call-scsynth "/g_new 1000")
+;; (call-scsynth "/notify 1")
+;; (call-scsynth "/g_new 1000")
+
