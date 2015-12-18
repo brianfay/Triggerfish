@@ -21,13 +21,15 @@
     (do
       (.on socket "listening" #(println "udp is listening"))
       (.on socket "message" (fn [msg, info]
-                              (println (str "msg: " msg))))
+                              (println (str "msg: " (.fromBuffer osc msg)))))
       (.on socket "error" #(println (str "error: " %)))
       (.on socket "close" #(println (str "closing udp socket " %)))
     socket)))
 
 (defonce udp-socket (create-socket))
 
+(defn array->osc [arr]
+  (.toBuffer osc arr))
 ;; (.on udp-server "listening" #(defonce address (.address udp-server)))
 
 ;; (.on udp-server "message"
@@ -40,11 +42,11 @@
   []
   (println "Hi from nodejs!!"))
 
-(defn call-scsynth [message]
-  (.send udp-socket message 0 (count message) 57110 "localhost"
-         (fn [err bytes]
-            (if (not (= 0 err)) (console.log (str "There was an error: " (.toString err)))
-                (do (console.log "UDP messge sent to localhost:57110"))))))
+(defn call-scsynth [addr & args]
+  (let [msg (array->osc (js-obj "address" addr "args" (clj->js args)))]
+    (.send udp-socket msg 0 (.-length msg) 57110 "localhost"
+            (fn [err bytes]
+                (if (not (= 0 err)) (console.log (str "There was an error: " (.toString err))))))))
 
 (def app (express))
 

@@ -3,6 +3,8 @@ Triggerfish is a tool for music performance, using supercollider for processing 
 
 I was writing it in javascript and sclang, but didn't like the way things were going. I want to learn clojure/clojurescript, so I'm starting over from scratch.
 
+It doesn't do much of anything yet - you can make a tone with something like (call-scsynth "/s_new" "default" 3051 0 0) but only if you already ran sclang to get a default group and compile the default synthdef.
+
 To run this, do 
 
     lein npm install
