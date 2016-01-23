@@ -1,4 +1,4 @@
-(ns client.core
+(ns triggerfish.client.core
   (:require [rum.core :as rum]))
 
 (rum/defc label [n text]

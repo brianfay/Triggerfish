@@ -3,8 +3,10 @@
   :url "http://github.com/yottasecond/Triggerfish"
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}
-  :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.48"]
+  :dependencies [[org.clojure/clojure "1.8.0"]
+                 [org.clojure/clojurescript "1.7.228"]
+                 [org.clojure/core.async "0.2.374"]
+                 [com.stuartsierra/dependency "0.2.0"]
                  [rum "0.5.0"]]
 
   :plugins [[lein-figwheel "0.5.0-2"]
@@ -20,16 +22,16 @@
   :cljsbuild {
     :builds
         [{:id "client-dev"
-            :source-paths ["src/client"]
+            :source-paths ["src/triggerfish/client"]
             :figwheel true
-          :compiler {:main "client.core"
+          :compiler {:main "triggerfish.client.core"
                      :output-to "out/client_out/client.js"
                      :output-dir "out/client_out"
                      :source-map true}}
         {:id "server-dev"
-            :source-paths ["src/server"]
+            :source-paths ["src/triggerfish/server"]
             :figwheel true
-            :compiler {:main "server.core"
+            :compiler {:main "triggerfish.server.core"
                     :output-to "out/server_out/triggerfish_server_with_figwheel.js"
                     :output-dir "out/server_out"
                     :target :nodejs
