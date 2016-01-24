@@ -28,8 +28,6 @@ SynthDef("tremolo",
 
 SynthDef("dac",
 	{|inL, inR|
-		Out.ar(0, In.ar(inL));thethe j
+		Out.ar(0, In.ar(inL));
 		Out.ar(1, In.ar(inR));
 }).store;
-
-daij
