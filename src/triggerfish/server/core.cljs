@@ -9,7 +9,6 @@
 (defonce express (nodejs/require "express"))
 (defonce serve-static (nodejs/require "serve-static"))
 (defonce http (nodejs/require "http"))
-(defonce dgram (nodejs/require "dgram"))
 
 (def app (express))
 

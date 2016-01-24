@@ -8,7 +8,7 @@
 ;;node 1, 2 (outlet 1 connected to node 5 inlet 3), 3, 4, 5 (outlet 1 connected to node 2 inlet 1, outlet 2 connected to node 2 inlet 2) 
 ;; [1 2 [[1 5 3]] 3 4 5 [[1 2 1] [2 2 2]]]
 
-;;Constructor accepts partial add-action fn, will fill in with own id. Will allocate whatever nodes/buffers needed, returns id of the top-level node
+;;Constructor accepts partial add-action fn, will fill in with own id. Will allocate whatever nodes/buffers needed, returns map with initial state of the object - the key should be the id of the top-level node
 
 ;;0 and 1 reserved for root node and default group.
 (def id-counter
