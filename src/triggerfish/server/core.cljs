@@ -1,7 +1,7 @@
 (ns triggerfish.server.core
   (:require
    [cljs.nodejs :as nodejs]
-   [triggerfish.server.scsynth :as sc]))
+   [triggerfish.server.patch]))
    ;; [triggerfish.shared.objects :refer :all]))
 
 (nodejs/enable-util-print!)
@@ -19,14 +19,6 @@
         (.listen 3000))))
 
 (set! *main-cli-fn* -main)
-
-
-
-;; (call-scsynth "/d_load synthdefs/default.scsyndef")
-;; (call-scsynth "/s_new default")
-;; (call-scsynth "/notify 1")
-;; (call-scsynth "/g_new 1000")
-
 
 ;; (defn remove-object
 ;;   "Removes an object from the patchwork"

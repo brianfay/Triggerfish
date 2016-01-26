@@ -1,4 +1,4 @@
-(ns triggerfish.server.scsynth
+
   (:require [cljs.nodejs :as nodejs]
             [cljs.core.async :as a :refer [pub sub unsub chan >! <! put! timeout]]
             [clojure.string :as string])
@@ -50,8 +50,8 @@
   (do (call-scsynth "/notify" arg)
       true))
 
-(defn do-when-node-added!
-  "Will execute the callback when the node is successfully added. Stops trying if no message is received after a second"
+(defn do-when-node-added
+  "Will execute the callback when the node is successfully added. Stops checking if no message is received after a second"
   [callback id]
   (let [ngo_chan (timeout 1000)]
     (sub sc-pub :n_go ngo_chan)
@@ -61,6 +61,18 @@
           (if (= id msg-id) (callback)
               (recur (<! ngo_chan))))
         (unsub sc-pub :n_go ngo_chan)))))
+
+(defn do-when-node-removed
+  "Will execute the callback when the node is successfully removed. Stops checking if no message is received after a second"
+  [callback id]
+  (let [nend_chan (timeout 1000)]
+    (sub sc-pub :n_end nend_chan)
+    (go-loop [msg (<! nend_chan)]
+      (if-not (nil? msg)
+        (let [msg-id (goog.object.getValueByKeys msg "args" 0 "value")]
+          (if (= id msg-id) (callback)
+              (recur (<! nend_chan))))
+        (unsub sc-pub :n_go nend_chan)))))
 
 (defn add-group
   "Adds a group with the given id, add-action, and target id."
@@ -126,6 +138,10 @@
   [id target]
   (call-scsynth "n_after" id target))
 
+(defn free-node
+  [id]
+  (call-scsynth "n_free" id))
+
 (defn free-in-group
   [id]
   (call-scsynth "g_freeAll" id))
@@ -133,4 +149,4 @@
 ;;Calling this on load to get confirmation messages for each new node.
 ;;Returning something at the end of the do block ensures that the defonce won't be retried.
 (defonce notify-on (do (notify 1) true))
-(defonce default-group (do (call-scsynth "g_new" 1 0 0) true))
+(defonce default-group (do (call-scsynth "g_new" 1 0 0) 1))
