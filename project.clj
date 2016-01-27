@@ -9,7 +9,7 @@
                  [com.stuartsierra/dependency "0.2.0"]
                  [rum "0.5.0"]]
 
-  :plugins [[lein-figwheel "0.5.0-2"]
+  :plugins [[lein-figwheel "0.5.0-5"]
             [lein-npm "0.6.1"]]
 
   :npm {:dependencies [[express "4.13.3"]
@@ -22,14 +22,14 @@
   :cljsbuild {
     :builds
         [{:id "client-dev"
-            :source-paths ["src/triggerfish/client"]
+            :source-paths ["src/triggerfish/client" "src/triggerfish/shared"]
             :figwheel true
           :compiler {:main "triggerfish.client.core"
                      :output-to "out/client_out/client.js"
                      :output-dir "out/client_out"
                      :source-map true}}
         {:id "server-dev"
-            :source-paths ["src/triggerfish/server"]
+            :source-paths ["src/triggerfish/server" "src/triggerfish/shared"]
             :figwheel true
             :compiler {:main "triggerfish.server.core"
                     :output-to "out/server_out/triggerfish_server_with_figwheel.js"
