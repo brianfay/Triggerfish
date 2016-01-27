@@ -1,4 +1,4 @@
-
+(ns triggerfish.server.scsynth
   (:require [cljs.nodejs :as nodejs]
             [cljs.core.async :as a :refer [pub sub unsub chan >! <! put! timeout]]
             [clojure.string :as string])
@@ -102,7 +102,7 @@
 
 (defn add-synth
   ([synthdef id add-action target controls]
-   (call-scsynth "s_new" synthdef id add-action target controls))
+   (apply call-scsynth "s_new" synthdef id add-action target controls))
   ([synthdef id add-action target]
    (call-scsynth "s_new" synthdef id add-action target)))
 
@@ -145,6 +145,14 @@
 (defn free-in-group
   [id]
   (call-scsynth "g_freeAll" id))
+
+(defn set-control
+  [id name val]
+  (call-scsynth "n_set" id name val))
+
+(defn map-control-to-bus
+  [id name bus]
+  (call-scsynth "n_map" id name bus))
 
 ;;Calling this on load to get confirmation messages for each new node.
 ;;Returning something at the end of the do block ensures that the defonce won't be retried.
