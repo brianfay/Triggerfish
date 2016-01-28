@@ -52,7 +52,7 @@
 
 (defn do-when-node-added
   "Will execute the callback when the node is successfully added. Stops checking if no message is received after a second"
-  [callback id]
+  [id callback]
   (let [ngo_chan (timeout 1000)]
     (sub sc-pub :n_go ngo_chan)
     (go-loop [msg (<! ngo_chan)]
@@ -64,7 +64,7 @@
 
 (defn do-when-node-removed
   "Will execute the callback when the node is successfully removed. Stops checking if no message is received after a second"
-  [callback id]
+  [id callback]
   (let [nend_chan (timeout 1000)]
     (sub sc-pub :n_end nend_chan)
     (go-loop [msg (<! nend_chan)]
