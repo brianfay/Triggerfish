@@ -29,7 +29,7 @@
                      :output-dir "out/client_out"
                      :source-map true}}
         {:id "server-dev"
-            :source-paths ["src/triggerfish/server" "src/triggerfish/shared"]
+            :source-paths ["src/triggerfish/server" "src/triggerfish/shared" "test/triggerfish_test/server"]
             :figwheel true
             :compiler {:main "triggerfish.server.core"
                     :output-to "out/server_out/triggerfish_server_with_figwheel.js"

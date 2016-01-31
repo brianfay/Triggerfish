@@ -5,7 +5,7 @@
    [triggerfish.server.objects :as obj]
    [triggerfish.shared.object-definitions :as obj-def]))
 
-(def id-counter
+(defonce id-counter
   (let [counter (atom 1)]
     #(swap! counter inc)))
 
@@ -19,32 +19,31 @@
 (defonce patch (atom {}))
 
 ;; Dependency graph derived from the patch.
-(def dag (atom {}))
+(defonce dag (atom {}))
 
 
 ;; Ordered sequence of objects, obtained from a topological sort of the dependency graph
-(def sdag)
+(defonce sdag (atom {}))
 
 ;; Table storing index of bus currently in use, followed by the last place (index in sorted DAG) in which the bus is used. If 
 (def audio-bus-table)
 
+;;conn - [inlet-id [out-obj-id outlet-id]]
+(defn build-obj-deps
+  "Takes a dependency graph and an object key-value pair, and returns a new graph with dependencies from the object to its ancestors."
+  [graph obj]
+  (let [id (first obj)
+        connections (:connections (second obj))]
+    (reduce (fn [g conn]
+              (let [out-obj-id (first (second conn))]
+                (dep/depend g id out-obj-id)))
+            graph connections)))
+
 (defn patch->dag
-  [patch])
-
-(defn dag->sdag
-  [dag])
-
-(defn merge-patch
-  "Returns a list of actions needed to transform the given old patch into the given new patch."
-  [old-patch new-patch])
-
-(defn merge-sdag
-  "Returns a list of actions needed to transform the given old sequence into a given new sequence."
-  [old-sdag new-sdag])
-
-(defn make-connections
-  "Returns a list of actions needed to make the connections in a given patch"
-  [patch])
+  "Takes a patch object and builds a dependency graph based on the connections of each object in the patch."
+  [patch]
+  (let [g (dep/graph)]
+    (reduce build-obj-deps g patch)))
 
 (defn create-object
   "Looks up the definition of an object and creates a record. Does not assign an id to the record or add it to the server."
