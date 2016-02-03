@@ -15,15 +15,14 @@
   []
   (id-counter))
 
-;; Describes current Triggerfish objects and their connections. In JVM Clojure world it would probably be preferable to make patch, dag, and sdag refs and have them change together in a transaction, but since js is single-threaded, STM stuff hasn't been implemented for cljs... we don't need to worry about thread safety if there are no threads
+;; Describes current Triggerfish objects and their connections. In JVM Clojure world it would probably be preferable to make patch, dag, and sorted-dag refs and have them change together in a transaction, but since js is single-threaded, STM stuff hasn't been implemented for cljs... we don't need to worry about thread safety if there are no threads
 (defonce patch (atom {}))
 
 ;; Dependency graph derived from the patch.
 (defonce dag (atom {}))
 
-
 ;; Ordered sequence of objects, obtained from a topological sort of the dependency graph
-(defonce sdag (atom {}))
+(defonce sorted-dag (atom {}))
 
 ;; Table storing index of bus currently in use, followed by the last place (index in sorted DAG) in which the bus is used. If 
 (def audio-bus-table)
@@ -44,6 +43,36 @@
   [patch]
   (let [g (dep/graph)]
     (reduce build-obj-deps g patch)))
+
+(defn sort-nodes!
+  "Given an old sorted-dag and a new one, returns a vector of the actions needed to sort the nodes (for unit-testing), and also
+  performs them as a side-effect."
+  [old-sorted-dag new-sorted-dag]
+  (loop [actions []
+         old-sdag (filterv #(contains? (set new-sorted-dag) %) old-sorted-dag)
+         new-sdag new-sorted-dag]
+    (cond
+      (< (count new-sdag) 2) actions
+      (= (second new-sdag) (second old-sdag)) (recur actions (rest old-sdag) (rest new-sdag))
+      :else (do (sc/move-node-after (second new-sdag) (first new-sdag))
+                (recur (conj actions `(sc/move-node-after ~(second new-sdag) ~(first new-sdag))) (rest old-sdag) (rest new-sdag))))))
+
+(defn update-graph!
+  []
+  (let [old-dag @dag
+        new-dag (patch->dag patch)
+        old-sorted-dag @sorted-dag
+        new-sorted-dag (dep/topo-sort @dag)]
+    (sort-nodes! old-sorted-dag new-sorted-dag)
+    ;;TODO: connect buses
+    (reset! dag new-dag)
+    (reset! sorted-dag new-sorted-dag)))
+
+(defn connect!
+  [in-obj-id inlet-idx out-obj-id outlet-idx]
+  (when (not (dep/depends? @dag out-obj-id in-obj-id))
+    (swap! patch assoc-in [in-obj-id :connections inlet-idx] [out-obj-id outlet-idx])
+    (update-graph!)))
 
 (defn create-object
   "Looks up the definition of an object and creates a record. Does not assign an id to the record or add it to the server."
