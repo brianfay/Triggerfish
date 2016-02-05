@@ -3,7 +3,8 @@
    [com.stuartsierra.dependency :as dep]
    [triggerfish.server.scsynth :as sc]
    [triggerfish.server.objects :as obj]
-   [triggerfish.shared.object-definitions :as obj-def]))
+   [triggerfish.shared.object-definitions :as obj-def]
+   [triggerfish.shared.constants :as c]))
 
 (defonce id-counter
   (let [counter (atom 1)]
@@ -24,17 +25,54 @@
 ;; Ordered sequence of objects, obtained from a topological sort of the dependency graph
 (defonce sorted-dag (atom {}))
 
-;; Table storing index of bus currently in use, followed by the last place (index in sorted DAG) in which the bus is used. If 
-(def audio-bus-table)
+(defn number-each
+  [vec]
+  (let [numbers (range (count vec))]
+    (apply assoc {} (interleave vec numbers))))
+
+(defn get-connected-inlets
+  [obj]
+  (filter (comp not nil?) (reduce
+                           (fn [coll inlet]
+                             (if (empty? (:connected (second inlet)))
+                               coll
+                               (conj coll inlet)))
+                           [] (:inlets obj))))
+
+(defn get-connections
+  [obj]
+  (map (comp :connected second) (get-connected-inlets obj)))
+
+(defn reserve-bus
+  "Reserves a bus for a node in the given position, or reuses one from the bus-table if possible."
+  [node-pos bus-table]
+  
+  (assoc bus-table bus-num node-pos))
+
+(defn connect-objs!
+  [sdag]
+  (let [numbered-sdag (number-each sdag)
+        patch @patch]
+    (loop [nodes (reverse sdag)
+           node (get patch (first nodes))
+           node-idx (get numbered-sdag node)
+           actions []
+           bus-table {}]
+      (if (empty? nodes)
+        actions
+        
+        )
+      (get-connected-inlets node)
+      )))
 
 ;;conn - [inlet-id [out-obj-id outlet-id]]
 (defn build-obj-deps
   "Takes a dependency graph and an object key-value pair, and returns a new graph with dependencies from the object to its ancestors."
   [graph obj]
   (let [id (first obj)
-        connections (:connections (second obj))]
+        connections (get-connections (second obj))]
     (reduce (fn [g conn]
-              (let [out-obj-id (first (second conn))]
+              (let [out-obj-id (first conn)]
                 (dep/depend g id out-obj-id)))
             graph connections)))
 
@@ -64,14 +102,15 @@
         old-sorted-dag @sorted-dag
         new-sorted-dag (dep/topo-sort @dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
-    ;;TODO: connect buses
+    (connect-objs! new-sorted-dag)
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
 (defn connect!
-  [in-obj-id inlet-idx out-obj-id outlet-idx]
-  (when (not (dep/depends? @dag out-obj-id in-obj-id))
-    (swap! patch assoc-in [in-obj-id :connections inlet-idx] [out-obj-id outlet-idx])
+  [in-id inlet-name out-id outlet-name]
+  (when (not (dep/depends? @dag out-id in-id))
+    (swap! patch assoc-in [in-id :inlets inlet-name :connected] [out-id outlet-name])
+    ;; (swap! patch assoc-in [in-obj-id :connections inlet-idx] [out-obj-id outlet-idx])
     (update-graph!)))
 
 (defn create-object

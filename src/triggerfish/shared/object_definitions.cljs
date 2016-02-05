@@ -1,4 +1,6 @@
-(ns triggerfish.shared.object-definitions)
+(ns triggerfish.shared.object-definitions
+  (:require
+   [triggerfish.shared.constants :as c]))
 
 (def objects
   {
@@ -6,39 +8,54 @@
    {
     :type :BasicSynth
     :synthdef "saw"
-    :inlets [{:name "freq" :type "control" :value 220}]
-    :outlets [{:name "out" :type "audio"}]
+    :inlets {
+             "freq" {:type :control :value 220}}
+    :outlets {
+              "out" {:type :audio :value c/junk-audio-bus}}
    }
    :sine
    {
     :type :BasicSynth
     :synthdef "sine"
-    :inlets [{:name "freq" :type "control" :value 220}]
-    :outlets [{:name "out" :type "audio"}]
+    :inlets {
+             "freq" {:type :control :value 220}}
+    :outlets {
+              "out" {:type :audio :value c/junk-audio-bus}}
    }
    :lopass
    {
     :type :BasicSynth
     :synthdef "lopass"
-    :inlets [{:type "audio" :name "in"} {:type "control" :name "cutoff" :value 1000} {:type "control" :name "res" :value 0.5}]
-    :outlets [{:type "audio" :name "out"}]
+    :inlets {
+             "in" {:type :audio}
+             "cutoff" {:type :control :value 1000}
+             "res" {:type :control :value 0.5}}
+    :outlets {
+              "out" {:type :audio :value c/junk-audio-bus}}
    }
    :tremolo
    {
     :type :BasicSynth
     :synthdef "tremolo"
-    :inlets [{:type "audio" :name "in"} {:type "control" :name "freq" :value 0.5}]
-    :outlets [{:type "audio" :name "out"}]
+    :inlets {
+             "in" {:type :audio}
+             "freq" {:type :control :value 0.5}}
+    :outlets {
+              "out" {:type :audio :value c/junk-audio-bus}}
    }
    :dac
    {
     :type :BasicSynth
     :synthdef "dac"
-    :inlets [{:type "audio" :name "inL"} {:type "audio" :name "inR"}]
+    :inlets {
+             "inL" {:type :audio :value c/junk-audio-bus}
+             "inR" {:type :audio :value c/junk-audio-bus}}
    }
    :adc
    {
     :type :BasicSynth
     :synthdef "adc"
-    :outlets [{:type "audio" :name "outL"} {:type "audio" :name "outR"}]
+    :outlets {
+              "outL" {:type :audio :value c/junk-audio-bus}
+              "outR" {:type :audio :value c/junk-audio-bus}}
    }})

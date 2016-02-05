@@ -3,11 +3,24 @@
             [triggerfish.server.patch :as p]
             [com.stuartsierra.dependency :as dep]))
 
+(def test-obj {:inlets {"cutoff" {:type :control :val 399}
+                    "in1" {:type :audio}
+                    "in2" {:type :audio :connected ["synth42" "outL"]}
+                    "in3" {:type :control :connected ["lfo5" "out2"]}}})
+
+(deftest get-connected-inlets
+  (is (contains? (set (p/get-connected-inlets test-obj))
+                 ["in2" {:type :audio :connected ["synth42" "outL"]}]
+                 ["in3" {:type :control :connected ["lfo5" "out2"]}])))
+
+(deftest get-connected
+  (is (contains? (set (p/get-connections test-obj)) ["synth42" "outL"] ["lfo5" "out2"])))
+
 ;; [synth1]  [synth2]
 ;;   \        /
 ;;   [mysynth]
-(def connections {0 ["synth1" 0] 1 ["synth2" 0]})
-(def mysynth ["mysynth" {:connections connections}])
+(def mysynth ["mysynth" {:inlets {0 {:connected ["synth1" 0]}
+                                  1 {:connected ["synth2" 0]}}}])
 
 (deftest build-obj-deps-mysynth
   (let [g (p/build-obj-deps (dep/graph) mysynth)]
@@ -22,13 +35,13 @@
  ;; [synth4]
 
 (def patch {"synth3"
-              {:connections {0 ["synth1" 1] 1 ["synth2" 0]}}
+              {:inlets {1 {:connected ["synth2" 0]}}}
             "synth1"
-              {:connections {1 ["synth2" 0]}}
+              {:inlets {1 {:connected ["synth2" 0]}}}
             "synth2"
-              {:connections {}}
+              {:inlets {}}
             "synth4"
-              {:connections {0 ["synth1" 0]}}})
+              {:inlets {0 {:connected ["synth1" 0]}}}})
 
 (deftest patch->dag-test
   (let [g (p/patch->dag patch)
@@ -60,3 +73,6 @@
          new ["2" "3" "1" "4" "5"]
          actions (p/sort-nodes! old new)]
      (is (= actions ['(sc/move-node-after "3" "2") '(sc/move-node-after "1" "3") '(sc/move-node-after "4" "1") '(sc/move-node-after "5" "4")])))))
+
+(deftest number-each
+  (is (= (p/number-each ["foo" "obj2" "obj3" "baz"]) {"foo" 0, "obj2" 1, "obj3" 2, "baz" 3})))

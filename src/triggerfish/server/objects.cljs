@@ -30,14 +30,16 @@
       (sc/add-synth-to-head synthdef id sc/default-group default-controls)))
   (remove-from-server! [this]
     (sc/free-node id))
-  (connect-inlet! [this inlet bus]
-    (if (= (:type inlet) "audio")
-      (sc/set-control id (:name inlet) bus)
-      (sc/map-control-to-bus id (:name inlet) bus)))
-  (connect-outlet! [this outlet bus]
-    (if (= (:type outlet) "audio")
-      (sc/set-control id (:name outlet) bus)
-      (sc/map-control-to-bus id (:name outlet) bus)))
+  (connect-inlet! [this name bus]
+    (let [props (get inlets name)]
+      (if (= (:type props) :audio)
+        (sc/set-control id name bus)
+        (sc/map-control-to-bus id name bus))))
+  (connect-outlet! [this name bus]
+    (let [props (get inlets name)]
+      (if (= (:type props) :audio)
+        (sc/set-control id name bus)
+        (sc/map-control-to-bus id name bus))))
   (set-control! [this name value]
     (sc/set-control id name value)))
 
