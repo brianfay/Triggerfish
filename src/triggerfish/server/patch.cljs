@@ -76,12 +76,12 @@
           :control (some #(when (not (contains? reserved-control-set %)) %) (private-control-buses)))))))
 
 (defn loop-through-inlets
-  "Loops through the inlets of a given object and returns any bus connections that should be made"
+  "Loops through the inlets of a given object and returns any bus connections that should be made."
   [patch obj-id reserved-buses numbered-sdag]
-  (loop [connections []
+  (loop [connections-to-make []
          inlets (get-connected-inlets patch obj-id)
          reserved reserved-buses]
-    (if (nil? (first (first inlets))) [connections reserved]
+    (if (nil? (first (first inlets))) [connections-to-make reserved]
       (let [connection (first inlets)
             inlet (first connection)
             outlet (second connection)
@@ -91,22 +91,17 @@
             outlet-name (second outlet)
             type (get-in patch [outlet-obj-id :outlets outlet-name :type])
             outlet-bus (get-in patch [outlet-obj-id :outlets outlet-name :value])]
-        (let [bus (reserve-bus type connection numbered-sdag reserved)]
-          (recur (conj connections [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet])
-                 (rest inlets)
-                 (assoc reserved [type bus] (get numbered-sdag inlet-obj-id))))
-        ))))
         ;;if the outlet already has a bus, just use that. Make sure it is explicitly reserved.
-        ;; (if (or
-        ;;      (and (= outlet-type :audio) (not (= outlet-bus c/junk-audio-bus)))
-        ;;      (and (= outlet-type :control) (not (= outlet-bus c/junk-control-bus))))
-        ;;   (recur (conj connections [inlet-obj-id :inlet inlet-name outlet-bus])
-        ;;          (rest inlets)
-        ;;          (assoc reserved [outlet-type outlet-bus] (get numbered-sdag inlet-obj-id)))
-        ;;   (let [bus (reserve-bus )]
-        ;;     (recur (conj connections [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet outlet-name bus])
-        ;;            (rest inlets)
-        ;;            (assoc reserved [outlet-type bus] (get numbered-sdag inlet-obj-id)))))
+        (if (or
+             (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
+             (and (= type :control) (not (= outlet-bus c/junk-control-bus))))
+            (recur (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
+                   (rest inlets)
+                   (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
+              (let [bus (reserve-bus type connection numbered-sdag reserved)]
+                (recur (conj connections-to-make [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet outlet-name bus])
+                       (rest inlets)
+                       (assoc reserved [type bus] (get numbered-sdag inlet-obj-id)))))))))
 
 (defn connect-objs
   [patch sdag]

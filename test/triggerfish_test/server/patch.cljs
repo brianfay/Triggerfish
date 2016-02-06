@@ -12,11 +12,44 @@
 ;;  |
 ;; [synth4]
 
-(def test-patch1 {:connections {
-                                ["synth3" "one"] ["synth1" "two"]
-                                ["synth3" "two"] ["synth2" "one"]
-                                ["synth1" "two"] ["synth2" "one"]
-                                ["synth4" "one"] ["synth1" "one"]}})
+(def test-patch1 {
+                  :connections
+                    {["synth3" "one"] ["synth1" "two"]
+                    ["synth3" "two"] ["synth2" "one"]
+                    ["synth1" "two"] ["synth2" "one"]
+                    ["synth4" "one"] ["synth1" "one"]}
+                  "synth1"
+                    {:inlets {"one" {:type :audio :value c/junk-audio-bus}
+                              "two" {:type :audio :value c/junk-audio-bus}}
+                     :outlets {"one" {:type :audio :value c/junk-audio-bus}
+                               "two" {:type :audio :value c/junk-audio-bus}}}
+                  "synth2"
+                    {:outlets {"one" {:type :audio :value c/junk-audio-bus}}}
+                  "synth3"
+                    {:inlets {"one" {:type :audio :value c/junk-audio-bus}
+                              "two" {:type :audio :value c/junk-audio-bus}}}
+                  "synth4"
+                    {:inlets {"one" {:type :audio :value c/junk-audio-bus}}}})
+
+;;same thing but with controls
+(def test-patch2 {
+                  :connections
+                  {["synth3" "one"] ["synth1" "two"]
+                   ["synth3" "two"] ["synth2" "one"]
+                   ["synth1" "two"] ["synth2" "one"]
+                   ["synth4" "one"] ["synth1" "one"]}
+                  "synth1"
+                  {:inlets {"one" {:type :control :value c/junk-control-bus}
+                            "two" {:type :control :value c/junk-control-bus}}
+                   :outlets {"one" {:type :control :value c/junk-control-bus}
+                             "two" {:type :control :value c/junk-control-bus}}}
+                  "synth2"
+                  {:outlets {"one" {:type :control :value c/junk-control-bus}}}
+                  "synth3"
+                  {:inlets {"one" {:type :control :value c/junk-control-bus}
+                            "two" {:type :control :value c/junk-control-bus}}}
+                  "synth4"
+                  {:inlets {"one" {:type :control :value c/junk-control-bus}}}})
 
 (deftest get-connected-inlets
   (is (contains? (set (p/get-connected-inlets test-patch1 "synth3"))
@@ -102,3 +135,29 @@
 (deftest reserve-control-bus-use-available
   ;;The reserved map has an availalbe audio bus at 100, we should use that.
   (is (= (p/reserve-bus :control [["synth3" "in1"] ["synth4" "out3"]] {"synth1" 0, "synth2" 1, "synth3" 2 "synth4" 3} {[:control 200] 3 [:control 100] 0 [:control 2] 0 [:audio 3] 0}) 100)))
+
+(deftest loop-through-audio-inlets-no-reserved
+  (is (= (first (p/loop-through-inlets test-patch1 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+         [["synth3" :inlet "one" (first (p/private-audio-buses))] ["synth1" :outlet "two" (first (p/private-audio-buses))]
+          ["synth3" :inlet "two" (second (p/private-audio-buses))] ["synth2" :outlet "one" (second (p/private-audio-buses))]])))
+
+(deftest loop-through-control-inlets-no-reserved
+  (is (= (first (p/loop-through-inlets test-patch2 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+         [["synth3" :inlet "one" (first (p/private-control-buses))] ["synth1" :outlet "two" (first (p/private-control-buses))]
+          ["synth3" :inlet "two" (second (p/private-control-buses))] ["synth2" :outlet "one" (second (p/private-control-buses))]])))
+
+(deftest loop-through-audio-inlets-use-existing-outlet-bus
+  (let [p (assoc-in test-patch1 ["synth1" :outlets "two" :value] 42)
+        connections (first (p/loop-through-inlets p "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+        conn-set (set connections)]
+    (is (contains? conn-set ["synth3" :inlet "one" 42]))
+    (is (contains? conn-set ["synth3" :inlet "two" (first (p/private-audio-buses))]))
+    (is (contains? conn-set ["synth2" :outlet "one" (first (p/private-audio-buses))]))))
+
+(deftest loop-through-control-inlets-use-existing-outlet-bus
+  (let [p (assoc-in test-patch2 ["synth1" :outlets "two" :value] 42)
+        connections (first (p/loop-through-inlets p "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+        conn-set (set connections)]
+    (is (contains? conn-set ["synth3" :inlet "one" 42]))
+    (is (contains? conn-set ["synth3" :inlet "two" (first (p/private-control-buses))]))
+    (is (contains? conn-set ["synth2" :outlet "one" (first (p/private-control-buses))]))))
