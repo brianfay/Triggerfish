@@ -31,56 +31,57 @@
     (apply assoc {} (interleave vec numbers))))
 
 (defn get-connected-inlets
-  [obj]
-  (filter (comp not nil?) (reduce
-                           (fn [coll inlet]
-                             (if (empty? (:connected (second inlet)))
-                               coll
-                               (conj coll inlet)))
-                           [] (:inlets obj))))
+  [patch obj-id]
+  (filter #(= obj-id (first (first %))) (:connections patch)))
 
-(defn get-connections
-  [obj]
-  (map (comp :connected second) (get-connected-inlets obj)))
+(defn get-connected-outlets
+  [patch obj-id]
+  (filter #(= obj-id (first (second %))) (:connections patch)))
 
-(defn reserve-bus
-  "Reserves a bus for a node in the given position, or reuses one from the bus-table if possible."
-  [node-pos bus-table]
+;; (defn get-connected-inlets
+;;   [obj]
+;;   (filter (comp not nil?) (reduce
+;;                            (fn [coll inlet]
+;;                              (if (empty? (:connected (second inlet)))
+;;                                coll
+;;                                (conj coll inlet)))
+;;                            [] (:inlets obj))))
+
+;; (defn reserve-bus
+;;   "Reserves a bus for a node in the given position, or reuses one from the bus-table if possible."
+;;   [node-pos bus-table]
   
-  (assoc bus-table bus-num node-pos))
+;;   (assoc bus-table bus-num node-pos))
 
-(defn connect-objs!
-  [sdag]
-  (let [numbered-sdag (number-each sdag)
-        patch @patch]
-    (loop [nodes (reverse sdag)
-           node (get patch (first nodes))
-           node-idx (get numbered-sdag node)
-           actions []
-           bus-table {}]
-      (if (empty? nodes)
-        actions
+;; (defn connect-objs!
+;;   [sdag]
+;;   (let [numbered-sdag (number-each sdag)
+;;         patch @patch]
+;;     (loop [nodes (reverse sdag)
+;;            node (get patch (first nodes))
+;;            node-idx (get numbered-sdag node)
+;;            actions []
+;;            bus-table {}]
+;;       (if (empty? nodes)
+;;         actions
         
-        )
-      (get-connected-inlets node)
-      )))
+;;         )
+;;       (get-connected-inlets node)
+;;       )))
 
 ;;conn - [inlet-id [out-obj-id outlet-id]]
 (defn build-obj-deps
   "Takes a dependency graph and an object key-value pair, and returns a new graph with dependencies from the object to its ancestors."
-  [graph obj]
-  (let [id (first obj)
-        connections (get-connections (second obj))]
-    (reduce (fn [g conn]
-              (let [out-obj-id (first conn)]
-                (dep/depend g id out-obj-id)))
-            graph connections)))
+  [g conn]
+  (let [in-id (first (first conn))
+        out-id (first (second conn))]
+    (dep/depend g in-id out-id)))
 
 (defn patch->dag
   "Takes a patch object and builds a dependency graph based on the connections of each object in the patch."
-  [patch]
+  [p]
   (let [g (dep/graph)]
-    (reduce build-obj-deps g patch)))
+    (reduce build-obj-deps g (:connections p))))
 
 (defn sort-nodes!
   "Given an old sorted-dag and a new one, returns a vector of the actions needed to sort the nodes (for unit-testing), and also
@@ -102,15 +103,15 @@
         old-sorted-dag @sorted-dag
         new-sorted-dag (dep/topo-sort @dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
-    (connect-objs! new-sorted-dag)
+    ;; (connect-objs! new-sorted-dag)
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
 (defn connect!
   [in-id inlet-name out-id outlet-name]
   (when (not (dep/depends? @dag out-id in-id))
-    (swap! patch assoc-in [in-id :inlets inlet-name :connected] [out-id outlet-name])
-    ;; (swap! patch assoc-in [in-obj-id :connections inlet-idx] [out-obj-id outlet-idx])
+    ;;Swap the inlet with the outlet in the :connections map. The inlet is the key, since outlets can be connected to multiple inlets but inlets can only connect to one outlet.
+    (swap! patch assoc-in [:connections [in-id inlet-name]] [out-id outlet-name])
     (update-graph!)))
 
 (defn create-object
