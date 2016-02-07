@@ -55,10 +55,7 @@
   "Gets a bus that the given connection can use, given the connection type, numbered sorted-dag, and map of reserved buses.
   Tries to reuse a previously used bus if possible."
   [type connection numbered-sdag reserved]
-  (let [inlet (first connection)
-        outlet (second connection)
-        inlet-obj-id (first inlet)
-        outlet-obj-id (first outlet)
+  (let [[[inlet-obj-id] [outlet-obj-id]] connection
         in-pos (get numbered-sdag inlet-obj-id)
         out-pos (get numbered-sdag outlet-obj-id)
         ;;first try to get a previously used bus (if the nodes in the new connection are both after the inlet
@@ -82,27 +79,22 @@
          connections-to-make []
          inlets (get-connected-inlets p obj-id)
          reserved reserved-buses]
-    ;;this next line is the base case, anything else will recur
-    (if (nil? (first (first inlets))) [p connections-to-make reserved]
+    (if (nil? (first (first inlets)))
+      ;;this next line is the base case, anything else will recur
+      [p connections-to-make reserved]
       (let [connection (first inlets)
-            inlet (first connection)
-            outlet (second connection)
-            inlet-obj-id (first inlet)
-            inlet-name (second inlet)
-            outlet-obj-id (first outlet)
-            outlet-name (second outlet)
+            [[inlet-obj-id inlet-name] [outlet-obj-id outlet-name]] connection
             type (get-in p [outlet-obj-id :outlets outlet-name :type])
             outlet-bus (get-in p [outlet-obj-id :outlets outlet-name :value])]
         ;;if the outlet already has a bus, just use that. Make sure it is explicitly reserved.
-        (if
-          (or
-            (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
-            (and (= type :control) (not (= outlet-bus c/junk-control-bus))))
+        (if (or
+             (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
+             (and (= type :control) (not (= outlet-bus c/junk-control-bus))))
           (recur
-            p
-            (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
-            (rest inlets)
-            (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
+           p
+           (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
+           (rest inlets)
+           (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
           (let [bus (reserve-bus type connection numbered-sdag reserved)]
             (recur
              (assoc-in p [outlet-obj-id :outlets outlet-name :value] bus)
@@ -123,10 +115,7 @@
       (if (nil? (first nodes))
         [patch connections]
         (let [node (first nodes)
-              inlet-loop-output (loop-through-inlets p node reserved-buses numbered-sdag)
-              temp-p (first inlet-loop-output)
-              conn (second inlet-loop-output)
-              reserve (second (rest inlet-loop-output))]
+              [temp-p conn reserve] (loop-through-inlets p node reserved-buses numbered-sdag)]
           (recur
             temp-p
             (rest nodes)
@@ -136,8 +125,7 @@
 (defn build-obj-deps
   "Takes a dependency graph and an object key-value pair, and returns a new graph with dependencies from the object to its ancestors."
   [g conn]
-  (let [in-id (first (first conn))
-        out-id (first (second conn))]
+  (let [[[in-id] [out-id]] conn]
     (dep/depend g in-id out-id)))
 
 (defn patch->dag
@@ -161,12 +149,13 @@
 
 (defn update-graph!
   []
-  (let [old-dag @dag
-        new-dag (patch->dag patch)
+  (let [p @patch
+        old-dag @dag
+        new-dag (patch->dag p)
         old-sorted-dag @sorted-dag
         new-sorted-dag (dep/topo-sort new-dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
-    ;; (connect-objs! new-sorted-dag)
+    (get-connection-actions p new-sorted-dag)
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
