@@ -78,10 +78,12 @@
 (defn loop-through-inlets
   "Loops through the inlets of a given object and returns any bus connections that should be made."
   [patch obj-id reserved-buses numbered-sdag]
-  (loop [connections-to-make []
-         inlets (get-connected-inlets patch obj-id)
+  (loop [p patch
+         connections-to-make []
+         inlets (get-connected-inlets p obj-id)
          reserved reserved-buses]
-    (if (nil? (first (first inlets))) [connections-to-make reserved]
+    ;;this next line is the base case, anything else will recur
+    (if (nil? (first (first inlets))) [p connections-to-make reserved]
       (let [connection (first inlets)
             inlet (first connection)
             outlet (second connection)
@@ -89,46 +91,48 @@
             inlet-name (second inlet)
             outlet-obj-id (first outlet)
             outlet-name (second outlet)
-            type (get-in patch [outlet-obj-id :outlets outlet-name :type])
-            outlet-bus (get-in patch [outlet-obj-id :outlets outlet-name :value])]
+            type (get-in p [outlet-obj-id :outlets outlet-name :type])
+            outlet-bus (get-in p [outlet-obj-id :outlets outlet-name :value])]
         ;;if the outlet already has a bus, just use that. Make sure it is explicitly reserved.
-        (if (or
-             (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
-             (and (= type :control) (not (= outlet-bus c/junk-control-bus))))
-            (recur (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
-                   (rest inlets)
-                   (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
-              (let [bus (reserve-bus type connection numbered-sdag reserved)]
-                (recur (conj connections-to-make [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet outlet-name bus])
-                       (rest inlets)
-                       (assoc reserved [type bus] (get numbered-sdag inlet-obj-id)))))))))
+        (if
+          (or
+            (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
+            (and (= type :control) (not (= outlet-bus c/junk-control-bus))))
+          (recur
+            p
+            (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
+            (rest inlets)
+            (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
+          (let [bus (reserve-bus type connection numbered-sdag reserved)]
+            (recur
+             (assoc-in p [outlet-obj-id :outlets outlet-name :value] bus)
+             (conj connections-to-make [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet outlet-name bus])
+             (rest inlets)
+             (assoc reserved [type bus] (get numbered-sdag inlet-obj-id)))))))))
 
-(defn connect-objs
+(defn get-connection-actions
+  "For a given patch and sorted dag, returns an updated patch with bus values set,
+  and a vector of the connections that must be made."
+  ;;[[node-id :inlet inlet-name bus] [node-id :outlet outlet-name bus] ...etc]
   [patch sdag]
   (let [numbered-sdag (number-each sdag)]
-    ;;outer loop
-    ;;ultimately return sequence of connections to make
-    ;;[[node-id :inlet inlet-name bus] [node-id :outlet outlet-name bus]]
-    (loop [nodes (reverse sdag)
+    (loop [p patch
+           nodes sdag
            connections []
-           reserved-buses []]
-      (loop [])
-      )))
-;;   (let [numbered-sdag (number-each sdag)
-;;         patch @patch]
-;;     (loop [nodes (reverse sdag)
-;;            node (get patch (first nodes))
-;;            node-idx (get numbered-sdag node)
-;;            actions []
-;;            bus-table {}]
-;;       (if (empty? nodes)
-;;         actions
-        
-;;         )
-;;       (get-connected-inlets node)
-;;       )))
+           reserved-buses {}]
+      (if (nil? (first nodes))
+        [patch connections]
+        (let [node (first nodes)
+              inlet-loop-output (loop-through-inlets p node reserved-buses numbered-sdag)
+              temp-p (first inlet-loop-output)
+              conn (second inlet-loop-output)
+              reserve (second (rest inlet-loop-output))]
+          (recur
+            temp-p
+            (rest nodes)
+            (apply conj connections conn)
+            (merge reserved-buses reserve)))))))
 
-;;conn - [inlet-id [out-obj-id outlet-id]]
 (defn build-obj-deps
   "Takes a dependency graph and an object key-value pair, and returns a new graph with dependencies from the object to its ancestors."
   [g conn]

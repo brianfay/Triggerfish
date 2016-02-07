@@ -137,18 +137,18 @@
   (is (= (p/reserve-bus :control [["synth3" "in1"] ["synth4" "out3"]] {"synth1" 0, "synth2" 1, "synth3" 2 "synth4" 3} {[:control 200] 3 [:control 100] 0 [:control 2] 0 [:audio 3] 0}) 100)))
 
 (deftest loop-through-audio-inlets-no-reserved
-  (is (= (first (p/loop-through-inlets test-patch1 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+  (is (= (second (p/loop-through-inlets test-patch1 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
          [["synth3" :inlet "one" (first (p/private-audio-buses))] ["synth1" :outlet "two" (first (p/private-audio-buses))]
           ["synth3" :inlet "two" (second (p/private-audio-buses))] ["synth2" :outlet "one" (second (p/private-audio-buses))]])))
 
 (deftest loop-through-control-inlets-no-reserved
-  (is (= (first (p/loop-through-inlets test-patch2 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+  (is (= (second (p/loop-through-inlets test-patch2 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
          [["synth3" :inlet "one" (first (p/private-control-buses))] ["synth1" :outlet "two" (first (p/private-control-buses))]
           ["synth3" :inlet "two" (second (p/private-control-buses))] ["synth2" :outlet "one" (second (p/private-control-buses))]])))
 
 (deftest loop-through-audio-inlets-use-existing-outlet-bus
   (let [p (assoc-in test-patch1 ["synth1" :outlets "two" :value] 42)
-        connections (first (p/loop-through-inlets p "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+        connections (second (p/loop-through-inlets p "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
         conn-set (set connections)]
     (is (contains? conn-set ["synth3" :inlet "one" 42]))
     (is (contains? conn-set ["synth3" :inlet "two" (first (p/private-audio-buses))]))
@@ -156,8 +156,42 @@
 
 (deftest loop-through-control-inlets-use-existing-outlet-bus
   (let [p (assoc-in test-patch2 ["synth1" :outlets "two" :value] 42)
-        connections (first (p/loop-through-inlets p "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
+        connections (second (p/loop-through-inlets p "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
         conn-set (set connections)]
     (is (contains? conn-set ["synth3" :inlet "one" 42]))
     (is (contains? conn-set ["synth3" :inlet "two" (first (p/private-control-buses))]))
     (is (contains? conn-set ["synth2" :outlet "one" (first (p/private-control-buses))]))))
+
+(deftest connect-objs
+  (let [connections (second (p/get-connection-actions test-patch1 ["synth2" "synth1" "synth3" "synth4"]))]
+    ;;are inlets and outlets connected to same buses, as expected?
+    (is (= (some #(when (= (butlast %) ["synth3" :inlet "two"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth2" :outlet "one"]) (last %)) connections)))
+
+    (is (= (some #(when (= (butlast %) ["synth3" :inlet "one"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth1" :outlet "two"]) (last %)) connections)))
+
+    (is (= (some #(when (= (butlast %) ["synth1" :inlet "two"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth2" :outlet "one"]) (last %)) connections)))
+
+    (is (= (some #(when (= (butlast %) ["synth1" :inlet "one"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth4" :outlet "one"]) (last %)) connections)))
+    ;;there should only be three buses used in these connections
+    (is (= (count (set (map last connections))) 3))))
+
+(deftest connect-objs-control
+  (let [connections (second (p/get-connection-actions test-patch2 ["synth2" "synth1" "synth3" "synth4"]))]
+    ;;are inlets and outlets connected to same buses, as expected?
+    (is (= (some #(when (= (butlast %) ["synth3" :inlet "two"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth2" :outlet "one"]) (last %)) connections)))
+
+    (is (= (some #(when (= (butlast %) ["synth3" :inlet "one"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth1" :outlet "two"]) (last %)) connections)))
+
+    (is (= (some #(when (= (butlast %) ["synth1" :inlet "two"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth2" :outlet "one"]) (last %)) connections)))
+
+    (is (= (some #(when (= (butlast %) ["synth1" :inlet "one"]) (last %)) connections)
+           (some #(when (= (butlast %) ["synth4" :outlet "one"]) (last %)) connections)))
+    ;;there should only be three buses used in these connections
+    (is (= (count (set (map last connections))) 3))))
