@@ -37,6 +37,8 @@
 (defn call-scsynth [addr & args]
   "Sends an OSC buffer to scsynth over a udp socket, using the given address and arguments."
   (let [msg (array->osc (js-obj "address" addr "args" (clj->js args)))]
+    ;; very useful for debugging
+    ;; (println "sending msg to scsynth: " (js-obj "address" addr "args" (clj->js args)))
     (.send udp-socket msg 0 (.-length msg) 57110 "localhost"
            (fn [err bytes]
              (if (not (= 0 err)) (println (str "There was an error: " (.toString err))))))))
@@ -49,6 +51,14 @@
   [arg]
   (do (call-scsynth "/notify" arg)
       true))
+
+(defn print-fail-messages
+  "Logs any error messages from scsynth."
+  []
+  (let [fail_chan (chan)]
+    (sub sc-pub :fail fail_chan)
+    (go-loop [msg (<! fail_chan)]
+      (println "scsynth: " msg))))
 
 (defn do-when-node-added
   "Will execute the callback when the node is successfully added. Stops checking if no message is received after a second"

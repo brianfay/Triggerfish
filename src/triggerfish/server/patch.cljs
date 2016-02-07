@@ -20,10 +20,10 @@
 (defonce patch (atom {}))
 
 ;; Dependency graph derived from the patch.
-(defonce dag (atom {}))
+(defonce dag (atom (dep/graph)))
 
 ;; Ordered sequence of objects, obtained from a topological sort of the dependency graph
-(defonce sorted-dag (atom {}))
+(defonce sorted-dag (atom []))
 
 (defn number-each
   "Returns a map where elements of the input vector are the keys and the value is the index that the element appeared in."
@@ -87,9 +87,10 @@
             type (get-in p [outlet-obj-id :outlets outlet-name :type])
             outlet-bus (get-in p [outlet-obj-id :outlets outlet-name :value])]
         ;;if the outlet already has a bus, just use that. Make sure it is explicitly reserved.
-        (if (or
-             (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
-             (and (= type :control) (not (= outlet-bus c/junk-control-bus))))
+        (if (and (not (nil? outlet-bus))
+                 (or
+                  (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
+                  (and (= type :control) (not (= outlet-bus c/junk-control-bus)))))
           (recur
            p
            (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
@@ -106,21 +107,21 @@
   "For a given patch and sorted dag, returns an updated patch with bus values set,
   and a vector of the connections that must be made."
   ;;[[node-id :inlet inlet-name bus] [node-id :outlet outlet-name bus] ...etc]
-  [patch sdag]
+  [init-patch sdag]
   (let [numbered-sdag (number-each sdag)]
-    (loop [p patch
+    (loop [p init-patch
            nodes sdag
            connections []
            reserved-buses {}]
       (if (nil? (first nodes))
-        [patch connections]
+        [p connections]
         (let [node (first nodes)
-              [temp-p conn reserve] (loop-through-inlets p node reserved-buses numbered-sdag)]
+              [temp-p conn reserved] (loop-through-inlets p node reserved-buses numbered-sdag)]
           (recur
             temp-p
             (rest nodes)
             (apply conj connections conn)
-            (merge reserved-buses reserve)))))))
+            reserved))))))
 
 (defn build-obj-deps
   "Takes a dependency graph and an object key-value pair, and returns a new graph with dependencies from the object to its ancestors."
@@ -147,7 +148,17 @@
       :else (do (sc/move-node-after (second new-sdag) (first new-sdag))
                 (recur (conj actions `(sc/move-node-after ~(second new-sdag) ~(first new-sdag))) (rest old-sdag) (rest new-sdag))))))
 
+(defn make-connection!
+  "Takes an action of form [id :inlet-or-:outlet name bus-number] and  performs the action."
+  [p action]
+  (let [[id i-or-o name bus] action
+        obj (get p id)]
+    (condp = i-or-o
+      :inlet (obj/connect-inlet! obj name bus)
+      :outlet (obj/connect-outlet! obj name bus))))
+
 (defn update-graph!
+  "Sort nodes in new order and connect inlets to outlets."
   []
   (let [p @patch
         old-dag @dag
@@ -155,13 +166,18 @@
         old-sorted-dag @sorted-dag
         new-sorted-dag (dep/topo-sort new-dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
-    (get-connection-actions p new-sorted-dag)
+    (let [[updated-patch actions] (get-connection-actions p new-sorted-dag)]
+      (doall (map (partial make-connection! updated-patch) actions))
+      (reset! patch updated-patch))
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
 (defn connect!
   [in-id inlet-name out-id outlet-name]
-  (when (not (dep/depends? @dag out-id in-id))
+  (when (and
+         (not (nil? (get-in @patch [in-id :inlets inlet-name])))
+         (not (nil? (get-in @patch [out-id :outlets outlet-name])))
+         (not (dep/depends? @dag out-id in-id)))
     ;;Swap the inlet with the outlet in the :connections map. The inlet is the key, since outlets can be connected to multiple inlets but inlets can only connect to one outlet.
     (swap! patch assoc-in [:connections [in-id inlet-name]] [out-id outlet-name])
     (update-graph!)))
@@ -173,6 +189,7 @@
         obj-type (:type obj-map)]
     (condp = obj-type
       :BasicSynth (obj/map->BasicSynth obj-map)
+      :DAC (obj/map->DAC obj-map)
       (println obj-type "is not a valid object type."))))
 
 (defn add-object!
@@ -189,3 +206,11 @@
   (let [id (:id obj)]
     (sc/do-when-node-removed id #(swap! patch dissoc id))
     (obj/remove-from-server! obj)))
+
+(defn kill-patch!
+  "Removes all running nodes from the server and resets the patch to an empty atom"
+  []
+  (doall (map obj/remove-from-server! (vals (filter #(not (= (first %) :connections))@patch))))
+  (reset! patch {})
+  (reset! dag (dep/graph))
+  (reset! sorted-dag []))

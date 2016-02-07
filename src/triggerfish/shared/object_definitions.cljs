@@ -9,18 +9,18 @@
     :type :BasicSynth
     :synthdef "saw"
     :inlets {
-             "freq" {:type :control :value 220}}
+             "freq" {:type :control :default 660}}
     :outlets {
-              "out" {:type :audio :value c/junk-audio-bus}}
+              "out" {:type :audio :default c/junk-audio-bus}}
    }
    :sine
    {
     :type :BasicSynth
     :synthdef "sine"
     :inlets {
-             "freq" {:type :control :value 220}}
+             "freq" {:type :control :default 220}}
     :outlets {
-              "out" {:type :audio :value c/junk-audio-bus}}
+              "out" {:type :audio :default c/junk-audio-bus}}
    }
    :lopass
    {
@@ -28,10 +28,10 @@
     :synthdef "lopass"
     :inlets {
              "in" {:type :audio}
-             "cutoff" {:type :control :value 1000}
-             "res" {:type :control :value 0.5}}
+             "cutoff" {:type :control :default 1000}
+             "res" {:type :control :default 0.5}}
     :outlets {
-              "out" {:type :audio :value c/junk-audio-bus}}
+              "out" {:type :audio :default c/junk-audio-bus}}
    }
    :tremolo
    {
@@ -39,23 +39,26 @@
     :synthdef "tremolo"
     :inlets {
              "in" {:type :audio}
-             "freq" {:type :control :value 0.5}}
+             "freq" {:type :control :default 0.5}}
     :outlets {
-              "out" {:type :audio :value c/junk-audio-bus}}
+              "out" {:type :audio :default c/junk-audio-bus}}
    }
    :dac
    {
-    :type :BasicSynth
-    :synthdef "dac"
+    :type :DAC
+    :synthdef "stereo-dac"
     :inlets {
-             "inL" {:type :audio :value c/junk-audio-bus}
-             "inR" {:type :audio :value c/junk-audio-bus}}
+             "inL" {:type :audio :default c/junk-audio-bus}
+             "inR" {:type :audio :default c/junk-audio-bus}}
+    :outputs {
+              "outL" {:type :audio :default c/junk-audio-bus :hardware-out 0}
+              "outR" {:type :audio :default c/junk-audio-bus :hardware-out 1}}
    }
    :adc
    {
     :type :BasicSynth
-    :synthdef "adc"
+    :synthdef "stereo-adc"
     :outlets {
-              "outL" {:type :audio :value c/junk-audio-bus}
-              "outR" {:type :audio :value c/junk-audio-bus}}
+              "outL" {:type :audio :default c/junk-audio-bus}
+              "outR" {:type :audio :default c/junk-audio-bus}}
    }})

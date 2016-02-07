@@ -15,10 +15,10 @@ SynthDef("lopass",
 		ReplaceOut.ar(out, RLPF.ar(In.ar(in), cutoff, res));
 }).store;
 
-SynthDef("adc",
+SynthDef("stereo-adc",
 	{|outL, outR|
 		ReplaceOut.ar(outL, SoundIn.ar(0));
-		ReplaceOut.ar(outR, SoundIn.ar(0));
+		ReplaceOut.ar(outR, SoundIn.ar(1));
 }).store;
 
 SynthDef("tremolo",
@@ -26,8 +26,8 @@ SynthDef("tremolo",
 		ReplaceOut.ar(out, In.ar(in) * SinOsc.kr(freq))
 }).store;
 
-SynthDef("dac",
-	{|inL, inR|
-		Out.ar(0, In.ar(inL));
-		Out.ar(1, In.ar(inR));
+SynthDef("stereo-dac",
+	{|inL, inR, outL=0, outR=1|
+		Out.ar(outL, In.ar(inL));
+		Out.ar(outR, In.ar(inR));
 }).store;
