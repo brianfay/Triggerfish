@@ -89,7 +89,7 @@
       (let [connection (first inlets)
             [[inlet-obj-id inlet-name] [outlet-obj-id outlet-name]] connection
             type (get-in p [outlet-obj-id :outlets outlet-name :type])
-            outlet-bus (get-in p [outlet-obj-id :outlets outlet-name :value])]
+            outlet-bus (get-in p [outlet-obj-id :outlets outlet-name :bus])]
         ;;if the outlet already has a bus, just use that. Make sure it is explicitly reserved.
         (if (and (not (nil? outlet-bus))
                  (or
@@ -102,7 +102,7 @@
            (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
           (let [bus (reserve-bus type connection numbered-sdag reserved)]
             (recur
-             (assoc-in p [outlet-obj-id :outlets outlet-name :value] bus)
+             (assoc-in p [outlet-obj-id :outlets outlet-name :bus] bus)
              (conj connections-to-make [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet outlet-name bus])
              (rest inlets)
              (assoc reserved [type bus] (get numbered-sdag inlet-obj-id)))))))))
