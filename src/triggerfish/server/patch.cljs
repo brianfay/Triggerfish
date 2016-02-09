@@ -6,6 +6,8 @@
    [triggerfish.shared.object-definitions :as obj-def]
    [triggerfish.shared.constants :as c]))
 
+(declare connect! disconnect!)
+
 (defonce id-counter
   (let [counter (atom 1)]
     [#(swap! counter inc) #(reset! counter 1)]))
@@ -163,29 +165,54 @@
       :inlet (obj/connect-inlet! obj name bus)
       :outlet (obj/connect-outlet! obj name bus))))
 
-(defn update-graph!
-  "Sort nodes in new order and connect inlets to outlets."
-  []
-  (let [p @patch
-        old-dag @dag
-        new-dag (patch->dag p)
+(defn update-patch!
+  "Updates the patch by sorting nodes in order based on their dependencies,
+  connecting inlets to outlets by setting them to read and write from shared buses,
+  and by updating the state stored in related atoms."
+  [new-patch]
+  (let [old-dag @dag
+        new-dag (patch->dag new-patch)
         old-sorted-dag @sorted-dag
         new-sorted-dag (dep/topo-sort new-dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
-    (let [actions (get-connection-actions p new-sorted-dag)]
-      (doall (map (partial make-connection! p) actions)))
+    (let [actions (get-connection-actions new-patch new-sorted-dag)]
+      (doall (map (partial make-connection! new-patch) actions)))
+    (reset! patch new-patch)
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
+(defn inlet-connected?
+  [p in-id inlet-name]
+  (contains? (set (keys (:connections p))) [in-id inlet-name]))
+
+(defn outlet-connected?
+  [p out-id outlet-name]
+  (contains? (set (vals (:connections p))) [out-id outlet-name]))
+
 (defn connect!
+  "Connects an inlet to an outlet and forces an update to the patch."
   [in-id inlet-name out-id outlet-name]
   (when (and
          (not (nil? (get-in @patch [in-id :inlets inlet-name])))
          (not (nil? (get-in @patch [out-id :outlets outlet-name])))
          (not (dep/depends? @dag out-id in-id)))
+    (when (inlet-connected? @patch in-id inlet-name)
+      (disconnect! in-id inlet-name))
     ;;Swap the inlet with the outlet in the :connections map. The inlet is the key, since outlets can be connected to multiple inlets but inlets can only connect to one outlet.
-    (swap! patch assoc-in [:connections [in-id inlet-name]] [out-id outlet-name])
-    (update-graph!)))
+    (update-patch! (assoc-in @patch [:connections [in-id inlet-name]] [out-id outlet-name]))))
+
+(defn disconnect!
+  "Disconnects an inlet and forces an update to the patch."
+  [in-id inlet-name]
+  (if (not (inlet-connected? @patch in-id inlet-name))
+    (println "The inlet:" [in-id inlet-name] "is not currently connected.")
+    (let [new-patch (update-in @patch [:connections] dissoc [in-id inlet-name])
+          outlet (get (:connections @patch) [in-id inlet-name])
+          [out-id outlet-name] outlet]
+      (when (outlet-connected? new-patch out-id outlet-name)
+        (obj/disconnect-outlet! (get new-patch out-id) outlet-name))
+      (obj/disconnect-inlet! (get new-patch in-id) inlet-name)
+      (update-patch! new-patch))))
 
 (defn create-object
   "Looks up the definition of an object and creates a record. Does not assign an id to the record or add it to the server."
@@ -198,18 +225,22 @@
       (println obj-type "is not a valid object type."))))
 
 (defn add-object!
-  "Takes a prototype object that has no id. On success, commits the object to the patch."
+  "Takes a prototype object, creates it on the server, and adds it to the patch."
   [obj-prototype]
   (let [id (new-id)
         obj (assoc obj-prototype :id id)]
     (swap! patch assoc id obj)
+    ;;this is a pessimistic updating approach
     ;; (sc/do-when-node-added id #(swap! patch assoc id obj))
     (obj/add-to-server! obj)))
 
 (defn remove-object!
-  "Removes object from the server. On success, removes object from the patch."
+  "Removes object from the server, first disconnecting all inlets and outlets (which will update the patch)"
   [obj]
-  (let [id (:id obj)]
+  (let [id (:id obj)
+        inlets-to-disconnect (vals (merge (get-connected-inlets @patch id) (get-connected-outlets @patch id)))]
+    (println "to disconnect: " inlets-to-disconnect)
+    (map #(apply disconnect! %) inlets-to-disconnect)
     (swap! patch dissoc id)
     ;; (sc/do-when-node-removed id #(swap! patch dissoc id))
     (obj/remove-from-server! obj)))

@@ -180,3 +180,19 @@
            (some #(when (= (butlast %) ["synth4" :outlet "one"]) (last %)) connections)))
     ;;there should only be three buses used in these connections
     (is (= (count (set (map last connections))) 3))))
+
+(deftest inlet-is-connected
+  []
+  (is (p/inlet-connected? test-patch1 "synth3" "two")))
+
+(deftest inlet-is-not-connected
+  []
+  (is (not (p/inlet-connected? test-patch1 "synth3" "nineteen"))))
+
+(deftest outlet-is-connected
+  []
+  (is (p/inlet-connected? test-patch1 "synth4" "one")))
+
+(deftest outlet-is-not-connected
+  []
+  (is (not (p/inlet-connected? test-patch1 "synth4" "twenty"))))

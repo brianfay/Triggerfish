@@ -6,8 +6,8 @@
   "A Triggerfish Object corresponds to one supercollider node (could be a group or a synth).
   Objects can be created or destroyed, and may have inlets and outlets that can be connected."
   (add-to-server! [this] [this controls])
-  (connect-inlet! [this inlet bus])
-  (connect-outlet! [this outlet bus])
+  (connect-inlet! [this inlet-name bus])
+  (connect-outlet! [this outlet-name bus])
   (disconnect-inlet! [this inlet-name])
   (disconnect-outlet! [this outlet-name])
   (set-control! [this name val])
@@ -31,20 +31,29 @@
   PObject
   (add-to-server! [this]
     (let [default-controls (get-control-val-pair (merge inlets outlets))]
-      (println "default-controls: " default-controls)
       (sc/add-synth-to-head synthdef id sc/default-group default-controls)))
   (remove-from-server! [this]
     (sc/free-node id))
-  (connect-inlet! [this name bus]
-    (let [props (get inlets name)]
+  (connect-inlet! [this inlet-name bus]
+    (let [props (get inlets inlet-name)]
       (if (= (:type props) :audio)
-        (sc/set-control id name bus)
-        (sc/map-control-to-bus id name bus))))
-  (connect-outlet! [this name bus]
-    (let [props (get outlets name)]
+        (sc/set-control id inlet-name bus)
+        (sc/map-control-to-bus id inlet-name bus))))
+  (connect-outlet! [this outlet-name bus]
+    (let [props (get outlets outlet-name)]
       (if (= (:type props) :audio)
-        (sc/set-control id name bus)
-        (sc/map-control-to-bus id name bus))))
+        (sc/set-control id outlet-name bus)
+        (sc/map-control-to-bus id outlet-name bus))))
+  (disconnect-inlet! [this inlet-name]
+    (let [inlet-props (get inlets inlet-name)]
+      ;;for controls, value is remembered in :value if set. Otherwise, use :default.
+      ;;Audio inlets shouldn't have a :value, so they'll go to :default
+      (if (not (nil? (:value inlet-props)))
+        (sc/set-control id inlet-name (:value inlet-props))
+        (sc/set-control id inlet-name (:default inlet-props)))))
+  (disconnect-outlet! [this outlet-name]
+    (let [outlet-props (get outlets outlet-name)]
+      (sc/set-control id outlet-name (:default outlet-props))))
   (set-control! [this name value]
     (sc/set-control id name value)))
 
@@ -55,17 +64,16 @@
   PObject
   (add-to-server! [this]
     (let [default-controls (get-control-val-pair (merge inlets outputs))]
-      (println "default-controls: " default-controls)
       (sc/add-synth-to-head synthdef id sc/default-group default-controls)))
   (remove-from-server! [this]
     (sc/free-node id))
-  (connect-inlet! [this name bus]
-    (let [props (get inlets name)
-          output-name (clojure.string/replace name #"in" "out")
+  (connect-inlet! [this inlet-name bus]
+    (let [props (get inlets inlet-name)
+          output-name (clojure.string/replace inlet-name #"in" "out")
           hardware-out (:hardware-out (get outputs output-name))]
       (if (= (:type props) :audio)
-        (do (sc/set-control id name bus) (sc/set-control id output-name hardware-out))
-        (sc/map-control-to-bus id name bus))))
+        (do (sc/set-control id inlet-name bus) (sc/set-control id output-name hardware-out))
+        (sc/map-control-to-bus id inlet-name bus))))
   (disconnect-inlet! [this inlet-name]
     (let [inlet-props (get inlets inlet-name)
           output-name (clojure.string/replace inlet-name #"in" "out")
