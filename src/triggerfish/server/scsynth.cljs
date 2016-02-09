@@ -148,6 +148,10 @@
   [id target]
   (call-scsynth "n_after" id target))
 
+(defn order-nodes
+  [add-action target node-ids]
+  (apply call-scsynth "n_order" add-action target node-ids))
+
 (defn free-node
   [id]
   (call-scsynth "n_free" id))

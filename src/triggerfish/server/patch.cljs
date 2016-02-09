@@ -8,13 +8,17 @@
 
 (defonce id-counter
   (let [counter (atom 1)]
-    #(swap! counter inc)))
+    [#(swap! counter inc) #(reset! counter 1)]))
+
+(defonce inc-counter! (first id-counter))
+
+(defonce reset-counter! (second id-counter))
 
 (defn new-id
   "Returns a unique identifier that can be used as the supercollider node id for an object. 0 and 1 are reserved for the root node and the default group.
   No logic is in place to reuse ids that have become free, but it would take a lot of iterations for the integer to overflow..."
   []
-  (id-counter))
+  (inc-counter!))
 
 ;; Describes current Triggerfish objects and their connections. In JVM Clojure world it would probably be preferable to make patch, dag, and sorted-dag refs and have them change together in a transaction, but since js is single-threaded, STM stuff hasn't been implemented for cljs... we don't need to worry about thread safety if there are no threads
 (defonce patch (atom {}))
@@ -139,14 +143,16 @@
   "Given an old sorted-dag and a new one, returns a vector of the actions needed to sort the nodes (for unit-testing), and also
   performs them as a side-effect."
   [old-sorted-dag new-sorted-dag]
-  (loop [actions []
-         old-sdag (filterv #(contains? (set new-sorted-dag) %) old-sorted-dag)
-         new-sdag new-sorted-dag]
-    (cond
-      (< (count new-sdag) 2) actions
-      (= (second new-sdag) (second old-sdag)) (recur actions (rest old-sdag) (rest new-sdag))
-      :else (do (sc/move-node-after (second new-sdag) (first new-sdag))
-                (recur (conj actions `(sc/move-node-after ~(second new-sdag) ~(first new-sdag))) (rest old-sdag) (rest new-sdag))))))
+  (sc/order-nodes 0 sc/default-group new-sorted-dag))
+  ;; this is what I did before finding "n_order"
+  ;; (loop [actions []
+  ;;        old-sdag (filterv #(contains? (set new-sorted-dag) %) old-sorted-dag)
+  ;;        new-sdag new-sorted-dag]
+  ;;   (cond
+  ;;     (< (count new-sdag) 2) actions
+  ;;     (= (second new-sdag) (second old-sdag)) (recur actions (rest old-sdag) (rest new-sdag))
+  ;;     :else (do (sc/move-node-after (second new-sdag) (first new-sdag))
+  ;;               (recur (conj actions `(sc/move-node-after ~(second new-sdag) ~(first new-sdag))) (rest old-sdag) (rest new-sdag))))))
 
 (defn make-connection!
   "Takes an action of form [id :inlet-or-:outlet name bus-number] and  performs the action."
@@ -167,8 +173,8 @@
         new-sorted-dag (dep/topo-sort new-dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
     (let [[updated-patch actions] (get-connection-actions p new-sorted-dag)]
-      (doall (map (partial make-connection! updated-patch) actions))
-      (reset! patch updated-patch))
+      (doall (map (partial make-connection! updated-patch) actions)))
+      ;; (reset! patch updated-patch))
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
@@ -197,20 +203,23 @@
   [obj-prototype]
   (let [id (new-id)
         obj (assoc obj-prototype :id id)]
-    (sc/do-when-node-added id #(swap! patch assoc id obj))
+    (swap! patch assoc id obj)
+    ;; (sc/do-when-node-added id #(swap! patch assoc id obj))
     (obj/add-to-server! obj)))
 
 (defn remove-object!
   "Removes object from the server. On success, removes object from the patch."
   [obj]
   (let [id (:id obj)]
-    (sc/do-when-node-removed id #(swap! patch dissoc id))
+    (swap! patch dissoc id)
+    ;; (sc/do-when-node-removed id #(swap! patch dissoc id))
     (obj/remove-from-server! obj)))
 
 (defn kill-patch!
   "Removes all running nodes from the server and resets the patch to an empty atom"
   []
-  (doall (map obj/remove-from-server! (vals (filter #(not (= (first %) :connections))@patch))))
+  (doall (map obj/remove-from-server! (vals (filter #(not (= (first %) :connections)) @patch))))
   (reset! patch {})
   (reset! dag (dep/graph))
-  (reset! sorted-dag []))
+  (reset! sorted-dag [])
+  (reset-counter!))

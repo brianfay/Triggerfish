@@ -8,6 +8,8 @@
   (add-to-server! [this] [this controls])
   (connect-inlet! [this inlet bus])
   (connect-outlet! [this outlet bus])
+  (disconnect-inlet! [this inlet-name])
+  (disconnect-outlet! [this outlet-name])
   (set-control! [this name val])
   (remove-from-server! [this]))
 
@@ -64,5 +66,11 @@
       (if (= (:type props) :audio)
         (do (sc/set-control id name bus) (sc/set-control id output-name hardware-out))
         (sc/map-control-to-bus id name bus))))
+  (disconnect-inlet! [this inlet-name]
+    (let [inlet-props (get inlets inlet-name)
+          output-name (clojure.string/replace inlet-name #"in" "out")
+          output-props (get outputs output-name)]
+      (if (= (:type inlet-props) :audio)
+        (do (sc/set-control id inlet-name (:default inlet-props)) (sc/set-control id output-name (:default output-props))))))
   (set-control! [this name value]
     (sc/set-control id name value)))
