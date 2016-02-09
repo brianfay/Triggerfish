@@ -118,7 +118,7 @@
            connections []
            reserved-buses {}]
       (if (nil? (first nodes))
-        [p connections]
+        connections
         (let [node (first nodes)
               [temp-p conn reserved] (loop-through-inlets p node reserved-buses numbered-sdag)]
           (recur
@@ -172,9 +172,8 @@
         old-sorted-dag @sorted-dag
         new-sorted-dag (dep/topo-sort new-dag)]
     (sort-nodes! old-sorted-dag new-sorted-dag)
-    (let [[updated-patch actions] (get-connection-actions p new-sorted-dag)]
-      (doall (map (partial make-connection! updated-patch) actions)))
-      ;; (reset! patch updated-patch))
+    (let [actions (get-connection-actions p new-sorted-dag)]
+      (doall (map (partial make-connection! p) actions)))
     (reset! dag new-dag)
     (reset! sorted-dag new-sorted-dag)))
 
