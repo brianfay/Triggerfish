@@ -253,3 +253,14 @@
   (reset! dag (dep/graph))
   (reset! sorted-dag [])
   (reset-counter!))
+
+(defn get-patch-map
+  "Gets the current patch, converting any records to maps."
+  []
+  (let [patch @patch]
+    (reduce (fn [accum key]
+              (let [val (get patch key)]
+                (if (record? val)
+                  (assoc accum key (into {} (seq val)))
+                  (assoc accum key val))))
+            {} (keys patch))))
