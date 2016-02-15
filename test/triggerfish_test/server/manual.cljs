@@ -1,11 +1,10 @@
-(ns ^:figwheel-always triggerfish-test.server.manual
+(ns triggerfish-test.server.manual
   (:require
    [triggerfish.server.patch :as p]
    [triggerfish.server.scsynth :as sc]
    [triggerfish.server.objects :as obj]
    [cljs.core.async :as a :refer [timeout <!]])
    (:require-macros [cljs.core.async.macros :refer [go]]))
-
 ;;Informal tests that can be run manually in order to do validation by ear.
 
 (defn connect-test

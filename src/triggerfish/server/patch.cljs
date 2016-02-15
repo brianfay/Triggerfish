@@ -217,7 +217,7 @@
 (defn create-object
   "Looks up the definition of an object and creates a record. Does not assign an id to the record or add it to the server."
   [obj-name]
-  (let [obj-map (obj-name obj-def/objects)
+  (let [obj-map (assoc (obj-name obj-def/objects) :name obj-name)
         obj-type (:type obj-map)]
     (condp = obj-type
       :BasicSynth (obj/map->BasicSynth obj-map)

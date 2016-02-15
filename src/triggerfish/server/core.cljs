@@ -1,5 +1,6 @@
 (ns ^:figwheel-always triggerfish.server.core
   (:require
+   [triggerfish-test.server.manual] ;;just so we can play with it at the repl
    [triggerfish.server.patch :as p]
    [triggerfish.server.events :as events]
    [cljs.nodejs        :as nodejs]
@@ -134,6 +135,5 @@
 ;;add a watch to the patch atom
 (defonce patch-watch (add-watch p/patch :notify-patch
                                 (fn [key atom old-state new-state]
-                                  (println "notifying clients of patch update")
                                   (doseq [uid (:any @connected-uids)]
                                     (chsk-send! uid [:patch/recv {:patch (p/get-patch-map)}])))))

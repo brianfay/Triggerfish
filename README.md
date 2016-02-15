@@ -1,32 +1,25 @@
 # Triggerfish
-Triggerfish is a tool for music performance, using supercollider for processing and a web interface for control.
+Triggerfish is an audio patching environment. Audio objects built in SuperCollider can be patched together using a web interface (coming soon).
 
-I was writing it in javascript and sclang, but didn't like the way things were going. I want to learn clojure/clojurescript, so I'm starting over from scratch.
-
-To run this...
+To run the development instance...
 
 Make sure the supercollider i/o environmental variables are set:
     export SC_JACK_DEFAULT_OUTPUTS="system"
     export SC_JACK_DEFAULT_INPUTS="system"
 Then do:
 
-    lein npm install
-    rlwrap lein figwheel server-dev client-dev
+    gem install sass
+    rlwrap lein run -m clojure.main --init script/figwheel.clj -r
     node out/server_out/triggerfish_server_with_figwheel.js 
 
 and load localhost:3000 in a browser
 
-...and probably some other stuff
 
-For a reason I have yet to discover, the repl will focus on client-dev first. To switch focus, type ":cljs/quit" and choose server-dev. Then you can (in-ns 'triggerfish.server.scsynth).
+To switch focus in the repl between builds, type ":cljs/quit" and choose client-dev or server-dev. From there you can run (in-ns 'triggerfish.server.scsynth) (or whatever namespace you want to test).
 
-Try:
-(call-scsynth "/s_new" "default" 1000 0 0)
-(call-scsynth "/s_new" "default" 1001 0 0 "freq" 660)
-(call-scsynth "/s_new" "default" 1001 0 0 "freq" 880)
-(call-scsynth "/s_new" "default" 1001 0 0 "freq" 1110)
+You might try
 
-Or maybe plug your guitar in and do something like:
-(in-ns 'triggerfish.server.patch)
-(add-object! (create-object :tremolo))
-(add-object! (create-object :adc))
+    (in-ns 'triggerfish-test.server.manual)
+    (connect-test)
+
+To hear a really simple example of sine waves going through tremolo effects.

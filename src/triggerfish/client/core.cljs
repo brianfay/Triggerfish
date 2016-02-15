@@ -1,6 +1,5 @@
 (ns triggerfish.client.core
-  (:require-macros [reagent.ratom :refer [reaction]]
-                   [cljs.core.async.macros :as asyncm :refer [go go-loop]])
+  (:require-macros [reagent.ratom :refer [reaction]])
   (:require [reagent.core :as reagent]
             [re-frame.core :refer [register-handler
                                    path
@@ -8,7 +7,6 @@
                                    dispatch
                                    dispatch-sync
                                    subscribe]]
-            [cljs.core.async :as async :refer [<! >! put! chan]]
             [taoensso.sente :as sente :refer [cb-success?]]))
 
 (enable-console-print!)
@@ -26,6 +24,17 @@
   (def ch-chsk ch-recv)
   (def chsk-send! send-fn)
   (def chsk-state state))
+
+(register-handler
+ :patch-recv
+ (fn [db [ev-id patch]]
+   (assoc db :patch patch)))
+
+(register-sub
+ :patch
+ (fn
+   [db _]
+   (reaction (:patch @db))))
 
 (defn request-patch!
   "Sends a request to :patch/notify, which will send out the current patch atom."
@@ -63,7 +72,7 @@
 
 (defmethod -event-msg-handler :patch/recv
   [{:as ev-msg :keys [?data]}]
-    (println "Patch: " ?data))
+  (dispatch [:patch-recv (:patch ?data)]))
 
 ;;Router
 (defonce router_ (atom nil))
@@ -74,6 +83,16 @@
           (sente/start-client-chsk-router!
            ch-chsk event-msg-handler)))
 
+(defn patch-component
+  []
+  (let [patch (subscribe [:patch])]
+    (fn
+      []
+      [:div
+        "PATCH: "
+       (let [patch @patch]
+         (map (fn [[key val]] ^{:key key} [:div (str key (:name val))]) patch))])))
+
 (defn example
   []
   [:div
@@ -81,7 +100,8 @@
    [:button {:id "btn1"
              :on-click (fn [ev]
                          (chsk-send! [:patch/notify {:had-a-callback? "nope"}]))}
-    "CLICK ME I TALK TO THE SERVER"]])
+    "CLICK ME I TALK TO THE SERVER"]
+   [patch-component]])
 
 (reagent/render [example]
                 (js/document.getElementById "app"))
