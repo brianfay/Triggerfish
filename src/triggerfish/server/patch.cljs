@@ -216,13 +216,15 @@
 
 (defn create-object
   "Looks up the definition of an object and creates a record. Does not assign an id to the record or add it to the server."
-  [obj-name]
-  (let [obj-map (assoc (obj-name obj-def/objects) :name obj-name)
-        obj-type (:type obj-map)]
-    (condp = obj-type
-      :BasicSynth (obj/map->BasicSynth obj-map)
-      :DAC (obj/map->DAC obj-map)
-      (println obj-type "is not a valid object type."))))
+  ([obj-name]
+   (create-object obj-name (rand-int 500) (rand-int 600)))
+  ([obj-name x-pos y-pos]
+   (let [obj-map (assoc (obj-name obj-def/objects) :name obj-name :x-pos x-pos :y-pos y-pos)
+         obj-type (:type obj-map)]
+     (condp = obj-type
+       :BasicSynth (obj/map->BasicSynth obj-map)
+       :DAC (obj/map->DAC obj-map)
+       (println obj-type "is not a valid object type.")))))
 
 (defn add-object!
   "Takes a prototype object, creates it on the server, and adds it to the patch."

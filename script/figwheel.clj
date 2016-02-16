@@ -2,8 +2,8 @@
          '[com.stuartsierra.component :as component])
 
 (def figwheel-config
-  {:fighweel-options {
-                      :web-socket-host "192.168.0.xxx"
+  {:figwheel-options {
+                      :web-socket-host "192.168.1.3"
                       :css-dirs ["css"]
                       }
    :build-ids ["client-dev" "server-dev"]

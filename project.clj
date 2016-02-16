@@ -54,6 +54,6 @@
                      :output-dir "out/client_prod"
                      :optimizations :advanced}}]}
   :figwheel {
-             :websocket-host "192.168.0.xxx"
+             :websocket-host "192.168.1.xxx"
              ;; :server-port 4000
              :css-dirs ["css"]})

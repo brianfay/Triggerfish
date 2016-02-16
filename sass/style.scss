@@ -1,3 +1,34 @@
+$font-stack: monospace;
+$bg-color: #93b8a2;
+$object-bg-color: complement($bg-color);
+$inlet-color: lighten($object-bg-color, 15%);
+$outlet-color: lighten($object-bg-color, 10%);
+/* $outlet-color: #4fb2d5; */
+
 body {
-    background-color: #FFF;
+    font: 100% $font-stack;
+    background-color: $bg-color;
+}
+
+.object {
+    position: absolute;
+    background-color: $object-bg-color;
+    padding: 0px;
+    margin: 0px;
+}
+
+.inlet {
+    background-color: $inlet-color;
+}
+
+.outlet {
+    background-color: $outlet-color;
+    text-align: right;
+}
+
+.line-box {
+    position: fixed;
+    width: 100%;
+    pointer-events: none;
+    height: 100%;
 }

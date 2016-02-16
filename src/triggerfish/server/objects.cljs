@@ -27,7 +27,7 @@
 
 
 ;; A BasicSynth is just a Supercollider Synth
-(defrecord BasicSynth [id synthdef inlets outlets]
+(defrecord BasicSynth [id synthdef inlets outlets name x-pos y-pos]
   PObject
   (add-to-server! [this]
     (let [default-controls (get-control-val-pair (merge inlets outlets))]
