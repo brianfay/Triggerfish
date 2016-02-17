@@ -1,12 +1,18 @@
 $font-stack: monospace;
-$bg-color: #93b8a2;
-$object-bg-color: complement($bg-color);
-$inlet-color: lighten($object-bg-color, 15%);
-$outlet-color: lighten($object-bg-color, 10%);
+/* $bg-color: #93b8a2; */
+/* $bg-color: hsl(179,36,57); */
+$black: hsl(226,21,11);
+$bg-color: $black; 
+/* $object-bg-color: adjust-hue($bg-color, 45); */
+$medium-aquamarine: hsl(193,41,62);
+$object-bg-color: darken($medium-aquamarine, 20%);
+$inlet-color: darken($object-bg-color, 10%);
+$outlet-color: darken($object-bg-color, 15%);
 /* $outlet-color: #4fb2d5; */
 
 body {
     font: 100% $font-stack;
+    color: lighten(complement($object-bg-color), 40%);
     background-color: $bg-color;
 }
 
