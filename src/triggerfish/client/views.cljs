@@ -5,17 +5,21 @@
 (defn get-bounding-rect
   [node]
   (let [rect (.getBoundingClientRect node)]
-    {:bottom (+ (.-bottom rect) (.-scrollY js/window))
-     :top (+ (.-top rect) (.-scrollY js/window))
-     :left (+ (.-left rect) (.-scrollX js/window))
-     :right (+ (.-right rect) (.-scrollX js/window))}))
+    {:bottom (+ (.-scrollY js/window) (.-bottom rect))
+     :top (+ (.-scrollY js/window) (.-top rect))
+     :left (.-left rect)
+     :right (.-right rect)}))
 
 (defn update-inlet-or-outlet-position
   [id name this]
   (dispatch [:update-position id name (get-bounding-rect (reagent/dom-node this))]))
 
+(defn move-object-mouse
+  [obj-id mouse_ev]
+  (dispatch [:move-object obj-id (.-clientX mouse_ev) (.-clientY mouse_ev)]))
+
 (defn outlet-component
-  [id name _]
+  [id name _] ;;ignoring last arg; it is position and we just use it to force component-did-update
   (reagent/create-class
    {
     :component-did-mount
@@ -24,9 +28,12 @@
     :component-did-update
     (fn [this]
       (update-inlet-or-outlet-position id name this))
+    :component-will-unmount
+    (fn [this]
+      (dispatch [:dissoc-position id name]))
     :reagent-render
-    (fn [id name]
-      [:div {:class "outlet" :key (str id name) :ref name}
+    (fn [id name _]
+      [:div {:class "outlet" :key (str id name)}
        name])}))
 
 (defn inlet-component
@@ -39,9 +46,13 @@
     :component-did-update
     (fn [this]
       (update-inlet-or-outlet-position id name this))
+    :component-will-unmount
+    (fn [this]
+      (dispatch [:dissoc-position id name]))
     :reagent-render
-    (fn [id name]
-      [:div {:class "inlet" :key (str id name) :ref name}
+    (fn [id name _]
+      [:div {:class "inlet" :key (str id name)}
+       ;; [connector-icon id name _]
        name])}))
 
 (defn object-component
@@ -51,17 +62,58 @@
     (let [x-pos (:x-pos obj-map)
           y-pos (:y-pos obj-map)]
       [:div {:class "object"
-              :style {:left x-pos
-                      :top  y-pos}}
+             :on-mouse-down (partial move-object-mouse id)
+             :style {:left x-pos
+                     :top  y-pos}}
         [:div (str (:name obj-map))]
         (map (fn [name]
               ^{:key (str id name)}
-              [inlet-component id name [x-pos y-pos]])
+              [inlet-component id name [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
             (keys (:inlets obj-map)))
         (map (fn [name]
               ^{:key (str id name)}
               [outlet-component id name [x-pos y-pos]])
             (keys (:outlets obj-map)))])))
+
+(defn cables-canvas
+  []
+  (let [connections (subscribe [:connections])
+        positions   (subscribe [:positions])
+        ]
+    (reagent/create-class
+     {
+     :component-did-mount
+     (fn [this]
+       (doall (map
+               (fn [conn]
+                 (let [
+                       [[in-id inlet-name] [out-id outlet-name]] conn
+                       pos1 (get @positions [in-id inlet-name])
+                       pos2 (get @positions [out-id outlet-name])
+                       x-left (:left pos1)
+                       x-right (:right pos1)
+                       x-bottom (:bottom pos1)
+                       x-top (:top pos1)
+                       y-left (:left pos2)
+                       y-right (:right pos2)
+                       y-bottom (:bottom pos2)
+                       y-top (:top pos2)
+                       canvas (reagent/dom-node this)
+                       ctx (.getContext canvas "2d")]
+                   (println "fill it " x-left x-top (- x-right x-left) (- x-bottom x-top))
+                   (.fillRect ctx x-left x-top (- x-right x-left) (- x-bottom x-top))
+                   ;; (.fillRect ctx 260 542 64 15)
+
+                   (.fillRect ctx 60 42 64 15)
+
+                   ;; (.clearRect ctx 45 45 60 60)
+                   )
+                   ;; (.strokeRect 50 50 50 50))
+                 )
+              @connections)))
+     :reagent-render
+     (fn []
+         [:canvas {:class "line-box" :id "canvas"}])})))
 
 (defn cables-component
   []
@@ -74,15 +126,21 @@
                       (let [[[in-id inlet-name] [out-id outlet-name]] conn
                             pos1 (get @positions [in-id inlet-name])
                             pos2 (get @positions [out-id outlet-name])
-                            x1 (:left pos1)
-                            y1 (:top pos1)
-                            x2 (:right pos2)
-                            y2 (:top pos2)]
+                            x1 (or (:left pos1) 0)
+                            y1 (or (:top pos1) 0)
+                            x2 (or (:right pos2) 0)
+                            y2 (or (:top pos2) 0)]
                         ^{:key conn}
-                        [:line {:stroke "white"
-                                :stroke-width 10
-                                :x1 x1 :y1 y1
-                                :x2 x2 :y2 y2}])) @connections))]])))
+                        [:path {:stroke "white"
+                                :fill "transparent"
+                                :stroke-width 2
+                                :d (str "M" x1 "," y1 " "
+                                        ;;control points - how the heck does Max/MSP do this?
+                                        "C" x1 "," (+ y1 50) " "
+                                        x2 "," (- y2 50) " "
+
+                                        x2 "," y2 )}]))
+                    @connections))]])))
 
 (defn patch-component
   []
@@ -96,5 +154,4 @@
 
 (defn app
   []
-  [:div
-   [patch-component]])
+  [patch-component])

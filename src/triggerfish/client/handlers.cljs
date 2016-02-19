@@ -25,6 +25,11 @@
    (assoc-in db [:positions [obj-id inlet-or-outlet-name]] pos)))
 
 (register-handler
+ :dissoc-position
+ (fn [db [ev-id obj-id inlet-or-outlet-name]]
+   (update-in db [:positions] dissoc [obj-id inlet-or-outlet-name])))
+
+(register-handler
  :move-object
  (fn [db [ev-id obj-id x y]]
    (-> db

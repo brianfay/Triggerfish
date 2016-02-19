@@ -1,16 +1,20 @@
 $font-stack: monospace;
 /* $bg-color: #93b8a2; */
 /* $bg-color: hsl(179,36,57); */
-$black: hsl(226,21,11);
-$bg-color: $black; 
+$black-ish: hsl(226,21,11);
+$bg-color: $black-ish;
 /* $object-bg-color: adjust-hue($bg-color, 45); */
 $medium-aquamarine: hsl(193,41,62);
 $object-bg-color: darken($medium-aquamarine, 20%);
 $inlet-color: darken($object-bg-color, 10%);
 $outlet-color: darken($object-bg-color, 15%);
 /* $outlet-color: #4fb2d5; */
+html {
+    height: 100%;
+}
 
 body {
+    /* height: 100%; */
     font: 100% $font-stack;
     color: lighten(complement($object-bg-color), 40%);
     background-color: $bg-color;
@@ -33,8 +37,22 @@ body {
 }
 
 .line-box {
-    position: fixed;
+    position: absolute;
     width: 100%;
     pointer-events: none;
     height: 100%;
+}
+#patch{
+    /* position: fixed; */
+}
+
+body, html, #patch, #app {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+svg {
+    z-index: -10;
 }
