@@ -28,3 +28,10 @@
   (let [session (:session ring-req)
         uid     (:uid     session)]
     (send-fn (:client-id (:params ring-req)) [:patch/recv {:patch (p/get-patch-map)}])))
+
+(defmethod -event-msg-handler :patch/create-object
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (let [session (:session ring-req)
+        uid     (:uid     session)]
+    (println "create-obj" ?data)
+    (p/add-object! (p/create-object (:name ?data) (:x-pos ?data) (:y-pos ?data)))))

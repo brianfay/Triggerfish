@@ -35,3 +35,8 @@
    (-> db
     (assoc-in [:objects obj-id :x-pos] x)
     (assoc-in [:objects obj-id :y-pos] y))))
+
+(register-handler
+ :select-create-object
+ (fn [db [ev-id name]]
+   (assoc db :selected-create-object name)))

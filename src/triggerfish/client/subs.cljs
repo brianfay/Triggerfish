@@ -19,3 +19,9 @@
  (fn
    [db _]
    (reaction (:connections @db))))
+
+(register-sub
+ :selected-create-object
+ (fn
+   [db _]
+   (reaction (:selected-create-object @db))))

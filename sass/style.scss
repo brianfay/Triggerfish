@@ -14,7 +14,6 @@ html {
 }
 
 body {
-    /* height: 100%; */
     font: 100% $font-stack;
     color: lighten(complement($object-bg-color), 40%);
     background-color: $bg-color;
@@ -25,6 +24,16 @@ body {
     background-color: $object-bg-color;
     padding: 0px;
     margin: 0px;
+}
+
+.leftbar {
+    position: fixed;
+    background-color: #000;
+    left: 0;
+    opacity: 0.7;
+    padding: 14px;
+    height: 100%;
+    z-index: 100;
 }
 
 .inlet {
@@ -43,10 +52,20 @@ body {
     height: 100%;
 }
 #patch{
-    /* position: fixed; */
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    overflow: scroll;
 }
 
-body, html, #patch, #app {
+body, html, #app {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.one-hundred{
     height: 100%;
     width: 100%;
     margin: 0;
@@ -54,5 +73,25 @@ body, html, #patch, #app {
 }
 
 svg {
+    position: absolute;
     z-index: -10;
+}
+
+.create-obj-selected {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    ms-user-select: none;
+    user-select: none;
+    color: #F00;
+}
+
+.create-obj-selector {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    ms-user-select: none;
+    user-select: none;
 }

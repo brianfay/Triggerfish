@@ -1,6 +1,8 @@
 (ns triggerfish.client.views
   (:require [reagent.core :as reagent]
-            [re-frame.core :refer [dispatch subscribe]]))
+            [re-frame.core :refer [dispatch subscribe]]
+            [triggerfish.shared.object-definitions :as obj]
+            [triggerfish.client.sente-events :refer [chsk-send!]]))
 
 (defn get-bounding-rect
   [node]
@@ -144,14 +146,45 @@
 
 (defn patch-component
   []
-  (let [objects (subscribe [:objects])]
+  (let [objects (subscribe [:objects])
+        selected-obj (subscribe [:selected-create-object])]
     (fn []
-      [:div {:id "patch"}
+      [:div {:id "patch"
+             :on-click (fn [e]
+                         (println "sel: " selected-obj)
+                         (if (nil? @selected-obj)
+                                  nil
+                                  (chsk-send! [:patch/create-object
+                                               {:name @selected-obj
+                                                :x-pos (.-clientX e)
+                                                :y-pos (.-clientY e)}])))}
        (map (fn [obj]
               (with-meta [object-component obj]
                 {:key (first obj)})) @objects)
-       [cables-component]])))
+       [cables-component]
+       ])))
+
+(defn create-object-selector
+  [name]
+  (let [selected-obj (subscribe [:selected-create-object])
+        selected-name @selected-obj]
+    [:p {:on-click #(dispatch [:select-create-object name])
+         :on-touch-down #(dispatch [:select-create-object name])
+         :class (if (= name selected-name)
+                  "create-obj-selected"
+                  "create-obj-selector")}
+    (str name)]))
+
+(defn left-bar
+  []
+  [:div {:class "leftbar"}
+   [:p {:style {:text-align "right"}}
+    "X"]
+   (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))])
 
 (defn app
   []
-  [patch-component])
+  [:div {:class "one-hundred"}
+   [left-bar]
+   [patch-component]
+   ])
