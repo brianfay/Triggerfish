@@ -4,6 +4,8 @@
             [triggerfish.shared.object-definitions :as obj]
             [triggerfish.client.sente-events :refer [chsk-send!]]))
 
+(defonce touch? (atom false))
+
 (defn get-bounding-rect
   [node]
   (let [rect (.getBoundingClientRect node)]
@@ -143,6 +145,16 @@
 
                                         x2 "," y2 )}]))
                     @connections))]])))
+(defn create-object
+  [obj-name x-pos y-pos]
+  (if (nil? obj-name)
+    nil
+    (do
+      (dispatch [:optimistic-create obj-name x-pos y-pos])
+      (chsk-send! [:patch/create-object
+                  {:name obj-name
+                   :x-pos x-pos
+                   :y-pos y-pos}]))))
 
 (defn patch-component
   []
@@ -150,14 +162,17 @@
         selected-obj (subscribe [:selected-create-object])]
     (fn []
       [:div {:id "patch"
-             :on-click (fn [e]
-                         (println "sel: " selected-obj)
-                         (if (nil? @selected-obj)
-                                  nil
-                                  (chsk-send! [:patch/create-object
-                                               {:name @selected-obj
-                                                :x-pos (.-clientX e)
-                                                :y-pos (.-clientY e)}])))}
+             :on-click (fn [e] (when (not @touch?) (create-object @selected-obj (.-clientX e) (.-clientY e))))
+             :on-touch-start (fn [e] (let [touch-events (js->clj (.-touches e))
+                                           length (.-length touch-events)]
+                                       (reset! touch? true)
+                                       ;;touch event is fired each time we put a finger down
+                                       ;;if other fingers are already down they will be in the
+                                       ;;touch-events list. Just use the last one in the list
+                                       (let [ev (.item touch-events (dec length))]
+                                         (create-object @selected-obj
+                                                        (.-pageX ev)
+                                                        (.-pageY ev)))))}
        (map (fn [obj]
               (with-meta [object-component obj]
                 {:key (first obj)})) @objects)
@@ -168,8 +183,8 @@
   [name]
   (let [selected-obj (subscribe [:selected-create-object])
         selected-name @selected-obj]
-    [:p {:on-click #(dispatch [:select-create-object name])
-         :on-touch-down #(dispatch [:select-create-object name])
+    [:p {:on-click #(when (not @touch?)(dispatch [:select-create-object name]))
+         :on-touch-start #(do (reset! touch? true) (dispatch [:select-create-object name]))
          :class (if (= name selected-name)
                   "create-obj-selected"
                   "create-obj-selector")}

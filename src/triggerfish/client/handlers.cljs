@@ -1,5 +1,6 @@
 (ns triggerfish.client.handlers
-  (:require [re-frame.core :refer [register-handler]]))
+  (:require [re-frame.core :refer [register-handler]]
+            [triggerfish.shared.object-definitions :as obj]))
 
 (def initial-state
   {:objects {}
@@ -40,3 +41,15 @@
  :select-create-object
  (fn [db [ev-id name]]
    (assoc db :selected-create-object name)))
+
+(register-handler
+ :optimistic-create
+ (fn [db [ev-id obj-name x-pos y-pos]]
+   ;;todo - guarantee id is unique
+   (let [id (str "ghost" (rand-int 99999))](assoc-in db [:objects id]
+              (merge (obj-name obj/objects)
+                     {:id id
+                      :x-pos x-pos
+                      :y-pos y-pos
+                      :name obj-name
+                      :optimistic true})))))
