@@ -4,6 +4,7 @@
             [triggerfish.shared.object-definitions :as obj]
             [triggerfish.client.sente-events :refer [chsk-send!]]))
 
+;;We assume that the device has no touch-screen until a touch-event is fired.
 (defonce touch? (atom false))
 
 (defn get-bounding-rect
@@ -171,35 +172,44 @@
                                        ;;touch-events list. Just use the last one in the list
                                        (let [ev (.item touch-events (dec length))]
                                          (create-object @selected-obj
-                                                        (.-pageX ev)
-                                                        (.-pageY ev)))))}
+                                                        ;;Yeah, I know, reading from the DOM is kinda bad, somebody call the wahhhhhmbulance
+                                                        (+ (.-scrollLeft (.getElementById js/document "patch")) (.-pageX ev))
+                                                        (+ (.-scrollTop (.getElementById js/document "patch")) (.-pageY ev))))))}
        (map (fn [obj]
               (with-meta [object-component obj]
                 {:key (first obj)})) @objects)
        [cables-component]
        ])))
 
+(defn mode-selector
+  []
+  [:div {:class "mode-selector"}
+   [:span {:class "mode-toggle insert-mode-toggle"} "insert" ]
+   [:span {:class "mode-toggle delete-mode-toggle"} "delete" ]
+   [:span {:class "mode-toggle connect-mode-toggle"} "connect"]])
+
 (defn create-object-selector
   [name]
   (let [selected-obj (subscribe [:selected-create-object])
         selected-name @selected-obj]
-    [:p {:on-click #(when (not @touch?)(dispatch [:select-create-object name]))
-         :on-touch-start #(do (reset! touch? true) (dispatch [:select-create-object name]))
-         :class (if (= name selected-name)
-                  "create-obj-selected"
-                  "create-obj-selector")}
-    (str name)]))
+    [:div [:p {:on-click #(when (not @touch?) (dispatch [:select-create-object name]))
+          :on-touch-start #(do (reset! touch? true) (dispatch [:select-create-object name]))
+          :class (if (= name selected-name)
+                   "create-obj-selector create-obj-selected"
+                   "create-obj-selector")}
+      (str name)]]))
 
-(defn left-bar
+(defn side-bar
   []
-  [:div {:class "leftbar"}
-   [:p {:style {:text-align "right"}}
-    "X"]
-   (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))])
+  [:div {:class "sidebar"}
+   [:p {:class "minimize-icon"} "<"]
+   [:div {:class "title"} [:h1 "TRIGGERFISH"]]
+   [mode-selector]
+   [:div {:class "sidebar-content"}
+    (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))]])
 
 (defn app
   []
   [:div {:class "one-hundred"}
-   [left-bar]
-   [patch-component]
-   ])
+   [side-bar]
+   [patch-component]])

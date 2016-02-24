@@ -1,10 +1,10 @@
 $font-stack: monospace;
 /* $bg-color: #93b8a2; */
 /* $bg-color: hsl(179,36,57); */
-$black-ish: hsl(226,21,11);
+$black-ish: hsl(226,21,11); //#161922
 $bg-color: $black-ish;
 /* $object-bg-color: adjust-hue($bg-color, 45); */
-$medium-aquamarine: hsl(193,41,62);
+$medium-aquamarine: hsl(193,41,62); //#76B5C6
 $object-bg-color: darken($medium-aquamarine, 20%);
 $inlet-color: darken($object-bg-color, 10%);
 $outlet-color: darken($object-bg-color, 15%);
@@ -25,6 +25,16 @@ body {
     background-color: $bg-color;
 }
 
+.title {
+    text-align: center;
+    color: #FFF;
+    margin: 24px 0px 48px 0px;
+}
+
+.minimize-icon {
+    text-align: right;
+}
+
 .object {
     position: absolute;
     background-color: $object-bg-color;
@@ -32,7 +42,7 @@ body {
     margin: 0px;
 }
 
-.leftbar {
+.sidebar {
     position: fixed;
     background-color: #000;
     left: 0;
@@ -83,23 +93,42 @@ svg {
     z-index: -10;
 }
 
+.mode-selector {
+    /* margin-top: 100px; */
+}
+
+.mode-toggle {
+    margin: 4px;
+    padding: 17px;
+    border: 2px solid;
+    border-radius: 2px;
+}
+
+.insert-mode-toggle {
+    color: #be4;
+    border-color: #be4;
+}
+
+.delete-mode-toggle {
+    color: #e44;
+    border-color: #e44;
+}
+
+.connect-mode-toggle {
+    color: #9de;
+    border-color: #9de;
+}
+
+.sidebar-content {
+     margin-top: 50px;
+}
+
 .create-obj-selected {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    ms-user-select: none;
-    user-select: none;
-    font-size: 1.5em;
-    color: #F00;
+    color: #e44;
 }
 
 .create-obj-selector {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    ms-user-select: none;
-    user-select: none;
     font-size: 1.5em;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #888;
 }
