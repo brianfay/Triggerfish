@@ -25,3 +25,9 @@
  (fn
    [db _]
    (reaction (:selected-create-object @db))))
+
+(register-sub
+ :mode
+ (fn
+   [db _]
+   (reaction (:mode @db))))

@@ -3,6 +3,10 @@ $font-stack: monospace;
 /* $bg-color: hsl(179,36,57); */
 $black-ish: hsl(226,21,11); //#161922
 $bg-color: $black-ish;
+$insert-color: #be4;
+$delete-color: #e44;
+$connect-color: #9de;
+$move-color: #fe3;
 /* $object-bg-color: adjust-hue($bg-color, 45); */
 $medium-aquamarine: hsl(193,41,62); //#76B5C6
 $object-bg-color: darken($medium-aquamarine, 20%);
@@ -44,9 +48,8 @@ body {
 
 .sidebar {
     position: fixed;
-    background-color: #000;
+    background-color: rgba(0,0,0,0.7);
     left: 0;
-    opacity: 0.7;
     padding: 14px;
     height: 100%;
     z-index: 100;
@@ -94,29 +97,68 @@ svg {
 }
 
 .mode-selector {
-    /* margin-top: 100px; */
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    max-width: 50vw;
+    flex-wrap: wrap;
 }
 
 .mode-toggle {
     margin: 4px;
-    padding: 17px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 40px;
     border: 2px solid;
     border-radius: 2px;
 }
 
-.insert-mode-toggle {
-    color: #be4;
-    border-color: #be4;
+.insert-mode-active {
+    background-color: darken($insert-color, 30%);
+    color: #FFF;
+    border-color: $insert-color;
 }
 
-.delete-mode-toggle {
-    color: #e44;
-    border-color: #e44;
+.insert-mode-inactive {
+    color: $insert-color;
+    border-color: $insert-color;
 }
 
-.connect-mode-toggle {
-    color: #9de;
-    border-color: #9de;
+.delete-mode-active {
+    background-color: darken($delete-color, 30%);
+    color: #FFF;
+    border-color: $delete-color;
+}
+
+.delete-mode-inactive {
+    color: $delete-color;
+    border-color: $delete-color;
+}
+
+.connect-mode-active {
+    background-color: darken($connect-color, 30%);
+    color: #FFF;
+    border-color: $connect-color;
+}
+
+.connect-mode-inactive {
+    color: $connect-color;
+    border-color: $connect-color;
+}
+
+.move-mode-active {
+    opacity: 1;
+    background-color: darken($move-color, 15%);
+    color: #FFF;
+    border-color: $move-color;
+}
+
+.move-mode-inactive {
+    color: $move-color;
+    border-color: $move-color;
 }
 
 .sidebar-content {

@@ -53,3 +53,8 @@
                       :y-pos y-pos
                       :name obj-name
                       :optimistic true})))))
+
+(register-handler
+ :set-mode
+ (fn [db [ev-id mode]]
+   (assoc db :mode mode)))

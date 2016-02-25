@@ -172,7 +172,6 @@
                                        ;;touch-events list. Just use the last one in the list
                                        (let [ev (.item touch-events (dec length))]
                                          (create-object @selected-obj
-                                                        ;;Yeah, I know, reading from the DOM is kinda bad, somebody call the wahhhhhmbulance
                                                         (+ (.-scrollLeft (.getElementById js/document "patch")) (.-pageX ev))
                                                         (+ (.-scrollTop (.getElementById js/document "patch")) (.-pageY ev))))))}
        (map (fn [obj]
@@ -183,10 +182,24 @@
 
 (defn mode-selector
   []
-  [:div {:class "mode-selector"}
-   [:span {:class "mode-toggle insert-mode-toggle"} "insert" ]
-   [:span {:class "mode-toggle delete-mode-toggle"} "delete" ]
-   [:span {:class "mode-toggle connect-mode-toggle"} "connect"]])
+  (let [mode (subscribe [:mode])]
+       [:div {:class "mode-selector"}
+        [:div {:class (if (= @mode :insert) "mode-toggle insert-mode-active"
+                          "mode-toggle insert-mode-inactive")
+               :on-click #(dispatch [:set-mode :insert])
+               :on-touch-start #(do (reset! touch? true) (dispatch [:set-mode :insert]))} "insert"]
+        [:div {:class (if (= @mode :delete) "mode-toggle delete-mode-active"
+                          "mode-toggle delete-mode-inactive")
+               :on-click #(dispatch [:set-mode :delete])
+               :on-touch-start #(do (reset! touch? true) (dispatch [:set-mode :delete]))} "delete"]
+        [:div {:class (if (= @mode :connect) "mode-toggle connect-mode-active"
+                          "mode-toggle connect-mode-inactive")
+               :on-click #(dispatch [:set-mode :connect])
+               :on-touch-start #(do (reset! touch? true) (dispatch [:set-mode :connect]))} "connect"]
+        [:div {:class (if (= @mode :move) "mode-toggle move-mode-active"
+                          "mode-toggle move-mode-inactive")
+               :on-click #(dispatch [:set-mode :move])
+               :on-touch-start #(do (reset! touch? true) (dispatch [:set-mode :move]))} "move"]]))
 
 (defn create-object-selector
   [name]
