@@ -209,6 +209,7 @@
     (let [new-patch (update-in @patch [:connections] dissoc [in-id inlet-name])
           outlet (get (:connections @patch) [in-id inlet-name])
           [out-id outlet-name] outlet]
+      (println "dissoc'ed" [in-id inlet-name])
       (when (outlet-connected? new-patch out-id outlet-name)
         (obj/disconnect-outlet! (get new-patch out-id) outlet-name))
       (obj/disconnect-inlet! (get new-patch in-id) inlet-name)
@@ -240,12 +241,15 @@
   "Removes object from the server, first disconnecting all inlets and outlets (which will update the patch)"
   [obj]
   (let [id (:id obj)
-        inlets-to-disconnect (vals (merge (get-connected-inlets @patch id) (get-connected-outlets @patch id)))]
-    (println "to disconnect: " inlets-to-disconnect)
-    (map #(apply disconnect! %) inlets-to-disconnect)
-    (swap! patch dissoc id)
-    ;; (sc/do-when-node-removed id #(swap! patch dissoc id))
-    (obj/remove-from-server! obj)))
+        inlets-to-disconnect (keys (merge (into {} (get-connected-inlets @patch id)) (into {} (get-connected-outlets @patch id))))]
+    (do
+      (doall (map #(apply disconnect! %) inlets-to-disconnect))
+      (obj/remove-from-server! obj)
+      (swap! patch dissoc id))))
+
+(defn remove-object-by-id!
+  [id]
+  (remove-object! (@patch id)))
 
 (defn kill-patch!
   "Removes all running nodes from the server and resets the patch to an empty atom"

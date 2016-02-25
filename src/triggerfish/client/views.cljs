@@ -4,6 +4,7 @@
             [triggerfish.shared.object-definitions :as obj]
             [triggerfish.client.sente-events :refer [chsk-send!]]))
 
+(declare click-delete touch-delete)
 ;;We assume that the device has no touch-screen until a touch-event is fired.
 (defonce touch? (atom false))
 
@@ -18,10 +19,6 @@
 (defn update-inlet-or-outlet-position
   [id name this]
   (dispatch [:update-position id name (get-bounding-rect (reagent/dom-node this))]))
-
-(defn move-object-mouse
-  [obj-id mouse_ev]
-  (dispatch [:move-object obj-id (.-clientX mouse_ev) (.-clientY mouse_ev)]))
 
 (defn outlet-component
   [id name _] ;;ignoring last arg; it is position and we just use it to force component-did-update
@@ -65,11 +62,18 @@
   [[id obj-map]]
   (fn [[id obj-map]]
     (let [x-pos (:x-pos obj-map)
-          y-pos (:y-pos obj-map)]
-      [:div {:class "object"
-             :on-mouse-down (partial move-object-mouse id)
-             :style {:left x-pos
-                     :top  y-pos}}
+          y-pos (:y-pos obj-map)
+          mode (subscribe [:mode])]
+      [:div
+       (merge
+        {:class "object"
+         :style {:left x-pos
+                 :top  y-pos}}
+        (condp = @mode
+          :delete
+            {:on-click (fn [e] (click-delete id))
+            :on-touch-start (fn [e] (touch-delete id))}
+          nil))
         [:div (str (:name obj-map))]
         (map (fn [name]
               ^{:key (str id name)}
@@ -157,28 +161,54 @@
                    :x-pos x-pos
                    :y-pos y-pos}]))))
 
+(defn delete-object
+  [obj-id]
+  (do
+    (dispatch [:optimistic-delete obj-id])
+    (chsk-send! [:patch/delete-object {:obj-id obj-id}])))
+
+(defn click-insert
+  [e selected-obj]
+  (when (not @touch?) (create-object selected-obj (.-clientX e) (.-clientY e))))
+
+(defn touch-insert
+  [e selected-obj]
+  (let [touch-events (js->clj (.-touches e))
+        length (.-length touch-events)]
+    (reset! touch? true)
+    ;;touch event is fired each time we put a finger down
+    ;;if other fingers are already down they will be in the
+    ;;touch-events list. Just use the last one in the list
+    (let [ev (.item touch-events (dec length))]
+      (create-object selected-obj
+                     (+ (.-scrollLeft (.getElementById js/document "patch")) (.-pageX ev))
+                     (+ (.-scrollTop (.getElementById js/document "patch")) (.-pageY ev))))))
+
+(defn click-delete
+  [obj-id]
+  (when (not @touch?) (delete-object obj-id)))
+
+(defn touch-delete
+  [obj-id]
+  (do (reset! touch? true)
+      (delete-object obj-id)))
+
 (defn patch-component
   []
   (let [objects (subscribe [:objects])
-        selected-obj (subscribe [:selected-create-object])]
+        selected-obj (subscribe [:selected-create-object])
+        mode (subscribe [:mode])]
     (fn []
-      [:div {:id "patch"
-             :on-click (fn [e] (when (not @touch?) (create-object @selected-obj (.-clientX e) (.-clientY e))))
-             :on-touch-start (fn [e] (let [touch-events (js->clj (.-touches e))
-                                           length (.-length touch-events)]
-                                       (reset! touch? true)
-                                       ;;touch event is fired each time we put a finger down
-                                       ;;if other fingers are already down they will be in the
-                                       ;;touch-events list. Just use the last one in the list
-                                       (let [ev (.item touch-events (dec length))]
-                                         (create-object @selected-obj
-                                                        (+ (.-scrollLeft (.getElementById js/document "patch")) (.-pageX ev))
-                                                        (+ (.-scrollTop (.getElementById js/document "patch")) (.-pageY ev))))))}
+      [:div (merge {:id "patch"}
+                   (condp = @mode
+                     :insert {
+                              :on-click (fn [e] (click-insert e @selected-obj))
+                              :on-touch-start (fn [e] (touch-insert e @selected-obj))}
+                     nil))
        (map (fn [obj]
               (with-meta [object-component obj]
                 {:key (first obj)})) @objects)
-       [cables-component]
-       ])))
+       [cables-component]])))
 
 (defn mode-selector
   []
@@ -212,17 +242,36 @@
                    "create-obj-selector")}
       (str name)]]))
 
-(defn side-bar
+(defn sidebar-show-toggle
   []
-  [:div {:class "sidebar"}
-   [:p {:class "minimize-icon"} "<"]
-   [:div {:class "title"} [:h1 "TRIGGERFISH"]]
-   [mode-selector]
-   [:div {:class "sidebar-content"}
-    (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))]])
+  (let [open (subscribe [:sidebar-open])]
+    (if @open
+      [:p {:class "min-max-icon min-max-open-slide"
+           :on-click #(when (not @touch?) (dispatch [:close-sidebar]))
+           :on-touch-start #(do (reset! touch? true) (dispatch [:close-sidebar]))} [:span {:class "min-max-open-flip"} "< "]]
+      [:p {:class "min-max-icon min-max-close-slide"
+           :on-click #(when (not @touch?) (dispatch [:open-sidebar]))
+           :on-touch-start #(do (reset! touch? true) (dispatch [:open-sidebar]))} [:span {:class "min-max-close-flip"} "< "]])))
+
+(defn sidebar
+  []
+  (let [open (subscribe [:sidebar-open])
+        mode (subscribe [:mode])]
+    [:div {:class (if @open "sidebar sidebar-opened"
+                      "sidebar sidebar-closed")}
+     [sidebar-show-toggle]
+     [:div {:class "title"} [:h1 "TRIGGERFISH"]]
+     [mode-selector]
+     [:div {:class "sidebar-content"}
+      (condp = @mode
+          :insert (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))
+          :delete nil
+          :connect nil
+          :move nil
+          nil)]]))
 
 (defn app
   []
   [:div {:class "one-hundred"}
-   [side-bar]
+   [sidebar]
    [patch-component]])

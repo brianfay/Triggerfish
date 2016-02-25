@@ -31,3 +31,9 @@
  (fn
    [db _]
    (reaction (:mode @db))))
+
+(register-sub
+ :sidebar-open
+ (fn
+   [db _]
+    (reaction (:sidebar-open @db))))

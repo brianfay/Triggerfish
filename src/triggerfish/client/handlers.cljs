@@ -6,6 +6,8 @@
   {:objects {}
    :connections {}
    :positions {}
+   :sidebar-open true
+   :mode :insert
    })
 
 (register-handler
@@ -46,7 +48,8 @@
  :optimistic-create
  (fn [db [ev-id obj-name x-pos y-pos]]
    ;;todo - guarantee id is unique
-   (let [id (str "ghost" (rand-int 99999))](assoc-in db [:objects id]
+   (let [id (str "ghost" (rand-int 99999))]
+     (assoc-in db [:objects id]
               (merge (obj-name obj/objects)
                      {:id id
                       :x-pos x-pos
@@ -54,7 +57,36 @@
                       :name obj-name
                       :optimistic true})))))
 
+(defn get-connected-inlets
+  [connections obj-id]
+  (filter #(= obj-id (first (first %))) connections))
+
+(defn get-connected-outlets
+  [connections obj-id]
+  (filter #(= obj-id (first (second %))) connections))
+
+(register-handler
+ :optimistic-delete
+ (fn [db [ev-id obj-id]]
+   (let [connections (:connections db)
+         connections-to-remove (vals (merge (get-connected-inlets connections obj-id)
+                                                (get-connected-outlets connections obj-id)))])
+   (-> db
+       ;; (reduce #(dissoc  ))
+       (update-in db [:objects] dissoc obj-id))
+   ))
+
 (register-handler
  :set-mode
  (fn [db [ev-id mode]]
    (assoc db :mode mode)))
+
+(register-handler
+ :open-sidebar
+ (fn [db [ev-id]]
+   (assoc db :sidebar-open true)))
+
+(register-handler
+ :close-sidebar
+ (fn [db [ev-id]]
+   (assoc db :sidebar-open false)))
