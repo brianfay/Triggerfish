@@ -78,11 +78,11 @@
         (map (fn [name]
               ^{:key (str id name)}
               [inlet-component id name [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
-            (keys (:inlets obj-map)))
+             (sort (keys (:inlets obj-map))))
         (map (fn [name]
               ^{:key (str id name)}
-              [outlet-component id name [x-pos y-pos]])
-            (keys (:outlets obj-map)))])))
+               [outlet-component id name [x-pos y-pos]])
+             (sort (keys (:outlets obj-map))))])))
 
 (defn cables-canvas
   []

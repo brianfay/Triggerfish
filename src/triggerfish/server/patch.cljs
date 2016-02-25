@@ -209,7 +209,6 @@
     (let [new-patch (update-in @patch [:connections] dissoc [in-id inlet-name])
           outlet (get (:connections @patch) [in-id inlet-name])
           [out-id outlet-name] outlet]
-      (println "dissoc'ed" [in-id inlet-name])
       (when (outlet-connected? new-patch out-id outlet-name)
         (obj/disconnect-outlet! (get new-patch out-id) outlet-name))
       (obj/disconnect-inlet! (get new-patch in-id) inlet-name)
