@@ -84,46 +84,6 @@
                [outlet-component id name [x-pos y-pos]])
              (sort (keys (:outlets obj-map))))])))
 
-(defn cables-canvas
-  []
-  (let [connections (subscribe [:connections])
-        positions   (subscribe [:positions])
-        ]
-    (reagent/create-class
-     {
-     :component-did-mount
-     (fn [this]
-       (doall (map
-               (fn [conn]
-                 (let [
-                       [[in-id inlet-name] [out-id outlet-name]] conn
-                       pos1 (get @positions [in-id inlet-name])
-                       pos2 (get @positions [out-id outlet-name])
-                       x-left (:left pos1)
-                       x-right (:right pos1)
-                       x-bottom (:bottom pos1)
-                       x-top (:top pos1)
-                       y-left (:left pos2)
-                       y-right (:right pos2)
-                       y-bottom (:bottom pos2)
-                       y-top (:top pos2)
-                       canvas (reagent/dom-node this)
-                       ctx (.getContext canvas "2d")]
-                   (println "fill it " x-left x-top (- x-right x-left) (- x-bottom x-top))
-                   (.fillRect ctx x-left x-top (- x-right x-left) (- x-bottom x-top))
-                   ;; (.fillRect ctx 260 542 64 15)
-
-                   (.fillRect ctx 60 42 64 15)
-
-                   ;; (.clearRect ctx 45 45 60 60)
-                   )
-                   ;; (.strokeRect 50 50 50 50))
-                 )
-              @connections)))
-     :reagent-render
-     (fn []
-         [:canvas {:class "line-box" :id "canvas"}])})))
-
 (defn cables-component
   []
   (let [connections (subscribe [:connections])

@@ -69,12 +69,10 @@
  :optimistic-delete
  (fn [db [ev-id obj-id]]
    (let [connections (:connections db)
-         connections-to-remove (vals (merge (get-connected-inlets connections obj-id)
-                                                (get-connected-outlets connections obj-id)))])
-   (-> db
-       ;; (reduce #(dissoc  ))
-       (update-in db [:objects] dissoc obj-id))
-   ))
+         connections-to-remove (keys (merge (into {} (get-connected-inlets connections obj-id))
+                                            (into {} (get-connected-outlets connections obj-id))))]
+     (-> (reduce #(update-in %1 [:connections] dissoc %2) db connections-to-remove)
+         (update-in [:objects] dissoc obj-id)))))
 
 (register-handler
  :set-mode
