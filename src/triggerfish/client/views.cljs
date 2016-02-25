@@ -21,25 +21,25 @@
   (dispatch [:update-position id name (get-bounding-rect (reagent/dom-node this))]))
 
 (defn outlet-component
-  [id name _] ;;ignoring last arg; it is position and we just use it to force component-did-update
+  [id [name {:keys [type]}] _] ;;ignoring last arg; it is position and we just use it to force component-did-update
   (reagent/create-class
    {
-    :component-did-mount
-    (fn [this]
-      (update-inlet-or-outlet-position id name this))
-    :component-did-update
-    (fn [this]
-      (update-inlet-or-outlet-position id name this))
-    :component-will-unmount
-    (fn [this]
-      (dispatch [:dissoc-position id name]))
-    :reagent-render
-    (fn [id name _]
-      [:div {:class "outlet" :key (str id name)}
-       name])}))
+     :component-did-mount
+     (fn [this]
+       (update-inlet-or-outlet-position id name this))
+     :component-did-update
+     (fn [this]
+       (update-inlet-or-outlet-position id name this))
+     :component-will-unmount
+     (fn [this]
+       (dispatch [:dissoc-position id name]))
+     :reagent-render
+    (fn [id [name {:keys [type]}] _]
+       [:div {:class "outlet" :key (str id name)}
+        (str name (when (= type :audio) "~"))])}))
 
 (defn inlet-component
-  [id name _]
+  [id [name {:keys [type]}] _]
   (reagent/create-class
    {
     :component-did-mount
@@ -52,10 +52,9 @@
     (fn [this]
       (dispatch [:dissoc-position id name]))
     :reagent-render
-    (fn [id name _]
+    (fn [id [name {:keys [type]}] _]
       [:div {:class "inlet" :key (str id name)}
-       ;; [connector-icon id name _]
-       name])}))
+       (str (when (= type :audio) "~") name)])}))
 
 (defn object-component
   "Component for a Triggerfish Object."
@@ -75,14 +74,14 @@
             :on-touch-start (fn [e] (touch-delete id))}
           nil))
         [:div (str (:name obj-map))]
-        (map (fn [name]
-              ^{:key (str id name)}
-              [inlet-component id name [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
-             (sort (keys (:inlets obj-map))))
-        (map (fn [name]
-              ^{:key (str id name)}
-               [outlet-component id name [x-pos y-pos]])
-             (sort (keys (:outlets obj-map))))])))
+        (map (fn [inlet]
+              ^{:key (str id inlet)}
+              [inlet-component id inlet [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
+             (sort-by first (:inlets obj-map)))
+        (map (fn [outlet]
+              ^{:key (str id outlet)}
+               [outlet-component id outlet [x-pos y-pos]])
+             (sort-by first (:outlets obj-map)))])))
 
 (defn cables-component
   []
