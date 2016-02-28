@@ -1,4 +1,4 @@
-# Triggerfish
+# Triggerfish :tropical_fish:
 Triggerfish is an audio patching environment. Audio objects built in SuperCollider can be patched together using a web interface (coming soon).
 
 To run the development instance...

@@ -75,6 +75,11 @@
          (update-in [:objects] dissoc obj-id)))))
 
 (register-handler
+ :select-object
+ (fn [db [ev-id obj-id]]
+   (assoc db :selected-object obj-id)))
+
+(register-handler
  :set-mode
  (fn [db [ev-id mode]]
    (assoc db :mode mode)))

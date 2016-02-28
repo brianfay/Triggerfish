@@ -56,13 +56,40 @@
       [:div {:class "inlet" :key (str id name)}
        (str (when (= type :audio) "~") name)])}))
 
+(defn inlet-connector
+  [inlets]
+  [:div
+   {:class "inlet-connector-cntr" :style
+    ;;probably not perfect, but close to center:
+    {:top (str "-" (* 15 (count inlets)) "px")}}
+   (map (fn [[name props]]
+          [:div
+           [:div {:class "horiz-center"} (str (when (= (:type props) :audio) "~") name)]
+           [:div {:class "connector-btn horiz-center"} ""]
+           ]) inlets)])
+
+(defn outlet-connector
+  [outlets]
+  [:div
+   {:class "outlet-connector-cntr" :style
+    {:top (str "-" (* 15 (count outlets)) "px")}}
+   (map (fn [[name props]]
+          [:div
+           [:div {:class "horiz-center"} (str name (when (= (:type props) :audio) "~"))]
+           [:div {:class "connector-btn horiz-center"} ""]
+           ]) outlets)])
+
 (defn object-component
   "Component for a Triggerfish Object."
   [[id obj-map]]
   (fn [[id obj-map]]
     (let [x-pos (:x-pos obj-map)
           y-pos (:y-pos obj-map)
-          mode (subscribe [:mode])]
+          mode (subscribe [:mode])
+          selected-obj (subscribe [:selected-object])
+          selected? (= @selected-obj id)
+          inlets (:inlets obj-map)
+          outlets (:outlets obj-map)]
       [:div
        (merge
         {:class "object"
@@ -71,17 +98,23 @@
         (condp = @mode
           :delete
             {:on-click (fn [e] (click-delete id))
-            :on-touch-start (fn [e] (touch-delete id))}
-          nil))
-        [:div (str (:name obj-map))]
-        (map (fn [inlet]
+             :on-touch-start (fn [e] (touch-delete id))}
+          :connect
+            {:on-click (fn [e] (dispatch [:select-object id]))}
+            nil))
+       (when (and selected? (= @mode :connect))
+         [inlet-connector inlets])
+       (when (and selected? (= @mode :connect))
+         [outlet-connector outlets])
+       [:div (str (:name obj-map))]
+       (map (fn [inlet]
               ^{:key (str id inlet)}
               [inlet-component id inlet [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
-             (sort-by first (:inlets obj-map)))
-        (map (fn [outlet]
+            (sort-by first inlets))
+       (map (fn [outlet]
               ^{:key (str id outlet)}
-               [outlet-component id outlet [x-pos y-pos]])
-             (sort-by first (:outlets obj-map)))])))
+              [outlet-component id outlet [x-pos y-pos]])
+            (sort-by first outlets))])))
 
 (defn cables-component
   []
@@ -99,14 +132,13 @@
                             x2 (or (:right pos2) 0)
                             y2 (or (:top pos2) 0)]
                         ^{:key conn}
-                        [:path {:stroke "white"
+                        [:path {:stroke "#555"
                                 :fill "transparent"
-                                :stroke-width 2
+                                :stroke-width 1
                                 :d (str "M" x1 "," y1 " "
                                         ;;control points - how the heck does Max/MSP do this?
                                         "C" x1 "," (+ y1 50) " "
                                         x2 "," (- y2 50) " "
-
                                         x2 "," y2 )}]))
                     @connections))]])))
 (defn create-object
@@ -164,6 +196,10 @@
                               :on-click (fn [e] (click-insert e @selected-obj))
                               :on-touch-start (fn [e] (touch-insert e @selected-obj))}
                      nil))
+       ;;TODO: There must be a way to do this without mapping over the same collection twice
+       ;; (map (fn [obj]
+       ;;        (with-meta [connector obj]
+       ;;          {:key (str "connector" (first obj))})) @objects)
        (map (fn [obj]
               (with-meta [object-component obj]
                 {:key (first obj)})) @objects)
@@ -207,10 +243,10 @@
     (if @open
       [:p {:class "min-max-icon min-max-open-slide"
            :on-click #(when (not @touch?) (dispatch [:close-sidebar]))
-           :on-touch-start #(do (reset! touch? true) (dispatch [:close-sidebar]))} [:span {:class "min-max-open-flip"} "< "]]
+           :on-touch-start #(do (reset! touch? true) (dispatch [:close-sidebar]))} [:span {:class "min-max-open-flip"} "<-"]]
       [:p {:class "min-max-icon min-max-close-slide"
            :on-click #(when (not @touch?) (dispatch [:open-sidebar]))
-           :on-touch-start #(do (reset! touch? true) (dispatch [:open-sidebar]))} [:span {:class "min-max-close-flip"} "< "]])))
+           :on-touch-start #(do (reset! touch? true) (dispatch [:open-sidebar]))} [:span {:class "min-max-close-flip"} "<-"]])))
 
 (defn sidebar
   []

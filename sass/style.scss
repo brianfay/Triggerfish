@@ -6,6 +6,7 @@ $bg-color: $black-ish;
 $insert-color: #be4;
 $delete-color: #e44;
 $connect-color: #9de;
+$connect-btn-color: lighten($delete-color, 20%);
 $move-color: #fe3;
 /* $object-bg-color: adjust-hue($bg-color, 45); */
 $medium-aquamarine: hsl(193,41,62); //#76B5C6
@@ -151,13 +152,66 @@ body {
     }
 }
 
+.inlet-connector-cntr {
+    position: absolute;
+    width: 50px;
+    /* left: -100%; */
+    left: -55px;
+    /* margin: auto auto; */
+    /* background-color: #F92; */
+}
+
+.outlet-connector-cntr {
+    position: absolute;
+    width: 50px;
+    left: calc(100% + 5px);
+    /* margin: auto auto; */
+    /* background-color: #F92; */
+}
+
+.horiz-center {
+    margin: auto auto;
+    text-align: center;
+}
+
+.connector-btn {
+    border: solid 1px;
+    border-color: $connect-btn-color;
+    background-color: $connect-btn-color;
+    color: #000;
+    font-size: 2em;
+    /* height: 10px; */
+    border-radius: 50%;
+    margin-bottom: 10px;
+    width: 30px;
+    height: 30px;
+}
+
+.connector {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    /* margin: 0 auto; */
+    top: 25%;
+    left: 25%;
+    /* width: 50%; */
+    /* height: 50%; */
+    /* transform: rotate(30deg); */
+    /* transform-origin: 100% 150%; */
+    background-color: #F92;
+    /* z-index: 100; */
+    /* transform: translateX(-30%); */
+}
+
 .inlet {
     background-color: $inlet-color;
+    /* padding: 10px; */
 }
 
 .outlet {
     background-color: $outlet-color;
     text-align: right;
+    /* padding: 10px; */
 }
 
 .line-box {
