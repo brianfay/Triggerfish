@@ -40,3 +40,13 @@
   (let [session (:session ring-req)
         uid     (:uid     session)]
     (p/remove-object-by-id! (:obj-id ?data))))
+
+(defmethod -event-msg-handler :patch/connect
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (let [session (:session ring-req)
+        uid     (:uid     session)
+        in-id (:in-id ?data)
+        in-name (:in-name ?data)
+        out-id (:out-id ?data)
+        out-name (:out-name ?data)]
+    (p/connect! in-id in-name out-id out-name)))

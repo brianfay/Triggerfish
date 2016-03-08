@@ -57,27 +57,65 @@
        (str (when (= type :audio) "~") name)])}))
 
 (defn inlet-connector
-  [inlets]
-  [:div
-   {:class "inlet-connector-cntr" :style
-    ;;probably not perfect, but close to center:
-    {:top (str "-" (* 15 (count inlets)) "px")}}
-   (map (fn [[name props]]
-          [:div
-           [:div {:class "horiz-center"} (str (when (= (:type props) :audio) "~") name)]
-           [:div {:class "connector-btn horiz-center"} ""]
-           ]) inlets)])
+  [id inlets]
+  (let [
+        selected-io (subscribe [:selected-io])
+        [selected-obj sel-i-or-o sel-io-name sel-type] @selected-io
+        obj-selected? (= selected-obj id)]
+    [:div
+    {:class "inlet-connector-cntr" :style
+     ;;probably not perfect, but close to center:
+     {:top (str "-" (* 20 (count inlets)) "px")}}
+     (doall (map (fn [[name props]]
+                   (when (or obj-selected? (= (:type props) sel-type))
+                    (let [inlet-selected? (and (= id selected-obj) (= :inlet sel-i-or-o) (= name sel-io-name))]
+                      [:div {:key (str id "_inlet_" name "_connector")}
+                       [:div {:class "horiz-center"} (str (when (= (:type props) :audio) "~") name)]
+                       [:div
+                        (merge  {:class (if (and obj-selected? inlet-selected?)
+                                          "connector-btn-selected horiz-center"
+                                          "connector-btn horiz-center")}
+                                (if obj-selected?
+                                  ;;object is selected, user is choosing another inlet
+                                  {:on-click (fn [e] (when (not @touch?) (dispatch [:select-io [:inlet name (:type props)]])))
+                                   :on-touch-start (fn [e] (dispatch [:select-io [:inlet name]]))}
+                                  ;;object is not selected, user is trying to connect an inlet and outlet
+                                  {:on-click (fn [e] (when (not @touch?)
+                                                       (chsk-send! [:patch/connect {:in-id id :in-name name :out-id selected-obj :out-name sel-io-name}])
+                                                       (dispatch [:connect [id :inlet name (:type props)]])))
+                                   :on-touch-start (fn [e]
+                                                     (chsk-send! [:patch/connect {:in-id id :in-name name :out-id selected-obj :out-name sel-io-name}])
+                                                     (dispatch [:connect [id :inlet name]]))}))]])))
+           inlets))]))
 
 (defn outlet-connector
-  [outlets]
-  [:div
-   {:class "outlet-connector-cntr" :style
-    {:top (str "-" (* 15 (count outlets)) "px")}}
-   (map (fn [[name props]]
-          [:div
-           [:div {:class "horiz-center"} (str name (when (= (:type props) :audio) "~"))]
-           [:div {:class "connector-btn horiz-center"} ""]
-           ]) outlets)])
+  [id outlets]
+  (let [
+        selected-io (subscribe [:selected-io])
+        [selected-obj sel-i-or-o sel-io-name sel-type] @selected-io
+        obj-selected? (= selected-obj id)]
+    [:div
+    {:class "outlet-connector-cntr" :style
+     {:top (str "-" (* 20 (count outlets)) "px")}}
+     (doall (map (fn [[name props]]
+                   (when (or obj-selected? (= (:type props) sel-type))
+                     (let [outlet-selected? (and (= id selected-obj) (= :outlet sel-i-or-o) (= name sel-io-name))]
+                       [:div {:key (str id "_outlet_" name "_connector")}
+                        [:div {:class "horiz-center"} (str name (when (= (:type props) :audio) "~"))]
+                        [:div
+                         (merge  {:class (if (and obj-selected? outlet-selected?)
+                                           "connector-btn-selected horiz-center"
+                                           "connector-btn horiz-center")}
+                                 (if obj-selected?
+                                   {:on-click (fn [e] (when (not @touch?) (dispatch [:select-io [:outlet name (:type props)]])))
+                                    :on-touch-start (fn [e] (dispatch [:select-io [:outlet name (:type props)]]))}
+                                   {:on-click (fn [e] (when (not @touch?)
+                                                        (chsk-send! [:patch/connect {:out-id id :out-name name :in-id selected-obj :in-name sel-io-name}])
+                                                        (dispatch [:connect [id :outlet name]])))
+                                    :on-touch-start (fn [e]
+                                                      (chsk-send! [:patch/connect {:out-id id :out-name name :in-id selected-obj :in-name sel-io-name}])
+                                                      (dispatch [:connect [id :outlet name]]))}))]])))
+           outlets))]))
 
 (defn object-component
   "Component for a Triggerfish Object."
@@ -86,35 +124,37 @@
     (let [x-pos (:x-pos obj-map)
           y-pos (:y-pos obj-map)
           mode (subscribe [:mode])
-          selected-obj (subscribe [:selected-object])
-          selected? (= @selected-obj id)
+          selected-io (subscribe [:selected-io])
+          [selected-obj sel-i-or-o sel-io-name sel-type] @selected-io
+          selected? (= selected-obj id)
           inlets (:inlets obj-map)
           outlets (:outlets obj-map)]
       [:div
-       (merge
-        {:class "object"
-         :style {:left x-pos
-                 :top  y-pos}}
+       {:class "object"
+        :style {:left x-pos
+                :top  y-pos}}
+       [:div
         (condp = @mode
           :delete
-            {:on-click (fn [e] (click-delete id))
-             :on-touch-start (fn [e] (touch-delete id))}
+          {:on-click (fn [e] (click-delete id))
+           :on-touch-start (fn [e] (touch-delete id))}
           :connect
-            {:on-click (fn [e] (dispatch [:select-object id]))}
-            nil))
-       (when (and selected? (= @mode :connect))
-         [inlet-connector inlets])
-       (when (and selected? (= @mode :connect))
-         [outlet-connector outlets])
-       [:div (str (:name obj-map))]
-       (map (fn [inlet]
-              ^{:key (str id inlet)}
-              [inlet-component id inlet [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
-            (sort-by first inlets))
-       (map (fn [outlet]
-              ^{:key (str id outlet)}
-              [outlet-component id outlet [x-pos y-pos]])
-            (sort-by first outlets))])))
+          {:on-click (fn [e] (when (not @touch?) (dispatch [:select-object id])))
+           :on-touch-start (fn [e] (dispatch [:select-object id]))}
+          nil)
+        [:div (str (:name obj-map))]
+        (map (fn [inlet]
+               ^{:key (str id inlet)}
+               [inlet-component id inlet [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
+             (sort-by first inlets))
+        (map (fn [outlet]
+               ^{:key (str id outlet)}
+               [outlet-component id outlet [x-pos y-pos]])
+             (sort-by first outlets))]
+        (when (and (= @mode :connect) (or selected? (= sel-i-or-o :outlet)))
+          [inlet-connector id inlets])
+        (when (and (= @mode :connect) (or selected? (= sel-i-or-o :inlet)))
+          [outlet-connector id outlets])])))
 
 (defn cables-component
   []
@@ -132,7 +172,7 @@
                             x2 (or (:right pos2) 0)
                             y2 (or (:top pos2) 0)]
                         ^{:key conn}
-                        [:path {:stroke "#555"
+                        [:path {:stroke "#777"
                                 :fill "transparent"
                                 :stroke-width 1
                                 :d (str "M" x1 "," y1 " "
@@ -187,14 +227,14 @@
 (defn patch-component
   []
   (let [objects (subscribe [:objects])
-        selected-obj (subscribe [:selected-create-object])
+        selected-create-obj (subscribe [:selected-create-object])
         mode (subscribe [:mode])]
     (fn []
       [:div (merge {:id "patch"}
                    (condp = @mode
                      :insert {
-                              :on-click (fn [e] (click-insert e @selected-obj))
-                              :on-touch-start (fn [e] (touch-insert e @selected-obj))}
+                              :on-click (fn [e] (click-insert e @selected-create-obj))
+                              :on-touch-start (fn [e] (touch-insert e @selected-create-obj))}
                      nil))
        ;;TODO: There must be a way to do this without mapping over the same collection twice
        ;; (map (fn [obj]

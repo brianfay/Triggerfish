@@ -8,6 +8,7 @@
    :positions {}
    :sidebar-open true
    :mode :insert
+   :selected-io [nil nil]
    })
 
 (register-handler
@@ -75,9 +76,28 @@
          (update-in [:objects] dissoc obj-id)))))
 
 (register-handler
+ :connect
+ (fn [db [ev-id [id i-or-o name]]]
+   (let [prev-selected (:selected-io db)
+         [p-id p-i-or-o p-name] prev-selected]
+     (println "connecting" id name "and" p-id p-name)
+     (println (:connections db))
+     (if (= i-or-o :inlet)
+       (assoc-in db [:connections [id name]] [p-id p-name])
+       (assoc-in db [:connections [p-id p-name]] [id name])))))
+
+(register-handler
+ ;;select an inlet or outlet
+ :select-io
+ (fn [db [ev-id [i-or-o name type]]]
+   (assoc db :selected-io [(first (:selected-io db)) i-or-o name type])))
+
+(register-handler
  :select-object
  (fn [db [ev-id obj-id]]
-   (assoc db :selected-object obj-id)))
+   (if (not (= obj-id (first (:selected-io db))))
+     (assoc db :selected-io [obj-id nil nil])
+     db)))
 
 (register-handler
  :set-mode

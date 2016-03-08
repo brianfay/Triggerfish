@@ -27,10 +27,16 @@
    (reaction (:selected-create-object @db))))
 
 (register-sub
- :selected-object
+ :selected-io
  (fn
    [db _]
-   (reaction (:selected-object @db))))
+   (reaction (:selected-io @db))))
+
+;; (register-sub
+;;  :selected-object
+;;  (fn
+;;    [db _]
+;;    (reaction (:selected-object @db))))
 
 (register-sub
  :mode
