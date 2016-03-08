@@ -26,6 +26,11 @@ SynthDef("tremolo",
 		ReplaceOut.ar(out, In.ar(in) * SinOsc.kr(freq))
 }).store;
 
+SynthDef("delay",
+	{|in, out, delaytime = 0.2, decaytime = 1|
+		ReplaceOut.ar(out, CombL.ar(in: In.ar(in),maxdelaytime: 2,delaytime: delaytime,decaytime: decaytime))
+}).store;
+
 SynthDef("stereo-dac",
 	{|inL, inR, outL=0, outR=1|
 		Out.ar(outL, In.ar(inL));

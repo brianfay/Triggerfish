@@ -54,6 +54,19 @@
               "outL" {:type :audio :default c/junk-audio-bus :hardware-out 0}
               "outR" {:type :audio :default c/junk-audio-bus :hardware-out 1}}
    }
+   :delay
+   {
+    :type :BasicSynth
+    :synthdef "delay"
+    :inlets {
+             "in" {:type :audio :default c/junk-audio-bus}
+             "delaytime" {:type :control :default 0.2}
+             "decaytime" {:type :control :default 1}
+             }
+    :outlets {
+              "out" {:type :audio :default c/junk-audio-bus}
+              }
+    }
    :adc
    {
     :type :BasicSynth
