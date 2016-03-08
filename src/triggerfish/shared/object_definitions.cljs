@@ -59,7 +59,7 @@
     :type :BasicSynth
     :synthdef "delay"
     :inlets {
-             "in" {:type :audio :default c/junk-audio-bus}
+             "in" {:type :audio :default 0} ;;assumes that nothing will write to bus 0; dacs will be last in dag
              "delaytime" {:type :control :default 0.2}
              "decaytime" {:type :control :default 1}
              }
