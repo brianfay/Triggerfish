@@ -137,15 +137,19 @@
   ;;The reserved map has an availalbe audio bus at 100, we should use that.
   (is (= (p/reserve-bus :control [["synth3" "in1"] ["synth4" "out3"]] {"synth1" 0, "synth2" 1, "synth3" 2 "synth4" 3} {[:control 200] 3 [:control 100] 0 [:control 2] 0 [:audio 3] 0}) 100)))
 
-(deftest loop-through-audio-inlets-no-reserved
-  (is (= (second (p/loop-through-inlets test-patch1 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
-         [["synth3" :inlet "one" (first (p/private-audio-buses))] ["synth1" :outlet "two" (first (p/private-audio-buses))]
-          ["synth3" :inlet "two" (second (p/private-audio-buses))] ["synth2" :outlet "one" (second (p/private-audio-buses))]])))
+(deftest loop-through-audio-outlets-no-reserved
+  (let [conn-set (set (second (p/loop-through-outlets test-patch1 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3})))]
+    (is (and (map (partial contains? conn-set)
+               ["synth3" :inlet "one" (first (p/private-audio-buses))]
+               ["synth1" :outlet "two" (first (p/private-audio-buses))]
+               ["synth3" :inlet "two" (second (p/private-audio-buses))]
+               ["synth2" :outlet "one" (second (p/private-audio-buses))])))))
 
-(deftest loop-through-control-inlets-no-reserved
-  (is (= (second (p/loop-through-inlets test-patch2 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))
-         [["synth3" :inlet "one" (first (p/private-control-buses))] ["synth1" :outlet "two" (first (p/private-control-buses))]
-          ["synth3" :inlet "two" (second (p/private-control-buses))] ["synth2" :outlet "one" (second (p/private-control-buses))]])))
+(deftest loop-through-control-outlets-no-reserved
+  (let [conn-set (second (p/loop-through-outlets test-patch2 "synth3" {} {"synth2" 0 "synth1" 1 "synth3" 2 "synth4" 3}))]
+    (is (and (map (partial contains? conn-set)
+              ["synth3" :inlet "one" (first (p/private-control-buses))] ["synth1" :outlet "two" (first (p/private-control-buses))]
+              ["synth3" :inlet "two" (second (p/private-control-buses))] ["synth2" :outlet "one" (second (p/private-control-buses))])))))
 
 (deftest connect-objs
   (let [connections (p/get-connection-actions test-patch1 ["synth2" "synth1" "synth3" "synth4"])]

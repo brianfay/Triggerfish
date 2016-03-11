@@ -48,8 +48,8 @@
     :type :DAC
     :synthdef "stereo-dac"
     :inlets {
-             "inL" {:type :audio :default c/junk-audio-bus}
-             "inR" {:type :audio :default c/junk-audio-bus}}
+             "inL" {:type :audio :default c/silent-audio-bus}
+             "inR" {:type :audio :default c/silent-audio-bus}}
     :outputs {
               "outL" {:type :audio :default c/junk-audio-bus :hardware-out 0}
               "outR" {:type :audio :default c/junk-audio-bus :hardware-out 1}}
@@ -59,7 +59,7 @@
     :type :BasicSynth
     :synthdef "delay"
     :inlets {
-             "in" {:type :audio :default 0} ;;assumes that nothing will write to bus 0; dacs will be last in dag
+             "in" {:type :audio :default c/silent-audio-bus}
              "delaytime" {:type :control :default 0.2}
              "decaytime" {:type :control :default 1}
              }
