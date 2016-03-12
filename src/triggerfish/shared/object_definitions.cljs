@@ -27,7 +27,7 @@
     :type :BasicSynth
     :synthdef "lopass"
     :inlets {
-             "in" {:type :audio}
+             "in" {:type :audio :default c/silent-audio-bus}
              "cutoff" {:type :control :default 1000}
              "res" {:type :control :default 0.5}}
     :outlets {
@@ -38,7 +38,7 @@
     :type :BasicSynth
     :synthdef "tremolo"
     :inlets {
-             "in" {:type :audio}
+             "in" {:type :audio :default c/silent-audio-bus}
              "freq" {:type :control :default 0.5}}
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
