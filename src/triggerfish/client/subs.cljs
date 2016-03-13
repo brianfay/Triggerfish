@@ -15,6 +15,12 @@
    (reaction (:positions @db))))
 
 (register-sub
+ :minimized
+ (fn
+   [db _]
+   (reaction (:minimized @db))))
+
+(register-sub
  :connections
  (fn
    [db _]

@@ -114,6 +114,13 @@ body {
     margin: 0px;
 }
 
+.object-name {
+    display: flex;
+    align-items: center;
+    height: 35px;
+    min-width: 30px;
+}
+
 .sidebar {
     position: fixed;
     background-color: rgba(0,0,0,0.7);
@@ -130,6 +137,7 @@ body {
 }
 
 .sidebar-opened {
+    overflow: scroll;
     animation-duration: $sidebar-animation-duration;
     animation-name: slide-in;
 }
@@ -182,8 +190,8 @@ body {
     font-size: 2em;
     border-radius: 50%;
     margin-bottom: 10px;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
 }
 
 .connector-btn-selected {
@@ -214,22 +222,45 @@ body {
     /* transform: translateX(-30%); */
 }
 
+.io-cntr {
+    display: flex; 
+}
+
+.io-column-cntr {
+    display: flex;
+    flex-direction: column;
+}
+
 .inlet {
+    display: flex;
     background-color: $inlet-color;
-    /* padding: 10px; */
+    border-top: solid 1px;
+    border-color: #444;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    min-width: 30px;
+    min-height: 30px;
 }
 
 .outlet {
+    display: flex;
+    border-top: solid 1px;
+    border-color: #444;
+    justify-content: center;
+    align-items: center;
     background-color: $outlet-color;
+    flex-grow: 1;
     text-align: right;
-    /* padding: 10px; */
+    min-width: 30px;
+    min-height: 30px;
 }
 
 .line-box {
-    position: absolute;
-    width: 100%;
+    width: 200%;
+    height: 200%;
+    z-index: -1;
     pointer-events: none;
-    height: 100%;
 }
 #patch{
     position: absolute;
@@ -252,10 +283,10 @@ body, html, #app {
     padding: 0;
 }
 
-svg {
-    position: absolute;
-    z-index: -10;
-}
+/* svg { */
+/*     position: absolute; */
+/*     z-index: -10; */
+/* } */
 
 .mode-selector {
     margin: 0 auto;

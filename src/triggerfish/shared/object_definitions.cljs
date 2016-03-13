@@ -60,8 +60,8 @@
     :synthdef "delay"
     :inlets {
              "in" {:type :audio :default c/silent-audio-bus}
-             "delaytime" {:type :control :default 0.2}
-             "decaytime" {:type :control :default 1}
+             "delaytime" {:type :control :default 0.5}
+             "decaytime" {:type :control :default 3}
              }
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}

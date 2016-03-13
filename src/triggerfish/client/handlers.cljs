@@ -24,9 +24,14 @@
 
 ;;Updates the app-db with the DOM position of an inlet or outlet
 (register-handler
- :update-position
+ :update-io-position
  (fn [db [ev-id obj-id inlet-or-outlet-name pos]]
    (assoc-in db [:positions [obj-id inlet-or-outlet-name]] pos)))
+
+(register-handler
+ :update-object-position
+ (fn [db [ev-id obj-id pos]]
+   (assoc-in db [:positions obj-id] pos)))
 
 (register-handler
  :dissoc-position
@@ -80,8 +85,6 @@
  (fn [db [ev-id [id i-or-o name]]]
    (let [prev-selected (:selected-io db)
          [p-id p-i-or-o p-name] prev-selected]
-     (println "connecting" id name "and" p-id p-name)
-     (println (:connections db))
      (if (= i-or-o :inlet)
        (assoc-in db [:connections [id name]] [p-id p-name])
        (assoc-in db [:connections [p-id p-name]] [id name])))))
@@ -98,6 +101,11 @@
    (if (not (= obj-id (first (:selected-io db))))
      (assoc db :selected-io [obj-id nil nil])
      db)))
+
+(register-handler
+ :min-max
+ (fn [db [ev-id obj-id current-val]]
+   (assoc-in db [:minimized obj-id] (not current-val))))
 
 (register-handler
  :set-mode

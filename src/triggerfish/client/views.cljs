@@ -2,23 +2,36 @@
   (:require [reagent.core :as reagent]
             [re-frame.core :refer [dispatch subscribe]]
             [triggerfish.shared.object-definitions :as obj]
-            [triggerfish.client.sente-events :refer [chsk-send!]]))
+            [triggerfish.client.sente-events :refer [chsk-send!]]
+            [goog.string :as gstring]))
 
 (declare click-delete touch-delete)
 ;;We assume that the device has no touch-screen until a touch-event is fired.
 (defonce touch? (atom false))
 
-(defn get-bounding-rect
+(defn get-bounding-rect-obj
   [node]
   (let [rect (.getBoundingClientRect node)]
-    {:bottom (+ (.-scrollY js/window) (.-bottom rect))
-     :top (+ (.-scrollY js/window) (.-top rect))
-     :left (.-left rect)
-     :right (.-right rect)}))
+    {:bottom (+ (.-scrollTop (.-offsetParent node)) (.-bottom rect))
+     :top (+ (.-scrollTop (.-offsetParent node)) (.-top rect))
+     :left (+ (.-scrollLeft (.-offsetParent node)) (.-left rect))
+     :right (+ (.-scrollLeft (.-offsetParent node)) (.-right rect))}))
+
+(defn get-bounding-rect-io
+  [node]
+  (let [rect (.getBoundingClientRect node)]
+    {:bottom (+ (.-scrollTop (.-offsetParent (.-offsetParent node))) (.-bottom rect))
+     :top (+ (.-scrollTop (.-offsetParent (.-offsetParent node))) (.-top rect))
+     :left (+ (.-scrollLeft (.-offsetParent (.-offsetParent node))) (.-left rect))
+     :right (+ (.-scrollLeft (.-offsetParent (.-offsetParent node))) (.-right rect))}))
 
 (defn update-inlet-or-outlet-position
   [id name this]
-  (dispatch [:update-position id name (get-bounding-rect (reagent/dom-node this))]))
+  (dispatch [:update-io-position id name (get-bounding-rect-io (reagent/dom-node this))]))
+
+(defn update-object-position
+  [id this]
+  (dispatch [:update-object-position id (get-bounding-rect-obj (reagent/dom-node this))]))
 
 (defn outlet-component
   [id [name {:keys [type]}] _] ;;ignoring last arg; it is position and we just use it to force component-did-update
@@ -120,46 +133,65 @@
 (defn object-component
   "Component for a Triggerfish Object."
   [[id obj-map]]
-  (fn [[id obj-map]]
-    (let [x-pos (:x-pos obj-map)
-          y-pos (:y-pos obj-map)
-          mode (subscribe [:mode])
-          selected-io (subscribe [:selected-io])
-          [selected-obj sel-i-or-o sel-io-name sel-type] @selected-io
-          selected? (= selected-obj id)
-          inlets (:inlets obj-map)
-          outlets (:outlets obj-map)]
-      [:div
-       {:class "object"
-        :style {:left x-pos
-                :top  y-pos}}
-       [:div
-        (condp = @mode
-          :delete
-          {:on-click (fn [e] (click-delete id))
-           :on-touch-start (fn [e] (touch-delete id))}
-          :connect
-          {:on-click (fn [e] (when (not @touch?) (dispatch [:select-object id])))
-           :on-touch-start (fn [e] (dispatch [:select-object id]))}
-          nil)
-        [:div (str (:name obj-map))]
-        (map (fn [inlet]
-               ^{:key (str id inlet)}
-               [inlet-component id inlet [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
-             (sort-by first inlets))
-        (map (fn [outlet]
-               ^{:key (str id outlet)}
-               [outlet-component id outlet [x-pos y-pos]])
-             (sort-by first outlets))]
-        (when (and (= @mode :connect) (or selected? (= sel-i-or-o :outlet)))
-          [inlet-connector id inlets])
-        (when (and (= @mode :connect) (or selected? (= sel-i-or-o :inlet)))
-          [outlet-connector id outlets])])))
+  (reagent/create-class
+   {
+    :component-did-mount
+    (fn [this]
+      (update-object-position id this))
+    :component-did-update
+    (fn [this]
+      (update-object-position id this))
+    :reagent-render
+    (fn [[id obj-map]]
+      (let [x-pos (:x-pos obj-map)
+            y-pos (:y-pos obj-map)
+            minimized (subscribe [:minimized])
+            minimized? (get @minimized id)
+            mode (subscribe [:mode])
+            selected-io (subscribe [:selected-io])
+            [selected-obj sel-i-or-o sel-io-name sel-type] @selected-io
+            selected? (= selected-obj id)
+            inlets (:inlets obj-map)
+            outlets (:outlets obj-map)]
+        [:div
+         {:class "object"
+          :style {:left x-pos
+                  :top  y-pos}}
+         [:div
+          (condp = @mode
+            :delete
+            {:on-click (fn [e] (click-delete id))
+             :on-touch-start (fn [e] (touch-delete id))}
+            :connect
+            {:on-click (fn [e] (when (not @touch?) (dispatch [:select-object id])))
+             :on-touch-start (fn [e] (dispatch [:select-object id]))}
+            nil)
+          [:div {:class "object-name"
+                 :on-click (fn [e] (when (not @touch?) (dispatch [:min-max id minimized?])))
+                 :on-touch-start (fn [e] (dispatch [:min-max id minimized?]))}
+           (str (:name obj-map))]
+          (when (not minimized?)
+            [:div {:class "io-cntr"}
+             [:div {:class "io-column-cntr"}
+              (map (fn [inlet]
+                     ^{:key (str id inlet)}
+                     [inlet-component id inlet [x-pos y-pos]]) ;;passing x-pos/y-pos forces an update
+                   (sort-by first inlets))]
+             [:div {:class "io-column-cntr"}
+              (map (fn [outlet]
+                     ^{:key (str id outlet)}
+                     [outlet-component id outlet [x-pos y-pos]])
+                   (sort-by first outlets))]])]
+         (when (and (= @mode :connect) (or selected? (= sel-i-or-o :outlet)))
+           [inlet-connector id inlets])
+         (when (and (= @mode :connect) (or selected? (= sel-i-or-o :inlet)))
+           [outlet-connector id outlets])]))}))
 
 (defn cables-component
   []
   (let [connections (subscribe [:connections])
-        positions   (subscribe [:positions])]
+        positions   (subscribe [:positions])
+        objects     (subscribe [:objects])]
     (fn []
       [:svg {:class "line-box"}
        [:g
@@ -167,19 +199,38 @@
                       (let [[[in-id inlet-name] [out-id outlet-name]] conn
                             pos1 (get @positions [in-id inlet-name])
                             pos2 (get @positions [out-id outlet-name])
-                            x1 (or (:left pos1) 0)
-                            y1 (or (:top pos1) 0)
-                            x2 (or (:right pos2) 0)
-                            y2 (or (:top pos2) 0)]
-                        ^{:key conn}
-                        [:path {:stroke "#777"
-                                :fill "transparent"
-                                :stroke-width 1
-                                :d (str "M" x1 "," y1 " "
-                                        ;;control points - how the heck does Max/MSP do this?
-                                        "C" x1 "," (+ y1 50) " "
-                                        x2 "," (- y2 50) " "
-                                        x2 "," y2 )}]))
+                            obj1pos (get @positions in-id)
+                            obj2pos (get @positions out-id)
+                            bottom1 (:bottom pos1)
+                            bottom2 (:bottom pos2)
+                            top1 (:top pos1)
+                            top2 (:top pos2)
+                            left1 (:left pos1)
+                            right2 (:right pos2)
+                            center1 (+ top1 (* (- bottom1 top1) 0.5))
+                            center2 (+ top2 (* (- bottom2 top2) 0.5))
+                            y1 (if (> center1 0)
+                                 center1
+                                 (:top obj1pos))
+                            y2 (if (> center2 0)
+                                 center2
+                                 (:top obj2pos))
+                            x1 (if (> left1 0)
+                                 left1
+                                 (:left obj1pos))
+                            x2 (if (> right2 0)
+                                 right2
+                                (:right obj2pos))]
+                        (when (and y1 y2 x1 x2)
+                          ^{:key conn}
+                          [:path {:stroke "#777"
+                                 :fill "transparent"
+                                 :stroke-width 1
+                                 :d (str "M" x1 "," y1 " "
+                                         ;;control points - how the heck does Max/MSP do this?
+                                         "C" x1 "," (+ y1 0) " "
+                                         x2 "," (- y2 0) " "
+                                         x2 "," y2 )}])))
                     @connections))]])))
 (defn create-object
   [obj-name x-pos y-pos]
@@ -283,10 +334,10 @@
     (if @open
       [:p {:class "min-max-icon min-max-open-slide"
            :on-click #(when (not @touch?) (dispatch [:close-sidebar]))
-           :on-touch-start #(do (reset! touch? true) (dispatch [:close-sidebar]))} [:span {:class "min-max-open-flip"} "<-"]]
+           :on-touch-start #(do (reset! touch? true) (dispatch [:close-sidebar]))} [:span {:class "min-max-open-flip"} (gstring/unescapeEntities "&#x266B;")]]
       [:p {:class "min-max-icon min-max-close-slide"
            :on-click #(when (not @touch?) (dispatch [:open-sidebar]))
-           :on-touch-start #(do (reset! touch? true) (dispatch [:open-sidebar]))} [:span {:class "min-max-close-flip"} "<-"]])))
+           :on-touch-start #(do (reset! touch? true) (dispatch [:open-sidebar]))} [:span {:class "min-max-close-flip"} (gstring/unescapeEntities "&#x266B;")]])))
 
 (defn sidebar
   []
