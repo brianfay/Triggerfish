@@ -1,6 +1,4 @@
 $font-stack: monospace;
-/* $bg-color: #93b8a2; */
-/* $bg-color: hsl(179,36,57); */
 $black-ish: hsl(226,21,11); //#161922
 $bg-color: $black-ish;
 $insert-color: #be4;
@@ -8,13 +6,11 @@ $delete-color: #e44;
 $connect-color: #9de;
 $connect-btn-color: lighten($delete-color, 20%);
 $move-color: #fe3;
-/* $object-bg-color: adjust-hue($bg-color, 45); */
 $medium-aquamarine: hsl(193,41,62); //#76B5C6
 $object-bg-color: darken($medium-aquamarine, 20%);
 $inlet-color: darken($object-bg-color, 10%);
 $outlet-color: darken($object-bg-color, 15%);
 $sidebar-animation-duration: 200ms;
-/* $outlet-color: #4fb2d5; */
 html {
     height: 100%;
     -webkit-touch-callout: none;
@@ -121,6 +117,10 @@ body {
     min-width: 30px;
 }
 
+.object-selected {
+    background-color: #d74;
+}
+
 .sidebar {
     position: fixed;
     background-color: rgba(0,0,0,0.7);
@@ -160,66 +160,9 @@ body {
     }
 }
 
-.inlet-connector-cntr {
-    position: absolute;
-    width: 50px;
-    /* left: -100%; */
-    left: -55px;
-    /* margin: auto auto; */
-    /* background-color: #F92; */
-}
-
-.outlet-connector-cntr {
-    position: absolute;
-    width: 50px;
-    left: calc(100% + 5px);
-    /* margin: auto auto; */
-    /* background-color: #F92; */
-}
-
 .horiz-center {
     margin: auto auto;
     text-align: center;
-}
-
-.connector-btn {
-    border: solid 1px;
-    border-color: $connect-btn-color;
-    background-color: $connect-btn-color;
-    color: #000;
-    font-size: 2em;
-    border-radius: 50%;
-    margin-bottom: 10px;
-    width: 30px;
-    height: 30px;
-}
-
-.connector-btn-selected {
-    border: solid 1px;
-    border-color: $connect-color;
-    background-color: $connect-color;
-    color: #000;
-    font-size: 2em;
-    border-radius: 50%;
-    margin-bottom: 10px;
-    width: 40px;
-    height: 40px;
-}
-
-.connector {
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    /* margin: 0 auto; */
-    top: 25%;
-    left: 25%;
-    /* width: 50%; */
-    /* height: 50%; */
-    /* transform: rotate(30deg); */
-    /* transform-origin: 100% 150%; */
-    background-color: #F92;
-    /* z-index: 100; */
-    /* transform: translateX(-30%); */
 }
 
 .io-cntr {
@@ -243,6 +186,10 @@ body {
     min-height: 30px;
 }
 
+.inlet-selected {
+    background-color: lighten($inlet-color, 20%);
+}
+
 .outlet {
     display: flex;
     border-top: solid 1px;
@@ -256,9 +203,11 @@ body {
     min-height: 30px;
 }
 
+.outlet-selected {
+    background-color: lighten($outlet-color, 20%);
+}
+
 .line-box {
-    width: 200%;
-    height: 200%;
     z-index: -1;
     pointer-events: none;
 }
@@ -282,11 +231,6 @@ body, html, #app {
     margin: 0;
     padding: 0;
 }
-
-/* svg { */
-/*     position: absolute; */
-/*     z-index: -10; */
-/* } */
 
 .mode-selector {
     margin: 0 auto;

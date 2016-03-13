@@ -46,6 +46,10 @@
 (defmethod -event-msg-handler :chsk/handshake
   [{:as ev-msg :keys [?data]}])
 
+(defmethod -event-msg-handler :apparent-success
+  [{:as ev-msg :keys [?data]}]
+  (println "got apparent-success from sente, not sure what this means."))
+
 (defmethod -event-msg-handler :patch/recv
   [{:as ev-msg :keys [?data]}]
   (dispatch [:patch-recv (:patch ?data)]))

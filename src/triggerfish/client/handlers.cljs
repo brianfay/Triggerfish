@@ -1,6 +1,7 @@
 (ns triggerfish.client.handlers
   (:require [re-frame.core :refer [register-handler]]
-            [triggerfish.shared.object-definitions :as obj]))
+            [triggerfish.shared.object-definitions :as obj]
+            [triggerfish.client.sente-events :refer [chsk-send!]]))
 
 (def initial-state
   {:objects {}
@@ -8,7 +9,7 @@
    :positions {}
    :sidebar-open true
    :mode :insert
-   :selected-io [nil nil]
+   :selected-outlet [nil nil]
    })
 
 (register-handler
@@ -82,25 +83,40 @@
 
 (register-handler
  :connect
- (fn [db [ev-id [id i-or-o name]]]
-   (let [prev-selected (:selected-io db)
-         [p-id p-i-or-o p-name] prev-selected]
-     (if (= i-or-o :inlet)
-       (assoc-in db [:connections [id name]] [p-id p-name])
-       (assoc-in db [:connections [p-id p-name]] [id name])))))
+ (fn [db [ev-id inlet-id inlet-name type]]
+   (let [selected-outlet (:selected-outlet db)
+         [outlet-id outlet-name outlet-type] selected-outlet]
+     (if (and (not (nil? selected-outlet)) (= type outlet-type))
+       (do
+         (chsk-send! [:patch/connect {:in-id inlet-id :in-name inlet-name :out-id outlet-id :out-name outlet-name}])
+         (assoc-in db [:connections [inlet-id inlet-name]] [outlet-id outlet-name]))
+       (if (not (nil? (get (:connections db) [inlet-id inlet-name])))
+           (do
+             (chsk-send! [:patch/disconnect {:in-id inlet-id :in-name inlet-name}])
+             (update-in db [:connections] dissoc [inlet-id inlet-name]))
+           db)))))
 
 (register-handler
- ;;select an inlet or outlet
- :select-io
- (fn [db [ev-id [i-or-o name type]]]
-   (assoc db :selected-io [(first (:selected-io db)) i-or-o name type])))
+ ;;select an outlet
+ :select-outlet
+ (fn [db [ev-id [id name type]]]
+   (let [prev-outlet (:selected-outlet db)]
+     (println prev-outlet)
+     (if (not (= prev-outlet [id name type]))
+       (assoc db :selected-outlet [id name type])
+       (dissoc db :selected-outlet)))))
 
 (register-handler
  :select-object
  (fn [db [ev-id obj-id]]
-   (if (not (= obj-id (first (:selected-io db))))
-     (assoc db :selected-io [obj-id nil nil])
+   (if (not (= obj-id (first (:selected-outlet db))))
+     (assoc db :selected-outlet [obj-id nil nil])
      db)))
+
+(register-handler
+ :deselect-outlet
+ (fn [db [ev-id [id name type]]]
+   (dissoc db :selected-outlet)))
 
 (register-handler
  :min-max
@@ -121,3 +137,8 @@
  :close-sidebar
  (fn [db [ev-id]]
    (assoc db :sidebar-open false)))
+
+(register-handler
+ :update-patch-size
+ (fn [db [ev-id width height]]
+   (assoc db :patch-size [width height])))

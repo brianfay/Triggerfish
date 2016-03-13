@@ -33,22 +33,22 @@
    (reaction (:selected-create-object @db))))
 
 (register-sub
- :selected-io
+ :selected-outlet
  (fn
    [db _]
-   (reaction (:selected-io @db))))
-
-;; (register-sub
-;;  :selected-object
-;;  (fn
-;;    [db _]
-;;    (reaction (:selected-object @db))))
+   (reaction (:selected-outlet @db))))
 
 (register-sub
  :mode
  (fn
    [db _]
    (reaction (:mode @db))))
+
+(register-sub
+ :patch-size
+ (fn
+   [db _]
+   (reaction (:patch-size @db))))
 
 (register-sub
  :sidebar-open
