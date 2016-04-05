@@ -9,4 +9,4 @@
 
 (deftest get-control-val-pair
   (is (= (obj/get-control-val-pair (:inlets (:sine obj-def/objects))) ["freq" 220]))
-  (is (= (obj/get-control-val-pair (:inlets (:lopass obj-def/objects))) ["cutoff" 1000 "res" 0.5])))
+  (is (= (obj/get-control-val-pair (:inlets (:lopass obj-def/objects))) ["in" 126 "cutoff" 1000 "res" 0.5])))

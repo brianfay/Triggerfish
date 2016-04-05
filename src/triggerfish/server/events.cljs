@@ -35,6 +35,16 @@
         uid     (:uid     session)]
     (p/add-object! (p/create-object (:name ?data) (:x-pos ?data) (:y-pos ?data)))))
 
+(defmethod -event-msg-handler :patch/move-object
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (let [session (:session ring-req)
+        uid     (:uid     session)]
+    (println "received move-obj request"
+             (:obj-id ?data)
+             (:x-pos ?data)
+             (:y-pos ?data))
+    (p/move-object! (:obj-id ?data) (:x-pos ?data) (:y-pos ?data))))
+
 (defmethod -event-msg-handler :patch/delete-object
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
   (let [session (:session ring-req)

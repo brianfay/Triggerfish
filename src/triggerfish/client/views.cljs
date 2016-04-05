@@ -1,4 +1,5 @@
 (ns triggerfish.client.views
+
   (:require [reagent.core :as reagent]
             [re-frame.core :refer [dispatch subscribe]]
             [triggerfish.shared.object-definitions :as obj]
@@ -9,6 +10,7 @@
 (declare click-delete touch-delete)
 ;;We assume that the device has no touch-screen until a touch-event is fired.
 (defonce touch? (atom false))
+(defonce moving-touches (atom {}))
 
 (defn get-bounding-rect-obj
   [node]
@@ -30,9 +32,21 @@
   [id name this]
   (dispatch [:update-io-position id name (get-bounding-rect-io (reagent/dom-node this))]))
 
-(defn update-object-position
+(defn update-object-dom-position
   [id this]
-  (dispatch [:update-object-position id (get-bounding-rect-obj (reagent/dom-node this))]))
+  (dispatch [:update-object-dom-position id (get-bounding-rect-obj (reagent/dom-node this))]))
+
+(defn handle-touch-move
+  [id pageX pageY]
+  (let [[oldPageX oldPageY dom-element] (get @moving-touches id)
+        translateX (- pageX oldPageX)
+        translateY (- pageY oldPageY)
+        style (.-style dom-element)]
+    (set! (.-transform style) (str "translate(" translateX "px, " translateY "px)"))))
+
+(defn commit-move-object
+  [id x y]
+  (dispatch [:move-object id x y]))
 
 (defn outlet-component
   [id [name {:keys [type]}] _] ;;ignoring last arg; it is position and we just use it to force component-did-update
@@ -80,9 +94,7 @@
                           (when (not @touch?)
                             (dispatch [:connect id name type])))
               :on-touch-start (fn [e]
-                                (dispatch [:connect id name type]))
-
-              }
+                                (dispatch [:connect id name type]))}
          (str (when (= type :audio) "~") name)])}))
 
 (defn object-component
@@ -92,10 +104,10 @@
    {
     :component-did-mount
     (fn [this]
-      (update-object-position id this))
+      (update-object-dom-position id this))
     :component-did-update
     (fn [this]
-      (update-object-position id this))
+      (update-object-dom-position id this))
     :reagent-render
     (fn [[id obj-map]]
       (let [x-pos (:x-pos obj-map)
@@ -112,22 +124,71 @@
          {:class (if selected?
                    "object object-selected"
                    "object")
-          :style {:left x-pos
-                  :top  y-pos}}
+          :style {
+                  ;; :transform (str "translate(" x-pos "px, " y-pos "px)")
+                  :left x-pos
+                  :top  y-pos
+                  }
+          :on-touch-start (fn [e]
+                            (.stopPropagation e)
+                            (.preventDefault e)
+                            (let [touch-event (.item (.-changedTouches e) 0)
+                                  touch-id (.-identifier touch-event)
+                                  pageX (.-pageX touch-event)
+                                  pageY (.-pageY touch-event)
+                                  dom-element (.-currentTarget e)]
+                              (swap! moving-touches assoc touch-id [pageX pageY dom-element])))
+           :on-touch-move (fn [e]
+                            (.stopPropagation e)
+                            (.preventDefault e)
+                            (doall
+                             (map
+                              (fn [idx]
+                                (let [touch-event (.item (.-changedTouches e) idx)
+                                      touch-id (.-identifier touch-event)
+                                      pageX (.-pageX touch-event)
+                                      pageY (.-pageY touch-event)
+                                      dom-element (.-currentTarget e)]
+                                  (handle-touch-move
+                                   touch-id pageX pageY)))
+                              (range (.-length (.-changedTouches e))))))
+          :on-touch-end (fn [e]
+                          (.stopPropagation e)
+                          (.preventDefault e)
+                          (let [touch-event (.item (.-changedTouches e) 0)
+                                touch-id (.-identifier touch-event)
+                                pageX (.-pageX touch-event)
+                                pageY (.-pageY touch-event)
+                                [oldPageX oldPageY dom-element] (get @moving-touches touch-id)
+                                style (.-style dom-element)
+                                old-left (js/parseFloat (.-left style))
+                                old-top (js/parseFloat (.-top style))
+                                translateX (- pageX oldPageX)
+                                translateY (- pageY oldPageY)
+                                new-left (js/parseFloat (+ old-left translateX))
+                                new-top (js/parseFloat (+ old-top translateY))]
+                            (swap! moving-touches dissoc touch-id)
+                            (set! (.-transform style) nil)
+                            (set! (.-left style) (str new-left "px"))
+                            (set! (.-top style) (str new-top "px"))
+                            (commit-move-object id new-left new-top)))}
          [:div
           (condp = @mode
             :delete
               {:on-click (fn [e] (click-delete id))
               :on-touch-start (fn [e] (touch-delete id))}
-            nil)
+            ;;default:
+              nil
+            )
           [:div {:class "object-name"
                  :on-click (fn [e] (do
                                      (.stopPropagation e)
                                      (when (not @touch?)
                                        (dispatch [:min-max id minimized?]))))
-                 :on-touch-start (fn [e] (do
-                                           (.stopPropagation e)
-                                           (dispatch [:min-max id minimized?])))}
+                 ;; :on-touch-end (fn [e] (do
+                 ;;                           ;; (.stopPropagation e)
+                 ;;                         (dispatch [:min-max id minimized?])))
+                 }
            (str (:name obj-map))]
           (when (not minimized?)
             [:div {:class "io-cntr"}
@@ -182,7 +243,7 @@
                               ^{:key conn}
                               [:path {:stroke "#777"
                                       :fill "transparent"
-                                      :stroke-width 1
+                                      :stroke-width 2
                                       :d (str "M" x1 "," y1 " "
                                               ;;control points - how the heck does Max/MSP do this?
                                               "C" x1 "," (+ y1 0) " "

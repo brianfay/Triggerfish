@@ -266,6 +266,15 @@
     ;; (sc/do-when-node-added id #(swap! patch assoc id obj))
     (obj/add-to-server! obj)))
 
+(defn move-object!
+  "Adjusts the x and y position of an object"
+  [id x-pos y-pos]
+  (reset!
+    patch
+    (-> @patch
+        (assoc-in [id :x-pos] (if (> x-pos 10) x-pos 10))
+        (assoc-in [id :y-pos] (if (> y-pos 0) y-pos 0)))))
+
 (defn remove-object!
   "Removes object from the server, first disconnecting all inlets and outlets (which will update the patch)"
   [obj]

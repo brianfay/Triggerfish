@@ -30,7 +30,7 @@
    (assoc-in db [:positions [obj-id inlet-or-outlet-name]] pos)))
 
 (register-handler
- :update-object-position
+ :update-object-dom-position
  (fn [db [ev-id obj-id pos]]
    (assoc-in db [:positions obj-id] pos)))
 
@@ -42,9 +42,11 @@
 (register-handler
  :move-object
  (fn [db [ev-id obj-id x y]]
-   (-> db
-    (assoc-in [:objects obj-id :x-pos] x)
-    (assoc-in [:objects obj-id :y-pos] y))))
+   (do
+     (chsk-send! [:patch/move-object {:obj-id obj-id :x-pos x :y-pos y}])
+     (-> db
+         (assoc-in [:objects obj-id :x-pos] (if (> x 10) x 10))
+         (assoc-in [:objects obj-id :y-pos] (if (> y 0) y 0))))))
 
 (register-handler
  :select-create-object
@@ -86,15 +88,16 @@
  (fn [db [ev-id inlet-id inlet-name type]]
    (let [selected-outlet (:selected-outlet db)
          [outlet-id outlet-name outlet-type] selected-outlet]
-     (if (and (not (nil? selected-outlet)) (= type outlet-type))
-       (do
-         (chsk-send! [:patch/connect {:in-id inlet-id :in-name inlet-name :out-id outlet-id :out-name outlet-name}])
-         (assoc-in db [:connections [inlet-id inlet-name]] [outlet-id outlet-name]))
-       (if (not (nil? (get (:connections db) [inlet-id inlet-name])))
+     (when (not (= inlet-id outlet-id))
+       (if (and (not (nil? selected-outlet)) (= type outlet-type))
+         (do
+           (chsk-send! [:patch/connect {:in-id inlet-id :in-name inlet-name :out-id outlet-id :out-name outlet-name}])
+           (assoc-in db [:connections [inlet-id inlet-name]] [outlet-id outlet-name]))
+         (if (not (nil? (get (:connections db) [inlet-id inlet-name])))
            (do
              (chsk-send! [:patch/disconnect {:in-id inlet-id :in-name inlet-name}])
              (update-in db [:connections] dissoc [inlet-id inlet-name]))
-           db)))))
+           db))))))
 
 (register-handler
  ;;select an outlet
