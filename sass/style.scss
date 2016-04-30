@@ -4,13 +4,13 @@ $bg-color: $black-ish;
 $insert-color: #be4;
 $delete-color: #e44;
 $connect-color: #9de;
+$control-color: #f2b500;
 $connect-btn-color: lighten($delete-color, 20%);
 $move-color: #fe3;
 $medium-aquamarine: hsl(193,41,62); //#76B5C6
 $object-bg-color: darken($medium-aquamarine, 20%);
 $inlet-color: darken($object-bg-color, 10%);
 $outlet-color: darken($object-bg-color, 15%);
-$sidebar-animation-duration: 200ms;
 html {
     height: 100%;
     -webkit-touch-callout: none;
@@ -33,76 +33,6 @@ body {
     margin: 24px 0px 48px 0px;
 }
 
-.min-max-icon {
-    text-align: right;
-    font-size: 1.5em;
-    position: relative;
-}
-
-.min-max-open-slide {
-    animation-duration: $sidebar-animation-duration;
-    animation-name: min-max-slide-in;
-    left: 0;
-}
-
-.min-max-close-slide {
-    animation-duration: $sidebar-animation-duration;
-    animation-name: min-max-slide-out;
-    left: 18%;
-}
-
-@keyframes min-max-slide-in {
-    from {
-        left: 18%;
-    }
-    to {
-        left: 0;
-    }
-}
-
-@keyframes min-max-slide-out {
-    from {
-        left: 0;
-    }
-    to {
-        left: 18%;
-    }
-}
-
-.min-max-close-flip {
-    animation-duration: $sidebar-animation-duration;
-    animation-name: flip;
-    display: inline-block;
-    transform: rotate(180deg);
-    position: relative;
-}
-
-.min-max-open-flip {
-    animation-duration: $sidebar-animation-duration;
-    animation-name: flip-180;
-    display: inline-block;
-    transform: rotate(0deg);
-    position: relative;
-}
-
-@keyframes flip {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(180deg);
-    }
-}
-
-@keyframes flip-180 {
-    from {
-        transform: rotate(180deg);
-    }
-    to {
-        transform: rotate(0deg);
-    }
-}
-
 .object {
     position: absolute;
     background-color: $object-bg-color;
@@ -119,45 +49,6 @@ body {
 
 .object-selected {
     background-color: #d74;
-}
-
-.sidebar {
-    position: fixed;
-    background-color: rgba(0,0,0,0.7);
-    left: 0;
-    padding: 14px;
-    height: 100%;
-    z-index: 100;
-}
-
-.sidebar-closed {
-    animation-duration: $sidebar-animation-duration;
-    animation-name: slide-out;
-    transform: translate(-100%);
-}
-
-.sidebar-opened {
-    overflow: scroll;
-    animation-duration: $sidebar-animation-duration;
-    animation-name: slide-in;
-}
-
-@keyframes slide-out {
-    from {
-        transform: translate(0);
-    }
-    to {
-        transform: translate(-100%);
-    }
-}
-
-@keyframes slide-in {
-    from {
-        transform: translate(-100%);
-    }
-    to {
-        transform: translate(0);
-    }
 }
 
 .horiz-center {
@@ -233,12 +124,16 @@ body, html, #app {
 }
 
 .mode-selector {
+    position: fixed;
+    background-color: #000;
+    top: 33%;
     margin: 0 auto;
     display: flex;
     justify-content: center;
-    flex-direction: row;
+    flex-direction: column;
     max-width: 50vw;
     flex-wrap: wrap;
+    z-index: 2;
 }
 
 .mode-toggle {
@@ -274,20 +169,20 @@ body, html, #app {
     border-color: $delete-color;
 }
 
-.connect-mode-active {
-    background-color: darken($connect-color, 30%);
+.control-mode-active {
+    background-color: darken($control-color, 15%);
     color: #FFF;
-    border-color: $connect-color;
+    border-color: $control-color;
 }
 
-.connect-mode-inactive {
-    color: $connect-color;
-    border-color: $connect-color;
+.control-mode-inactive {
+    color: $control-color;
+    border-color: $control-color;
 }
 
 .move-mode-active {
     opacity: 1;
-    background-color: darken($move-color, 15%);
+    background-color: darken($move-color, 20%);
     color: #FFF;
     border-color: $move-color;
 }
@@ -309,4 +204,17 @@ body, html, #app {
     font-size: 1.5em;
     padding-bottom: 4px;
     border-bottom: 1px solid #888;
+}
+
+.toolbar-hidden {
+    transform: translateX(-100%);
+}
+
+.toolbar-show-hide-btn {
+    font-size: 2.5em; 
+    text-align: center;
+    /* margin: 7px; */
+}
+.toolbar-show-hide-btn-hidden {
+    transform: translateX(100%);
 }

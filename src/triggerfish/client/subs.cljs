@@ -51,7 +51,7 @@
    (reaction (:patch-size @db))))
 
 (register-sub
- :sidebar-open
+ :toolbar-hidden
  (fn
    [db _]
-    (reaction (:sidebar-open @db))))
+    (reaction (:toolbar-hidden @db))))

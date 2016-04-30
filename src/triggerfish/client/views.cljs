@@ -1,5 +1,4 @@
 (ns triggerfish.client.views
-
   (:require [reagent.core :as reagent]
             [re-frame.core :refer [dispatch subscribe]]
             [triggerfish.shared.object-definitions :as obj]
@@ -75,8 +74,9 @@
 
 (defn inlet-component
   [id [name {:keys [type]}] _]
+  (let [mode (subscribe [:mode])]
     (reagent/create-class
-     {
+    {
      :component-did-mount
      (fn [this]
        (update-inlet-or-outlet-position id name this))
@@ -88,14 +88,19 @@
        (dispatch [:dissoc-position id name]))
      :reagent-render
      (fn [id [name {:keys [type]}] _]
-       [:div {:class "inlet"
-              :key (str id name)
-              :on-click (fn [e]
-                          (when (not @touch?)
-                            (dispatch [:connect id name type])))
-              :on-touch-start (fn [e]
-                                (dispatch [:connect id name type]))}
-         (str (when (= type :audio) "~") name)])}))
+       [:div
+        (merge
+         {:class "inlet"
+          :key (str id name)}
+         (when (= @mode :connect)
+           {:on-click
+            (fn [e]
+              (when (not @touch?)
+                (dispatch [:connect id name type])))
+            :on-touch-start
+            (fn [e]
+              (dispatch [:connect id name type]))}))
+        (str (when (= type :audio) "~") name)])})))
 
 (defn object-component
   "Component for a Triggerfish Object."
@@ -308,14 +313,13 @@
     :reagent-render
     (let [objects (subscribe [:objects])
           selected-create-obj (subscribe [:selected-create-object])
-          mode (subscribe [:mode])]
+          mode (subscribe [:mode])
+          insert-disabled? (subscribe [:toolbar-hidden])]
       (fn []
-        [:div (merge {:id "patch"}
-                     (condp = @mode
-                       :insert {
-                                :on-click (fn [e] (click-insert e @selected-create-obj))
-                                :on-touch-start (fn [e] (touch-insert e @selected-create-obj))}
-                       nil))
+        [:div {:id "patch"
+               :on-click (when (not @insert-disabled?) (fn [e] (click-insert e @selected-create-obj)))
+               :on-touch-start (when (not @insert-disabled?) (fn [e] (touch-insert e @selected-create-obj)))}
+
          ;;TODO: There must be a way to do this without mapping over the same collection twice
          ;; (map (fn [obj]
          ;;        (with-meta [connector obj]
@@ -351,42 +355,29 @@
   (let [selected-obj (subscribe [:selected-create-object])
         selected-name @selected-obj]
     [:div [:p {:on-click #(when (not @touch?) (dispatch [:select-create-object name]))
-          :on-touch-start #(do (reset! touch? true) (dispatch [:select-create-object name]))
+               :on-touch-start #(do
+                                    (reset! touch? true)
+                                    (dispatch [:select-create-object name])
+                                    (dispatch [:set-mode :insert]))
           :class (if (= name selected-name)
                    "create-obj-selector create-obj-selected"
                    "create-obj-selector")}
       (str name)]]))
 
-(defn sidebar-show-toggle
+(defn toolbar
   []
-  (let [open (subscribe [:sidebar-open])]
-    (if @open
-      [:p {:class "min-max-icon min-max-open-slide"
-           :on-click #(when (not @touch?) (dispatch [:close-sidebar]))
-           :on-touch-start #(do (reset! touch? true) (dispatch [:close-sidebar]))} [:span {:class "min-max-open-flip"} (gstring/unescapeEntities "&#x266B;")]]
-      [:p {:class "min-max-icon min-max-close-slide"
-           :on-click #(when (not @touch?) (dispatch [:open-sidebar]))
-           :on-touch-start #(do (reset! touch? true) (dispatch [:open-sidebar]))} [:span {:class "min-max-close-flip"} (gstring/unescapeEntities "&#x266B;")]])))
-
-(defn sidebar
-  []
-  (let [open (subscribe [:sidebar-open])
-        mode (subscribe [:mode])]
-    [:div {:class (if @open "sidebar sidebar-opened"
-                      "sidebar sidebar-closed")}
-     [sidebar-show-toggle]
-     [:div {:class "title"} [:h1 "TRIGGERFISH"]]
-     [mode-selector]
-     [:div {:class "sidebar-content"}
-      (condp = @mode
-          :insert (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))
-          :delete nil
-          :connect nil
-          :move nil
-          nil)]]))
+  (let [toolbar-hidden? (subscribe [:toolbar-hidden])]
+    [:div {:class (str (when @toolbar-hidden? "toolbar-hidden ") "mode-selector")}
+     [:div {:class (str (when @toolbar-hidden? "toolbar-show-hide-btn-hidden ") "toolbar-show-hide-btn")
+            :on-click (if @toolbar-hidden?
+                        #(dispatch [:open-toolbar])
+                        #(dispatch [:close-toolbar]))}
+      (gstring/unescapeEntities "&#x266B;")]
+     [:div
+      (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))]]))
 
 (defn app
   []
   [:div {:class "one-hundred"}
-   [sidebar]
+   [toolbar]
    [patch-component]])

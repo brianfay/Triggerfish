@@ -7,7 +7,7 @@
   {:objects {}
    :connections {}
    :positions {}
-   :sidebar-open true
+   :toolbar-hidden true
    :mode :insert
    :selected-outlet [nil nil]
    })
@@ -132,14 +132,14 @@
    (assoc db :mode mode)))
 
 (register-handler
- :open-sidebar
+ :open-toolbar
  (fn [db [ev-id]]
-   (assoc db :sidebar-open true)))
+   (assoc db :toolbar-hidden false)))
 
 (register-handler
- :close-sidebar
+ :close-toolbar
  (fn [db [ev-id]]
-   (assoc db :sidebar-open false)))
+   (assoc db :toolbar-hidden true)))
 
 (register-handler
  :update-patch-size
