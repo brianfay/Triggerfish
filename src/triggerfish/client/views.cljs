@@ -92,7 +92,7 @@
         (merge
          {:class "inlet"
           :key (str id name)}
-         (when (= @mode :connect)
+         (when true
            {:on-click
             (fn [e]
               (when (not @touch?)
@@ -101,6 +101,18 @@
             (fn [e]
               (dispatch [:connect id name type]))}))
         (str (when (= type :audio) "~") name)])})))
+
+(defn object-name
+  [id name minimized?]
+  [:div {:class "object-name"
+         :on-click (fn [e] (do
+                             (.stopPropagation e)
+                             (when (not @touch?)
+                               (dispatch [:min-max id minimized?]))))
+         :on-touch-end (fn [e] (do
+                                 ;; (.stopPropagation e)
+                                 (dispatch [:min-max id minimized?])))}
+   [:div {:class "object-name-txt"} name]])
 
 (defn object-component
   "Component for a Triggerfish Object."
@@ -185,16 +197,9 @@
             ;;default:
               nil
             )
-          [:div {:class "object-name"
-                 :on-click (fn [e] (do
-                                     (.stopPropagation e)
-                                     (when (not @touch?)
-                                       (dispatch [:min-max id minimized?]))))
-                 ;; :on-touch-end (fn [e] (do
-                 ;;                           ;; (.stopPropagation e)
-                 ;;                         (dispatch [:min-max id minimized?])))
-                 }
-           (str (:name obj-map))]
+
+          [object-name id (str (:name obj-map)) minimized?]
+
           (when (not minimized?)
             [:div {:class "io-cntr"}
              [:div {:class "io-column-cntr"}
@@ -313,17 +318,13 @@
     :reagent-render
     (let [objects (subscribe [:objects])
           selected-create-obj (subscribe [:selected-create-object])
-          mode (subscribe [:mode])
-          insert-disabled? (subscribe [:toolbar-hidden])]
+          mode (subscribe [:mode])]
       (fn []
         [:div {:id "patch"
-               :on-click (when (not @insert-disabled?) (fn [e] (click-insert e @selected-create-obj)))
-               :on-touch-start (when (not @insert-disabled?) (fn [e] (touch-insert e @selected-create-obj)))}
 
-         ;;TODO: There must be a way to do this without mapping over the same collection twice
-         ;; (map (fn [obj]
-         ;;        (with-meta [connector obj]
-         ;;          {:key (str "connector" (first obj))})) @objects)
+               ;; :on-click #(defonce fullscreen (.webkitRequestFullscreen (.-body js/document)))
+               :on-click (when (= @mode :insert) (fn [e] (click-insert e @selected-create-obj)))
+               :on-touch-start (when (= @mode :insert) (fn [e] (touch-insert e @selected-create-obj)))}
          (map (fn [obj]
                 (with-meta [object-component obj]
                   {:key (first obj)})) @objects)
@@ -355,26 +356,53 @@
   (let [selected-obj (subscribe [:selected-create-object])
         selected-name @selected-obj]
     [:div [:p {:on-click #(when (not @touch?) (dispatch [:select-create-object name]))
-               :on-touch-start #(do
-                                    (reset! touch? true)
-                                    (dispatch [:select-create-object name])
-                                    (dispatch [:set-mode :insert]))
+               :on-touch-start #(do (reset! touch? true)
+                                    (dispatch [:select-create-object name]))
           :class (if (= name selected-name)
                    "create-obj-selector create-obj-selected"
                    "create-obj-selector")}
       (str name)]]))
 
+(defn insert-toolbar
+  []
+   [:div {:class "synth-list"}
+    (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))])
+
+(defn mode-toggler
+  [mode selected-mode txt]
+  [:div {:class (str "mode-toggle"
+                     (if (= selected-mode mode) (str " " (name mode) "-mode-active") (str " " (name mode) "-mode-inactive")))
+         :on-click #(when (not @touch?) (dispatch [:set-mode mode]))
+         :on-touch-start #(do (dispatch [:set-mode mode])
+                              (reset! touch? true))}
+   txt])
+
 (defn toolbar
   []
-  (let [toolbar-hidden? (subscribe [:toolbar-hidden])]
-    [:div {:class (str (when @toolbar-hidden? "toolbar-hidden ") "mode-selector")}
-     [:div {:class (str (when @toolbar-hidden? "toolbar-show-hide-btn-hidden ") "toolbar-show-hide-btn")
-            :on-click (if @toolbar-hidden?
-                        #(dispatch [:open-toolbar])
-                        #(dispatch [:close-toolbar]))}
-      (gstring/unescapeEntities "&#x266B;")]
-     [:div
-      (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))]]))
+  (let [toolbar-hidden? (subscribe [:toolbar-hidden])
+        mode            (subscribe [:mode])]
+     (condp = @mode
+       :insert
+       [:div {:class "toolbar"}
+        [mode-toggler :insert @mode "+"]
+        [insert-toolbar]
+        [mode-toggler :delete @mode "-"]]
+       ;;default
+       [:div {:class "toolbar"}
+        [mode-toggler :insert @mode "+"]
+        [mode-toggler :delete @mode "-"]]
+       )
+    
+    
+    ;; [:div {:class (str (when @toolbar-hidden? "toolbar-hidden ") "toolbar")}
+    ;;  [:div {:class (str (when @toolbar-hidden? "toolbar-show-hide-btn-hidden ") "toolbar-show-hide-btn")
+    ;;         :on-click (if @toolbar-hidden?
+    ;;                     #(dispatch [:open-toolbar])
+    ;;                     #(dispatch [:close-toolbar]))}
+    ;;   (gstring/unescapeEntities "&#x266B;")]
+    ;;  [:div {:class "synth-list"}
+    ;;   (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))]]
+    ))
 
 (defn app
   []

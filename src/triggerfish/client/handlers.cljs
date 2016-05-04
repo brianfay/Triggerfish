@@ -129,7 +129,9 @@
 (register-handler
  :set-mode
  (fn [db [ev-id mode]]
-   (assoc db :mode mode)))
+   (if (= mode (:mode db))
+     (assoc db :mode nil)
+     (assoc db :mode mode))))
 
 (register-handler
  :open-toolbar
