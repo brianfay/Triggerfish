@@ -10,6 +10,7 @@
    :toolbar-hidden true
    :mode :insert
    :selected-outlet [nil nil]
+   :obj-name-last-click {}
    })
 
 (register-handler
@@ -104,7 +105,6 @@
  :select-outlet
  (fn [db [ev-id [id name type]]]
    (let [prev-outlet (:selected-outlet db)]
-     (println prev-outlet)
      (if (not (= prev-outlet [id name type]))
        (assoc db :selected-outlet [id name type])
        (dissoc db :selected-outlet)))))
@@ -147,3 +147,14 @@
  :update-patch-size
  (fn [db [ev-id width height]]
    (assoc db :patch-size [width height])))
+
+(register-handler
+ :click-obj-name
+ (fn [db [ev-id id]]
+   (let [now (.now js/Date)
+         prev-click (get-in db [:obj-name-last-click id])]
+     (if (< (- now prev-click) 300)
+       (-> db
+           (assoc-in [:obj-name-last-click id] now)
+           (update-in [:minimized id] not))
+       (assoc-in db [:obj-name-last-click id] now)))))

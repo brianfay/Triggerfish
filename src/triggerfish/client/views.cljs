@@ -108,10 +108,10 @@
          :on-click (fn [e] (do
                              (.stopPropagation e)
                              (when (not @touch?)
-                               (dispatch [:min-max id minimized?]))))
-         :on-touch-end (fn [e] (do
+                               (dispatch [:click-obj-name id]))))
+         :on-touch-start (fn [e] (do
                                  ;; (.stopPropagation e)
-                                 (dispatch [:min-max id minimized?])))}
+                                 (dispatch [:click-obj-name id ])))}
    [:div {:class "object-name-txt"} name]])
 
 (defn object-component
