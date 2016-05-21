@@ -194,6 +194,9 @@
             :delete
               {:on-click (fn [e] (click-delete id))
               :on-touch-start (fn [e] (touch-delete id))}
+            :control
+              {:on-click (when (not @touch?) (fn [e] (dispatch [:select-control-object id])))
+               :on-touch-start (fn [e] (dispatch [:select-control-object id]))}
             ;;default:
               nil
             )
@@ -386,26 +389,28 @@
        [:div {:class "toolbar"}
         [mode-toggler :insert @mode "+"]
         [insert-toolbar]
-        [mode-toggler :delete @mode "-"]]
+        [mode-toggler :delete @mode "-"]
+        [mode-toggler :control @mode "!"]]
+
        ;;default
        [:div {:class "toolbar"}
         [mode-toggler :insert @mode "+"]
-        [mode-toggler :delete @mode "-"]]
-       )
-    
-    
-    ;; [:div {:class (str (when @toolbar-hidden? "toolbar-hidden ") "toolbar")}
-    ;;  [:div {:class (str (when @toolbar-hidden? "toolbar-show-hide-btn-hidden ") "toolbar-show-hide-btn")
-    ;;         :on-click (if @toolbar-hidden?
-    ;;                     #(dispatch [:open-toolbar])
-    ;;                     #(dispatch [:close-toolbar]))}
-    ;;   (gstring/unescapeEntities "&#x266B;")]
-    ;;  [:div {:class "synth-list"}
-    ;;   (map (fn [name] (with-meta [create-object-selector name] {:key name})) (keys obj/objects))]]
-    ))
+        [mode-toggler :delete @mode "-"]
+        [mode-toggler :control @mode "!"]])))
+
+(defn control-window
+  []
+  (let [mode (subscribe [:mode])
+        selected-obj (subscribe [:selected-control-object])]
+    (when (and (= @mode :control) @selected-obj)
+      [:div {:class "control-window"}
+       [:div {:class "close-control-window"
+              :on-click #(dispatch [:close-control-window])} "X"]
+       ])))
 
 (defn app
   []
   [:div {:class "one-hundred"}
    [toolbar]
-   [patch-component]])
+   [patch-component]
+   [control-window]])

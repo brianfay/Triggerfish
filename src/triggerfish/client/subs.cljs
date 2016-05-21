@@ -33,6 +33,12 @@
    (reaction (:selected-create-object @db))))
 
 (register-sub
+ :selected-control-object
+ (fn
+   [db _]
+   (reaction (:selected-control-object @db))))
+
+(register-sub
  :selected-outlet
  (fn
    [db _]

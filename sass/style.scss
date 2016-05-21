@@ -3,8 +3,8 @@ $black-ish: hsl(226,21,11); //#161922
 $bg-color: $black-ish;
 $insert-color: #be4;
 $delete-color: #e44;
-$connect-color: #9de;
-$control-color: #f2b500;
+$connect-color: #f2b500;
+$control-color: #9de;
 $connect-btn-color: lighten($delete-color, 20%);
 $move-color: #fe3;
 $medium-aquamarine: hsl(193,41,62); //#76B5C6
@@ -48,7 +48,6 @@ body {
 .object-name-txt {
     display: flex;
     flex-grow: 1;
-    padding-right: 10px;
 }
 
 .object-name-close-btn {
@@ -244,4 +243,26 @@ body, html, #app {
 
 .synth-list {
     overflow: auto;
+}
+
+.control-window {
+    background-color: rgba(10,10,10,.9);
+    position: absolute;
+    right: 0px;
+    height: 100%;
+}
+
+.close-control-window{
+    margin: 4px;
+    font-size: 1.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 37px;
+    height: 37px;
+    border: 2px solid;
+    border-radius: 2px;
+    background-color: darken($delete-color, 30%);
+    color: #FFF;
+    border-color: $delete-color;
 }

@@ -55,6 +55,16 @@
    (assoc db :selected-create-object name)))
 
 (register-handler
+ :close-control-window
+ (fn [db [ev-id]]
+   (assoc db :selected-control-object nil)))
+
+(register-handler
+ :select-control-object
+ (fn [db [ev-id obj-id]]
+   (assoc db :selected-control-object obj-id)))
+
+(register-handler
  :optimistic-create
  (fn [db [ev-id obj-name x-pos y-pos]]
    ;;todo - guarantee id is unique
@@ -82,7 +92,8 @@
          connections-to-remove (keys (merge (into {} (get-connected-inlets connections obj-id))
                                             (into {} (get-connected-outlets connections obj-id))))]
      (-> (reduce #(update-in %1 [:connections] dissoc %2) db connections-to-remove)
-         (update-in [:objects] dissoc obj-id)))))
+         (update-in [:objects] dissoc obj-id)
+         (update :selected-control-object #(if (= % obj-id) nil %))))))
 
 (register-handler
  :connect
