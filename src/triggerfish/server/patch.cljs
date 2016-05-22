@@ -285,6 +285,19 @@
       (obj/remove-from-server! obj)
       (swap! patch dissoc id))))
 
+(defn set-control!
+  [obj-id ctrl-name value]
+  (sc/set-control obj-id ctrl-name value)
+  (let [last-updated (get-in @patch [obj-id :controls ctrl-name :last-updated])
+        now          (.now js/Date)
+        new-patch    (-> @patch
+                         (assoc-in [obj-id :controls ctrl-name :value] value)
+                         (assoc-in [obj-id :controls ctrl-name :last-updated] now))])
+  ;;simple throttle; if the specific control has been updated in the last second, do not update the patch
+  ;; (when (or (nil? now) (> (- last-updated now) 1000))
+  ;;   (reset! patch))
+  )
+
 (defn remove-object-by-id!
   [id]
   (remove-object! (@patch id)))

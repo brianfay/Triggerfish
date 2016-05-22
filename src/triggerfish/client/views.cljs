@@ -9,6 +9,8 @@
 (declare click-delete touch-delete)
 ;;We assume that the device has no touch-screen until a touch-event is fired.
 (defonce touch? (atom false))
+
+;;Not using app-db state, because this needs to change frequently
 (defonce moving-touches (atom {}))
 
 (defn get-bounding-rect-obj
@@ -49,7 +51,8 @@
 
 (defn outlet-component
   [id [name {:keys [type]}] _] ;;ignoring last arg; it is position and we just use it to force component-did-update
-  (let [selected-outlet (subscribe [:selected-outlet])]
+  (let [selected-outlet (subscribe [:selected-outlet])
+        mode            (subscribe [:mode])]
     (reagent/create-class
     {
      :component-did-mount
@@ -68,8 +71,10 @@
                         "outlet outlet-selected"
                         "outlet")
                :key (str id name)
-               :on-click (fn [e] (when (not @touch?) (dispatch [:select-outlet [id name type]])))
-               :on-touch-start (fn [e] (dispatch [:select-outlet [id name type]]))}
+               :on-click (when (nil? @mode)
+                           (fn [e] (when (not @touch?) (dispatch [:select-outlet [id name type]]))))
+               :on-touch-start (when (nil? @mode)
+                                 (fn [e] (dispatch [:select-outlet [id name type]])))}
          (str name (when (= type :audio) "~"))]))})))
 
 (defn inlet-component
@@ -92,7 +97,7 @@
         (merge
          {:class "inlet"
           :key (str id name)}
-         (when true
+         (when (nil? @mode)
            {:on-click
             (fn [e]
               (when (not @touch?)
@@ -106,7 +111,7 @@
   [id name minimized?]
   [:div {:class "object-name"
          :on-click (fn [e] (do
-                             (.stopPropagation e)
+                             ;; (.stopPropagation e)
                              (when (not @touch?)
                                (dispatch [:click-obj-name id]))))
          :on-touch-start (fn [e] (do
@@ -192,11 +197,14 @@
          [:div
           (condp = @mode
             :delete
-              {:on-click (fn [e] (click-delete id))
+            {:class "WHEE"
+             :on-click (fn [e] (click-delete id))
               :on-touch-start (fn [e] (touch-delete id))}
             :control
-              {:on-click (when (not @touch?) (fn [e] (dispatch [:select-control-object id])))
-               :on-touch-start (fn [e] (dispatch [:select-control-object id]))}
+            {:class "WHEE"
+             :on-click (fn [e] (when (not @touch?)
+                                 (dispatch [:select-control-object id])))
+             :on-touch-start (fn [e] (dispatch [:select-control-object id]))}
             ;;default:
               nil
             )
@@ -398,15 +406,51 @@
         [mode-toggler :delete @mode "-"]
         [mode-toggler :control @mode "!"]])))
 
+;;a map of the nexus components we've added, so we know which one to destroy,
+;;it doesn't really make sense to use the app-db for this state
+(defonce nx-registry (atom {}))
+
+(defn nexus-component
+  [obj-id [ctrl-name props]]
+  (reagent/create-class
+   {:component-did-mount
+    (fn [this]
+      (let [widget (.add js/nx (:nx-type props) (clj->js {:parent (reagent/dom-node this)}))]
+        (swap! nx-registry #(assoc % (str obj-id ctrl-name) widget))
+        (.set widget (clj->js {:value (:value props)}))
+        (.sendsTo widget (fn [data]
+                           (chsk-send! [:patch/set-control {:obj-id obj-id
+                                                            :ctrl-name ctrl-name
+                                                            :value (aget data "value")}])))
+        (doall (map
+                (fn [[k v]] (aset widget (name k) v))
+                (:nx-props props)))))
+    :component-will-unmount
+    (fn [this]
+      (.destroy (get @nx-registry (str obj-id ctrl-name)))
+      (swap! nx-registry #(dissoc % (str obj-id ctrl-name))))
+    :reagent-render
+    (fn []
+      [:div
+       [:h2 ctrl-name]])})
+  )
+
 (defn control-window
   []
   (let [mode (subscribe [:mode])
-        selected-obj (subscribe [:selected-control-object])]
+        objects (subscribe [:objects])
+        selected-obj (subscribe [:selected-control-object])
+        obj (get @objects @selected-obj)
+        controls (:controls obj)]
     (when (and (= @mode :control) @selected-obj)
       [:div {:class "control-window"}
        [:div {:class "close-control-window"
               :on-click #(dispatch [:close-control-window])} "X"]
-       ])))
+       (doall (map (fn [ctrl]
+                     (let [key (str @selected-obj (first ctrl) "ctrl")]
+                       ^{:key key}
+                       [nexus-component @selected-obj ctrl]))
+                   controls))])))
 
 (defn app
   []

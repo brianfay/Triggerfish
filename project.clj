@@ -25,6 +25,7 @@
                        [express-session "1.11.3"]
                        [csurf "1.8.3"]
                        [express-ws "1.0.0-rc.2"]
+                       [nexusui "lsu-emdm/nexusUI"]
                        [ws "0.8.0"]
                        [osc-min "0.2.0"]]}
 

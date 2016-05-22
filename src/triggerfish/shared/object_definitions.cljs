@@ -9,18 +9,22 @@
     :type :BasicSynth
     :synthdef "saw"
     :inlets {
-             "freq" {:type :control :default 660}}
+             "freq" {:type :control}}
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
+    :controls {
+               "freq" {:nx-type "number" :nx-props {:min 30 :max 10000} :value 220}}
    }
    :sine
    {
     :type :BasicSynth
     :synthdef "sine"
     :inlets {
-             "freq" {:type :control :default 220}}
+             "freq" {:type :control}}
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
+    :controls {
+               "freq" {:nx-type "number" :nx-props {:min 30 :max 10000} :value 220}}
    }
    :lopass
    {
@@ -28,10 +32,13 @@
     :synthdef "lopass"
     :inlets {
              "in" {:type :audio :default c/silent-audio-bus}
-             "cutoff" {:type :control :default 1000}
-             "res" {:type :control :default 0.5}}
+             "cutoff" {:type :control}
+             "res" {:type :control}}
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
+    :controls {
+               "cutoff" {:nx-type "number" :min 0 :max 10000 :value 1000}
+               "res" {:nx-type "number" :nx-props {:min 0 :max 1} :value 0.5}}
    }
    :tremolo
    {
@@ -39,9 +46,12 @@
     :synthdef "tremolo"
     :inlets {
              "in" {:type :audio :default c/silent-audio-bus}
-             "freq" {:type :control :default 0.5}}
+             "freq" {:type :control}}
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
+    :controls {
+               "freq" {:nx-type "number" :nx-props {:min 0.01 :max 4} :value 0.5}
+               }
    }
    :dac
    {
@@ -60,12 +70,16 @@
     :synthdef "delay"
     :inlets {
              "in" {:type :audio :default c/silent-audio-bus}
-             "delaytime" {:type :control :default 0.5}
-             "decaytime" {:type :control :default 3}
+             "delaytime" {:type :control}
+             "decaytime" {:type :control}
              }
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}
               }
+    :controls {
+               "delaytime" {:nx-type "number" :nx-props {:min 0.01 :max 3 :step 0.02} :value 0.5}
+               "decaytime" {:nx-type "number" :nx-props {:min 0.01 :max 5 :step 0.02} :value 3}
+               }
     }
    :adc
    {

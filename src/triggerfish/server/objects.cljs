@@ -27,7 +27,7 @@
 
 
 ;; A BasicSynth is just a Supercollider Synth
-(defrecord BasicSynth [id synthdef inlets outlets name x-pos y-pos]
+(defrecord BasicSynth [id synthdef inlets outlets controls name x-pos y-pos]
   PObject
   (add-to-server! [this]
     (let [default-controls (get-control-val-pair (merge inlets outlets))]
@@ -45,12 +45,14 @@
         (sc/set-control id outlet-name bus)
         (sc/map-control-to-bus id outlet-name bus))))
   (disconnect-inlet! [this inlet-name]
-    (let [inlet-props (get inlets inlet-name)]
-      ;;for controls, value is remembered in :value if set. Otherwise, use :default.
-      ;;Audio inlets shouldn't have a :value, so they'll go to :default
-      (if (not (nil? (:value inlet-props)))
-        (sc/set-control id inlet-name (:value inlet-props))
-        (sc/set-control id inlet-name (:default inlet-props)))))
+    (let [inlet-props (get inlets inlet-name)
+          controls    (get controls inlet-name)
+          type        (:type inlet-props)]
+      ;;for controls, value is stored in :value
+      ;;Audio inlets shouldn't have a :value, so they'll go to :default from :inlets
+      (if (= type :audio)
+        (sc/set-control id inlet-name (:default inlet-props))
+        (sc/set-control id inlet-name (:value controls)))))
   (disconnect-outlet! [this outlet-name]
     (let [outlet-props (get outlets outlet-name)]
       (sc/set-control id outlet-name (:default outlet-props))))

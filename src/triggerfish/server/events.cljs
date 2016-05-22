@@ -64,3 +64,12 @@
         in-id (:in-id ?data)
         in-name (:in-name ?data)]
     (p/disconnect! in-id in-name)))
+
+(defmethod -event-msg-handler :patch/set-control
+  [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
+  (let [session   (:session ring-req)
+        uid       (:uid     session)
+        obj-id    (:obj-id ?data)
+        ctrl-name (:ctrl-name ?data)
+        value     (:value ?data)]
+    (p/set-control! obj-id ctrl-name value)))
