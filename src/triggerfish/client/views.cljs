@@ -197,12 +197,11 @@
          [:div
           (condp = @mode
             :delete
-            {:class "WHEE"
-             :on-click (fn [e] (click-delete id))
-              :on-touch-start (fn [e] (touch-delete id))}
+            {:on-click (fn [e] (click-delete id))
+             :on-touch-start (fn [e] (touch-delete id))}
+
             :control
-            {:class "WHEE"
-             :on-click (fn [e] (when (not @touch?)
+            {:on-click (fn [e] (when (not @touch?)
                                  (dispatch [:select-control-object id])))
              :on-touch-start (fn [e] (dispatch [:select-control-object id]))}
             ;;default:
