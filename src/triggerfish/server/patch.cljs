@@ -292,11 +292,11 @@
         now          (.now js/Date)
         new-patch    (-> @patch
                          (assoc-in [obj-id :controls ctrl-name :value] value)
-                         (assoc-in [obj-id :controls ctrl-name :last-updated] now))])
+                         (assoc-in [obj-id :controls ctrl-name :last-updated] now))]
+    (reset! patch new-patch)))
   ;;simple throttle; if the specific control has been updated in the last second, do not update the patch
   ;; (when (or (nil? now) (> (- last-updated now) 1000))
   ;;   (reset! patch))
-  )
 
 (defn remove-object-by-id!
   [id]

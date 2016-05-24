@@ -416,14 +416,22 @@
     (fn [this]
       (let [widget (.add js/nx (:nx-type props) (clj->js {:parent (reagent/dom-node this)}))]
         (swap! nx-registry #(assoc % (str obj-id ctrl-name) widget))
-        (.set widget (clj->js {:value (:value props)}))
-        (.sendsTo widget (fn [data]
-                           (chsk-send! [:patch/set-control {:obj-id obj-id
-                                                            :ctrl-name ctrl-name
-                                                            :value (aget data "value")}])))
+
+        ;;set params
         (doall (map
                 (fn [[k v]] (aset widget (name k) v))
-                (:nx-props props)))))
+                (:nx-props props)))
+
+        ;;set value
+        (.set widget (clj->js {:value (:value props)}))
+
+        (.sendsTo widget
+                  (fn [data]
+                    (let [value (aget data "value")]
+                      (dispatch [:optimistic-set-control obj-id ctrl-name value])
+                      (chsk-send! [:patch/set-control {:obj-id obj-id
+                                                       :ctrl-name ctrl-name
+                                                       :value value}]))))))
     :component-will-unmount
     (fn [this]
       (.destroy (get @nx-registry (str obj-id ctrl-name)))

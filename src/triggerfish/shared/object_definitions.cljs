@@ -13,7 +13,7 @@
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
     :controls {
-               "freq" {:nx-type "number" :nx-props {:min 30 :max 10000} :value 220}}
+               "freq" {:nx-type "dial" :nx-props {:min 30 :max 5000} :value 220}}
    }
    :sine
    {
@@ -24,7 +24,7 @@
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
     :controls {
-               "freq" {:nx-type "number" :nx-props {:min 30 :max 10000} :value 220}}
+               "freq" {:nx-type "dial" :nx-props {:min 30 :max 5000} :value 220}}
    }
    :lopass
    {
@@ -37,8 +37,8 @@
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
     :controls {
-               "cutoff" {:nx-type "number" :min 0 :max 10000 :value 1000}
-               "res" {:nx-type "number" :nx-props {:min 0 :max 1} :value 0.5}}
+               "cutoff" {:nx-type "dial" :nx-props {:min 0 :max 10000} :value 1000}
+               "res" {:nx-type "dial" :nx-props {:min 0 :max 1} :value 0.5}}
    }
    :tremolo
    {
@@ -50,7 +50,7 @@
     :outlets {
               "out" {:type :audio :default c/junk-audio-bus}}
     :controls {
-               "freq" {:nx-type "number" :nx-props {:min 0.01 :max 4} :value 0.5}
+               "freq" {:nx-type "dial" :nx-props {:min 0.01 :max 4.0} :value 0.5}
                }
    }
    :dac
@@ -77,8 +77,8 @@
               "out" {:type :audio :default c/junk-audio-bus}
               }
     :controls {
-               "delaytime" {:nx-type "number" :nx-props {:min 0.01 :max 3 :step 0.02} :value 0.5}
-               "decaytime" {:nx-type "number" :nx-props {:min 0.01 :max 5 :step 0.02} :value 3}
+               "delaytime" {:nx-type "dial" :nx-props {:min 0.01 :max 3.0} :value 0.5}
+               "decaytime" {:nx-type "dial" :nx-props {:min 0.01 :max 5.0} :value 3.0}
                }
     }
    :adc

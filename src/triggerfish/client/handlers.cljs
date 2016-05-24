@@ -160,6 +160,11 @@
    (assoc db :patch-size [width height])))
 
 (register-handler
+ :optimistic-set-control
+ (fn [db [ev-id obj-id ctrl-name value]]
+   (assoc-in db [:objects obj-id :controls ctrl-name :value] value)))
+
+(register-handler
  :click-obj-name
  (fn [db [ev-id id]]
    (let [now (.now js/Date)
