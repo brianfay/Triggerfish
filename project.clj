@@ -10,11 +10,15 @@
                  [com.stuartsierra/component "0.3.1"]
                  [com.taoensso/sente "1.8.0-beta1"]
                  [com.taoensso/timbre "4.2.1"]
+                 ;;these should maybe be in a :dev :dependencies?
                  [figwheel-sidecar "0.5.0-4"]
+                 [com.cemerick/piggieback "0.2.1"]
                  [reagent "0.6.0-alpha"]
                  [re-frame "0.7.0-alpha-2"]]
 
-  :plugins [[lein-figwheel "0.5.0-5"]
+  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+
+  :plugins [[lein-figwheel "0.5.4-5-SNAPSHOT"]
             [lein-npm "0.6.1"]
             [lein-cljsbuild "1.1.2"]]
 
@@ -25,17 +29,20 @@
                        [express-session "1.11.3"]
                        [csurf "1.8.3"]
                        [express-ws "1.0.0-rc.2"]
+                       [midi "0.9.4"]
                        [nexusui "lsu-emdm/nexusUI"]
                        [ws "0.8.0"]
                        [osc-min "0.2.0"]]}
 
   :clean-targets ^{:protect false} ["target"]
 
+  :figwheel {:css-dirs ["css"]}
+
   :cljsbuild {
     :builds
         [{:id "client-dev"
+          :figwheel {:websocket-host :js-client-host} ;;this took so long to figure out, I dunno why
           :source-paths ["src/triggerfish/client" "src/triggerfish/shared"]
-          :figwheel true
           :compiler {:main "triggerfish.client.core"
                      :output-to "out/client_out/client.js"
                      :output-dir "out/client_out"
@@ -54,7 +61,7 @@
                      :output-to "out/client_prod/client.js"
                      :output-dir "out/client_prod"
                      :optimizations :advanced}}]}
-  :figwheel {
-             :websocket-host "192.168.1.xxx"
-             ;; :server-port 4000
-             :css-dirs ["css"]})
+  ;; :figwheel {
+  ;;            :websocket-host :js-client-host
+  ;;            :css-dirs ["css"]}
+  )

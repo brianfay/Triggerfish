@@ -2,15 +2,12 @@
          '[com.stuartsierra.component :as component])
 
 (def figwheel-config
-  {:figwheel-options {
-                      :web-socket-host "192.168.1.3"
-                      :css-dirs ["css"]
-                      }
+  {:figwheel-options {:css-dirs ["css"]}
    :build-ids ["client-dev" "server-dev"]
    :all-builds
    [{:id "client-dev"
      :source-paths ["src/triggerfish/client" "src/triggerfish/shared"]
-     :figwheel true
+     :figwheel {:websocket-host :js-client-host}
      :compiler {:main "triggerfish.client.core"
                 :output-to "out/client_out/client.js"
                 :output-dir "out/client_out"
@@ -76,8 +73,18 @@
   (stop)
   (start))
 
-(defn repl []
+(defn client-repl []
+  (ra/cljs-repl "client-dev"))
+
+(defn server-repl []
   (ra/cljs-repl "server-dev"))
 
 (start)
-(repl)
+
+;;To start Triggerfish from emacs:
+;;Start the node process with "node out/server_out/triggerfish_server_with_figwheel.js" TODO: do this in script/figwheel.clj
+;;Load browser at localhost:3000
+;;in spacemacs you hit:
+;;', s I' to cider jack in
+;;', e b' to eval buffer
+;;client-dev should be running by default, so it will wait for you to connect your browser (should work for any device on the LAN)

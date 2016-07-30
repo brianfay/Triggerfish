@@ -78,7 +78,7 @@
               }
     :controls {
                "delaytime" {:nx-type "dial" :nx-props {:min 0.01 :max 3.0} :value 0.5}
-               "decaytime" {:nx-type "dial" :nx-props {:min 0.01 :max 5.0} :value 3.0}
+               "decaytime" {:nx-type "dial" :nx-props {:min 0.01 :max 200.0} :value 3.0}
                }
     }
    :adc

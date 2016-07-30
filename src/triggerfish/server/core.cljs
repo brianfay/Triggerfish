@@ -3,6 +3,7 @@
    [triggerfish-test.server.manual] ;;just so we can play with it at the repl
    [triggerfish.server.patch :as p]
    [triggerfish.server.events :as events]
+   [triggerfish.server.midi :as midi]
    [cljs.nodejs        :as nodejs]
    [clojure.string     :as str]
    [cljs.core.async    :as async  :refer (<! >! put! chan)]
