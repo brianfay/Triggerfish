@@ -36,3 +36,17 @@ SynthDef("stereo-dac",
 		Out.ar(outL, In.ar(inL));
 		Out.ar(outR, In.ar(inR));
 }).store;
+
+SynthDef(\loop, {arg in, bufnum, trigger= -1.0, rate=1, out=0;
+	var sr, input, recordHead, loopEnd, output, env, envgen, existingSig;
+	sr = SampleRate.ir;
+	env = Env.asr(attackTime: 0.15, releaseTime: 0.5, curve: -4);
+	envgen = EnvGen.ar(env, trigger); //fade in/out when starting/stopping recording
+	input = In.ar(in) * (trigger > 0) * envgen;
+	recordHead = Phasor.ar(trigger, BufRateScale.kr(bufnum), 0, BufFrames.kr(bufnum));
+	existingSig = BufRd.ar(1,bufnum,recordHead) * (trigger < 0); //existing sig will keep rewriting original signal when not recording (thanks http://jeremah.co.uk/blog/permalink/a_synced_audio_looper_in_supercollider)
+	loopEnd = Latch.ar(recordHead, trigger.neg); //where the loop stops in samples
+	BufWr.ar(input + existingSig, bufnum, recordHead, 0);
+	output = BufRd.ar(1,bufnum,Phasor.ar(trigger.neg, BufRateScale.kr(bufnum) * rate, 0, loopEnd)) * (trigger < 0);
+	Out.ar(out, output);
+}).add;
