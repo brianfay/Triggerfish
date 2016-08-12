@@ -1,5 +1,5 @@
 (ns triggerfish.client.handlers
-  (:require [re-frame.core :refer [register-handler]]
+  (:require [re-frame.core :refer [reg-event]]
             [triggerfish.shared.object-definitions :as obj]
             [triggerfish.client.sente-events :refer [chsk-send!]]))
 
@@ -13,34 +13,34 @@
    :obj-name-last-click {}
    })
 
-(register-handler
+(reg-event
  :initialize
  (fn
    [db _]
    (merge db initial-state)))
 
-(register-handler
+(reg-event
  :patch-recv
  (fn [db [ev-id patch]]
    (assoc db :objects (dissoc patch :connections) :connections (:connections patch))))
 
 ;;Updates the app-db with the DOM position of an inlet or outlet
-(register-handler
+(reg-event
  :update-io-position
  (fn [db [ev-id obj-id inlet-or-outlet-name pos]]
    (assoc-in db [:positions [obj-id inlet-or-outlet-name]] pos)))
 
-(register-handler
+(reg-event
  :update-object-dom-position
  (fn [db [ev-id obj-id pos]]
    (assoc-in db [:positions obj-id] pos)))
 
-(register-handler
+(reg-event
  :dissoc-position
  (fn [db [ev-id obj-id inlet-or-outlet-name]]
    (update-in db [:positions] dissoc [obj-id inlet-or-outlet-name])))
 
-(register-handler
+(reg-event
  :move-object
  (fn [db [ev-id obj-id x y]]
    (do
@@ -49,22 +49,22 @@
          (assoc-in [:objects obj-id :x-pos] (if (> x 10) x 10))
          (assoc-in [:objects obj-id :y-pos] (if (> y 0) y 0))))))
 
-(register-handler
+(reg-event
  :select-create-object
  (fn [db [ev-id name]]
    (assoc db :selected-create-object name)))
 
-(register-handler
+(reg-event
  :close-control-window
  (fn [db [ev-id]]
    (assoc db :selected-control-object nil)))
 
-(register-handler
+(reg-event
  :select-control-object
  (fn [db [ev-id obj-id]]
    (assoc db :selected-control-object obj-id)))
 
-(register-handler
+(reg-event
  :optimistic-create
  (fn [db [ev-id obj-name x-pos y-pos]]
    ;;todo - guarantee id is unique
@@ -85,7 +85,7 @@
   [connections obj-id]
   (filter #(= obj-id (first (second %))) connections))
 
-(register-handler
+(reg-event
  :optimistic-delete
  (fn [db [ev-id obj-id]]
    (let [connections (:connections db)
@@ -95,7 +95,7 @@
          (update-in [:objects] dissoc obj-id)
          (update :selected-control-object #(if (= % obj-id) nil %))))))
 
-(register-handler
+(reg-event
  :connect
  (fn [db [ev-id inlet-id inlet-name type]]
    (let [selected-outlet (:selected-outlet db)
@@ -111,7 +111,7 @@
              (update-in db [:connections] dissoc [inlet-id inlet-name]))
            db))))))
 
-(register-handler
+(reg-event
  ;;select an outlet
  :select-outlet
  (fn [db [ev-id [id name type]]]
@@ -120,51 +120,51 @@
        (assoc db :selected-outlet [id name type])
        (dissoc db :selected-outlet)))))
 
-(register-handler
+(reg-event
  :select-object
  (fn [db [ev-id obj-id]]
    (if (not (= obj-id (first (:selected-outlet db))))
      (assoc db :selected-outlet [obj-id nil nil])
      db)))
 
-(register-handler
+(reg-event
  :deselect-outlet
  (fn [db [ev-id [id name type]]]
    (dissoc db :selected-outlet)))
 
-(register-handler
+(reg-event
  :min-max
  (fn [db [ev-id obj-id current-val]]
    (assoc-in db [:minimized obj-id] (not current-val))))
 
-(register-handler
+(reg-event
  :set-mode
  (fn [db [ev-id mode]]
    (if (= mode (:mode db))
      (assoc db :mode nil)
      (assoc db :mode mode))))
 
-(register-handler
+(reg-event
  :open-toolbar
  (fn [db [ev-id]]
    (assoc db :toolbar-hidden false)))
 
-(register-handler
+(reg-event
  :close-toolbar
  (fn [db [ev-id]]
    (assoc db :toolbar-hidden true)))
 
-(register-handler
+(reg-event
  :update-patch-size
  (fn [db [ev-id width height]]
    (assoc db :patch-size [width height])))
 
-(register-handler
+(reg-event
  :optimistic-set-control
  (fn [db [ev-id obj-id ctrl-name value]]
    (assoc-in db [:objects obj-id :controls ctrl-name :value] value)))
 
-(register-handler
+(reg-event
  :click-obj-name
  (fn [db [ev-id id]]
    (let [now (.now js/Date)

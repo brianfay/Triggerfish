@@ -4,21 +4,21 @@
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.7.228"]
+                 [org.clojure/clojurescript "1.9.89"]
                  [org.clojure/core.async "0.2.374"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.stuartsierra/component "0.3.1"]
                  [com.taoensso/sente "1.8.0-beta1"]
                  [com.taoensso/timbre "4.2.1"]
                  ;;these should maybe be in a :dev :dependencies?
-                 [figwheel-sidecar "0.5.0-4"]
+                 [figwheel-sidecar "0.5.4-7"]
                  [com.cemerick/piggieback "0.2.1"]
-                 [reagent "0.6.0-alpha"]
-                 [re-frame "0.7.0-alpha-2"]]
+                 [reagent "0.6.0-rc"]
+                 [re-frame "0.8.0-alpha9"]]
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
-  :plugins [[lein-figwheel "0.5.4-5-SNAPSHOT"]
+  :plugins [[lein-figwheel "0.5.4-7"]
             [lein-npm "0.6.1"]
             [lein-cljsbuild "1.1.2"]]
 

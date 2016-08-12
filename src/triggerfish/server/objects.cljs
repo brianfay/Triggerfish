@@ -25,7 +25,6 @@
   (let [control-pairs (map get-ctl-nv (filter #(:default (second %)) controls))]
     (reduce #(into %1 %2) control-pairs)))
 
-
 ;; A BasicSynth is just a Supercollider Synth
 (defrecord BasicSynth [id synthdef inlets outlets controls name x-pos y-pos]
   PObject

@@ -1,63 +1,63 @@
 (ns triggerfish.client.subs
   (:require-macros [reagent.ratom :refer [reaction]])
-  (:require [re-frame.core :refer [register-sub]]))
+  (:require [re-frame.core :refer [reg-sub]]))
 
-(register-sub
+(reg-sub
  :objects
  (fn
    [db _]
-   (reaction (:objects @db))))
+   (:objects db)))
 
-(register-sub
+(reg-sub
  :positions
  (fn
    [db _]
-   (reaction (:positions @db))))
+   (:positions db)))
 
-(register-sub
+(reg-sub
  :minimized
  (fn
    [db _]
-   (reaction (:minimized @db))))
+   (:minimized db)))
 
-(register-sub
+(reg-sub
  :connections
  (fn
    [db _]
-   (reaction (:connections @db))))
+   (:connections db)))
 
-(register-sub
+(reg-sub
  :selected-create-object
  (fn
    [db _]
-   (reaction (:selected-create-object @db))))
+   (:selected-create-object db)))
 
-(register-sub
+(reg-sub
  :selected-control-object
  (fn
    [db _]
-   (reaction (:selected-control-object @db))))
+   (:selected-control-object db)))
 
-(register-sub
+(reg-sub
  :selected-outlet
  (fn
    [db _]
-   (reaction (:selected-outlet @db))))
+   (:selected-outlet db)))
 
-(register-sub
+(reg-sub
  :mode
  (fn
    [db _]
-   (reaction (:mode @db))))
+   (:mode db)))
 
-(register-sub
+(reg-sub
  :patch-size
  (fn
    [db _]
-   (reaction (:patch-size @db))))
+   (:patch-size db)))
 
-(register-sub
+(reg-sub
  :toolbar-hidden
  (fn
    [db _]
-    (reaction (:toolbar-hidden @db))))
+   (:toolbar-hidden db)))

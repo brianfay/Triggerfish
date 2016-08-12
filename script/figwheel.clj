@@ -80,7 +80,6 @@
   (ra/cljs-repl "server-dev"))
 
 (start)
-
 ;;To start Triggerfish from emacs:
 ;;Start the node process with "node out/server_out/triggerfish_server_with_figwheel.js" TODO: do this in script/figwheel.clj
 ;;Load browser at localhost:3000

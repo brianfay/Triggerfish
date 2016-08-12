@@ -140,6 +140,12 @@
   ([synthdef id target]
    (add-synth synthdef id 3 target)))
 
+(defn alloc-buffer [num frames channels]
+  (call-scsynth "b_alloc" num frames channels))
+
+(defn free-buffer [num]
+  (call-scsynth "b_free"))
+
 (defn move-node-before
   [id target]
    (call-scsynth "n_before" id target))
