@@ -86,4 +86,7 @@
 ;;in spacemacs you hit:
 ;;', s I' to cider jack in
 ;;', e b' to eval buffer
-;;client-dev should be running by default, so it will wait for you to connect your browser (should work for any device on the LAN)
+;;eval server-repl or client-repl here, depending on which process you want to connect your figwheel repl to
+(comment
+  (server-repl)
+  (client-repl))
