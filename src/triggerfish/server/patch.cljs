@@ -8,20 +8,6 @@
 
 (declare connect! disconnect!)
 
-(defonce id-counter
-  (let [counter (atom 1)]
-    [#(swap! counter inc) #(reset! counter 1)]))
-
-(defonce inc-counter! (first id-counter))
-
-(defonce reset-counter! (second id-counter))
-
-(defn new-id
-  "Returns a unique identifier that can be used as the supercollider node id for an object. 0 and 1 are reserved for the root node and the default group.
-  No logic is in place to reuse ids that have become free, but it would take a lot of iterations for the integer to overflow..."
-  []
-  (inc-counter!))
-
 ;; Describes current Triggerfish objects and their connections.
 (defonce patch (atom {}))
 
@@ -107,38 +93,6 @@
               (rest connections)
               (assoc reserved [type bus] (get numbered-sdag inlet-obj-id))))))))))
 
-;;doesn't work 100%
-;; (defn loop-through-inlets
-;;   "Loops through the inlets of a given object and returns any bus connections that should be made."
-;;   [patch obj-id reserved-buses numbered-sdag]
-;;   (loop [p patch
-;;          connections-to-make []
-;;          inlets (get-connected-inlets p obj-id)
-;;          reserved reserved-buses]
-;;     (if (nil? (first (first inlets)))
-;;       ;;this next line is the base case, anything else will recur
-;;       [p connections-to-make reserved]
-;;       (let [connection (first inlets)
-;;             [[inlet-obj-id inlet-name] [outlet-obj-id outlet-name]] connection
-;;             type (get-in p [outlet-obj-id :outlets outlet-name :type])
-;;             outlet-bus (get-in p [outlet-obj-id :outlets outlet-name :bus])]
-;;         ;;if the outlet already has a bus, just use that. Make sure it is explicitly reserved.
-;;         (if (and (not (nil? outlet-bus))
-;;                  (or
-;;                   (and (= type :audio) (not (= outlet-bus c/junk-audio-bus)))
-;;                   (and (= type :control) (not (= outlet-bus c/junk-control-bus)))))
-;;           (recur
-;;            p
-;;            (conj connections-to-make [inlet-obj-id :inlet inlet-name outlet-bus])
-;;            (rest inlets)
-;;            (assoc reserved [type outlet-bus] (get numbered-sdag inlet-obj-id)))
-;;           (let [bus (reserve-bus type connection numbered-sdag reserved)]
-;;             (recur
-;;              (assoc-in p [outlet-obj-id :outlets outlet-name :bus] bus)
-;;              (conj connections-to-make [inlet-obj-id :inlet inlet-name bus] [outlet-obj-id :outlet outlet-name bus])
-;;              (rest inlets)
-;;              (assoc reserved [type bus] (get numbered-sdag inlet-obj-id)))))))))
-
 (defn get-connection-actions
   "For a given patch and sorted dag, returns an updated patch with bus values set,
   and a vector of the connections that must be made."
@@ -176,15 +130,6 @@
   performs them as a side-effect."
   [old-sorted-dag new-sorted-dag]
   (sc/order-nodes 0 sc/default-group new-sorted-dag))
-  ;; this is what I did before finding "n_order"
-  ;; (loop [actions []
-  ;;        old-sdag (filterv #(contains? (set new-sorted-dag) %) old-sorted-dag)
-  ;;        new-sdag new-sorted-dag]
-  ;;   (cond
-  ;;     (< (count new-sdag) 2) actions
-  ;;     (= (second new-sdag) (second old-sdag)) (recur actions (rest old-sdag) (rest new-sdag))
-  ;;     :else (do (sc/move-node-after (second new-sdag) (first new-sdag))
-  ;;               (recur (conj actions `(sc/move-node-after ~(second new-sdag) ~(first new-sdag))) (rest old-sdag) (rest new-sdag))))))
 
 (defn make-connection!
   "Takes an action of form [id :inlet-or-:outlet name bus-number] and  performs the action."
@@ -244,27 +189,14 @@
       (obj/disconnect-inlet! (get new-patch in-id) inlet-name)
       (update-patch! new-patch))))
 
-(defn create-object
-  "Looks up the definition of an object and creates a record. Does not assign an id to the record or add it to the server."
-  ([obj-name]
-   (create-object obj-name (rand-int 500) (rand-int 600)))
-  ([obj-name x-pos y-pos]
-   (let [obj-map (assoc (obj-name obj-def/objects) :name obj-name :x-pos x-pos :y-pos y-pos)
-         obj-type (:type obj-map)]
-     (condp = obj-type
-       :BasicSynth (obj/map->BasicSynth obj-map)
-       :DAC (obj/map->DAC obj-map)
-       (println obj-type "is not a valid object type.")))))
 
 (defn add-object!
-  "Takes a prototype object, creates it on the server, and adds it to the patch."
-  [obj-prototype]
-  (let [id (new-id)
-        obj (assoc obj-prototype :id id)]
-    (swap! patch assoc id obj)
-    ;;this is a pessimistic updating approach
-    ;; (sc/do-when-node-added id #(swap! patch assoc id obj))
-    (obj/add-to-server! obj)))
+  "Adds a new object to the patch."
+  ([obj-name]
+   (add-object! obj-name (rand-int 500) (rand-int 600)))
+  ([obj-name x-pos y-pos]
+   (let [obj (obj/obj-constructor (assoc (obj-name obj-def/objects) :name obj-name :x-pos x-pos :y-pos y-pos))]
+     (swap! patch assoc (:id obj) obj))))
 
 (defn move-object!
   "Adjusts the x and y position of an object"
@@ -282,7 +214,7 @@
         inlets-to-disconnect (keys (merge (into {} (get-connected-inlets @patch id)) (into {} (get-connected-outlets @patch id))))]
     (do
       (doall (map #(apply disconnect! %) inlets-to-disconnect))
-      (obj/remove-from-server! obj)
+      (obj/obj-destructor obj)
       (swap! patch dissoc id))))
 
 (defn set-control!
@@ -297,11 +229,10 @@
 (defn kill-patch!
   "Removes all running nodes from the server and resets the patch to an empty atom"
   []
-  (doall (map obj/remove-from-server! (vals (filter #(not (= (first %) :connections)) @patch))))
+  (doall (map obj/obj-destructor (vals (filter #(not (= (first %) :connections)) @patch))))
   (reset! patch {})
   (reset! dag (dep/graph))
-  (reset! sorted-dag [])
-  (reset-counter!))
+  (reset! sorted-dag []))
 
 (defn get-patch-map
   "Gets the current patch, converting any records to maps."

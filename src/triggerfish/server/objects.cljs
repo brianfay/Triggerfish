@@ -1,6 +1,7 @@
 (ns triggerfish.server.objects
   (:require
-   [triggerfish.server.scsynth :as sc]))
+   [triggerfish.server.scsynth :as sc]
+   [triggerfish.server.id-allocator :as id-alloc]))
 
 (defprotocol PObject
   "A Triggerfish Object corresponds to one supercollider node (could be a group or a synth).
@@ -12,7 +13,6 @@
   (disconnect-outlet! [this outlet-name])
   (set-control! [this name val])
   (remove-from-server! [this]))
-
 (defn get-ctl-nv
   [control]
   (let [[name val] control
@@ -26,7 +26,7 @@
     (reduce #(into %1 %2) control-pairs)))
 
 ;; A BasicSynth is just a Supercollider Synth
-(defrecord BasicSynth [id synthdef inlets outlets controls name x-pos y-pos]
+(defrecord BasicSynth [id synthdef inlets outlets controls name]
   PObject
   (add-to-server! [this]
     (let [default-controls (get-control-val-pair (merge inlets outlets))]
@@ -60,6 +60,10 @@
 
 ;; (->BasicSynth {:id 1000 :inlets [] :outlets [] :synthdef "saw"})
 
+;;A BufferSynth has one synthdef and needs to allocate a buffer
+;;TODO: make ctor which allocates buffer ids so that you don't have to from patch
+(defrecord BufferSynth [id synthdef inlets outlets controls name])
+
 ;;A DAC needs to write to the junk bus when it is not connected to anything
 (defrecord DAC [id synthdef inlets outputs]
   PObject
@@ -83,3 +87,24 @@
         (do (sc/set-control id inlet-name (:default inlet-props)) (sc/set-control id output-name (:default output-props))))))
   (set-control! [this name value]
     (sc/set-control id name value)))
+
+(defn obj-constructor
+  [obj-map]
+  (let [obj-type (:type obj-map)
+        obj-id   (id-alloc/new-obj-id)
+        obj-map  (assoc obj-map :id obj-id)
+        obj      (condp = obj-type
+                   :BasicSynth
+                   (map->BasicSynth obj-map)
+                   :DAC
+                   (map->BasicSynth obj-map)
+                   ;;default
+                   (do (id-alloc/free-obj-id obj-id)
+                       (throw obj-type " is not a valid object type.")))]
+    (add-to-server! obj)
+    obj))
+
+(defn obj-destructor
+  [obj]
+  (remove-from-server! obj)
+  (id-alloc/free-obj-id (:id obj)))

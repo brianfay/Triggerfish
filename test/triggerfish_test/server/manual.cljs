@@ -12,15 +12,15 @@
   []
   (go
     ;;2
-    (p/add-object! (p/create-object :dac))
+    (p/add-object! :dac)
     ;;3
-    (p/add-object! (p/create-object :sine))
+    (p/add-object! :sine)
     ;;4
-    (p/add-object! (p/create-object :sine))
+    (p/add-object! :sine)
     ;;5
-    (p/add-object! (p/create-object :tremolo))
+    (p/add-object! :tremolo)
     ;;6
-    (p/add-object! (p/create-object :tremolo))
+    (p/add-object! :tremolo)
     ;;It could be possible to try and set control before the id is created, that would be bad, may need a timeout
     ;; (<! (timeout 100))
     (let [cool-jams
@@ -46,9 +46,9 @@
   []
   (go
     ;;2
-    (p/add-object! (p/create-object :dac))
+    (p/add-object! :dac)
     ;;3
-    (p/add-object! (p/create-object :sine))
+    (p/add-object! :sine)
     (p/connect! 2 "inL" 3 "out")
     (p/connect! 2 "inR" 3 "out")
     (<! (timeout 1000))
@@ -61,9 +61,9 @@
   []
   (go
     ;;2
-    (p/add-object! (p/create-object :dac))
+    (p/add-object! :dac)
     ;;3
-    (p/add-object! (p/create-object :sine))
+    (p/add-object! :sine)
     (p/connect! 2 "inL" 3 "out")
     ;; (<! (timeout 1000))
     ;; (obj/disconnect-outlet! (get @p/patch 3) "out")
@@ -79,15 +79,15 @@
   []
   (go
     ;;2
-    (p/add-object! (p/create-object :dac))
+    (p/add-object! :dac)
     ;;3
-    (p/add-object! (p/create-object :sine))
+    (p/add-object! :sine)
     ;;4
-    (p/add-object! (p/create-object :sine))
+    (p/add-object! :sine)
     ;;5
-    (p/add-object! (p/create-object :tremolo))
+    (p/add-object! :tremolo)
     ;;6
-    (p/add-object! (p/create-object :tremolo))
+    (p/add-object! :tremolo)
     ;;It could be possible to try and set control before the id is created, that would be bad, may need a timeout
     ;; (<! (timeout 100))
     (let [cool-jams

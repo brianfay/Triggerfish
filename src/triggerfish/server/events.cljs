@@ -1,7 +1,6 @@
 (ns triggerfish.server.events
   (:require
-   [triggerfish.server.patch :as p]
-   ))
+   [triggerfish.server.patch :as p]))
 
 ;;;; Sente event handlers
 (defmulti -event-msg-handler
@@ -32,8 +31,9 @@
 (defmethod -event-msg-handler :patch/create-object
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn connected-uids]}]
   (let [session (:session ring-req)
-        uid     (:uid     session)]
-    (p/add-object! (p/create-object (:name ?data) (:x-pos ?data) (:y-pos ?data)))
+        uid     (:uid     session)
+        {:keys [name x-pos y-pos]} ?data]
+    (p/add-object! name x-pos y-pos)
     (doseq [uid (:any @connected-uids)]
       (send-fn uid [:patch/recv {:patch (p/get-patch-map)}]))))
 
