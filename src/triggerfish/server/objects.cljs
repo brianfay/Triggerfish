@@ -97,7 +97,7 @@
                    :BasicSynth
                    (map->BasicSynth obj-map)
                    :DAC
-                   (map->BasicSynth obj-map)
+                   (map->DAC obj-map)
                    ;;default
                    (do (id-alloc/free-obj-id obj-id)
                        (throw obj-type " is not a valid object type.")))]

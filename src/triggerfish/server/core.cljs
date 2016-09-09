@@ -124,17 +124,10 @@
 
 (defn stop!  []  (stop-router!)  (stop-web-server!))
 (defn start! [] (start-router!) (start-web-server!))
-;; (defonce _start-once (start!))
 
 (defn -main [& _]
   (start!))
 
 (set! *main-cli-fn* -main) ;; this is required
 
-(start-router!)
-
-;;add a watch to the patch atom
-;; (defonce patch-watch (add-watch p/patch :notify-patch
-;;                                 (fn [key atom old-state new-state]
-;;                                   (doseq [uid (:any @connected-uids)]
-;;                                     (chsk-send! uid [:patch/recv {:patch (p/get-patch-map)}])))))
+(defonce _start-once (start-router!))
