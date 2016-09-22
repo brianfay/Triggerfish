@@ -33,6 +33,24 @@
 (defn handle-midi-msg-fn [port-name]
   (fn [delta-time msg] (put! midi-chan [port-name delta-time msg])))
 
+(defn get-status-type [status-byte]
+  "Tells you the status type, note that note-on may actually mean note-off if velocity is zero"
+  (condp > status-byte
+    128 :dunno
+    144 :note-off
+    160 :note-on
+    176 :polyphonic-key-pressure
+    192 :control-change
+    208 :program-change
+    224 :pitch-bend
+    :dunno))
+
+(def channel-mask 15) ;; 00001111
+
+(defn get-channel [status-byte]
+  (+ 1 (bit-and channel-mask status-byte)))
+
+
 (defn setup-input [state]
   ;;close old ports
   (dorun
