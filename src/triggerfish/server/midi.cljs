@@ -9,12 +9,46 @@
 (defonce midi-ports (atom nil))
 (defonce used-inputs (atom nil))
 (defonce midi-chan (chan))
+(defonce subscribers (atom {}))
+
+(defn get-status-type [status-byte]
+  "Tells you the status type, note that note-on may actually mean note-off if velocity is zero"
+  (condp > status-byte
+    128 :dunno
+    144 :note-off
+    160 :note-on
+    176 :polyphonic-key-pressure
+    192 :control-change
+    208 :program-change
+    224 :channel-pressure
+    240 :pitch-bend
+    :system-message));;ignoring system messages for now
+
+(def channel-mask 15) ;; 00001111
+
+(defn get-channel [status-byte]
+  (+ 1 (bit-and channel-mask status-byte)))
+
+(defn subscribe [callback port-name status-type channel & [first-data-byte]]
+  (if first-data-byte ;;first-data-byte isn't used to identify pitch-bend, so it's optional here
+    (swap! subscribers assoc [port-name status-type channel first-data-byte] callback)
+    (swap! subscribers assoc [port-name status-type channel] callback)))
 
 (defonce midi-msg-handler
   (go-loop []
-    (let [[port-name delta-time msg] (<! midi-chan)]
-      (println port-name delta-time msg))
-    (recur)))
+    (let [[port-name delta-time msg] (<! midi-chan)
+          status-byte (first msg)
+          status-type (get-status-type status-byte)
+          channel     (get-channel status-byte)
+          first-data-byte (second msg)
+          second-data-byte (nth msg 2)]
+      (if (= :pitch-bend status-type)
+        (when-let [fun (get @subscribers [port-name status-type channel])]
+          (fun first-data-byte second-data-byte))
+        (when-let [fun (get @subscribers [port-name status-type channel first-data-byte])]
+          (fun second-data-byte))))
+  (recur)))
+
 
 (defonce device-watch
   (add-watch midi-ports
@@ -32,24 +66,6 @@
 
 (defn handle-midi-msg-fn [port-name]
   (fn [delta-time msg] (put! midi-chan [port-name delta-time msg])))
-
-(defn get-status-type [status-byte]
-  "Tells you the status type, note that note-on may actually mean note-off if velocity is zero"
-  (condp > status-byte
-    128 :dunno
-    144 :note-off
-    160 :note-on
-    176 :polyphonic-key-pressure
-    192 :control-change
-    208 :program-change
-    224 :pitch-bend
-    :dunno))
-
-(def channel-mask 15) ;; 00001111
-
-(defn get-channel [status-byte]
-  (+ 1 (bit-and channel-mask status-byte)))
-
 
 (defn setup-input [state]
   ;;close old ports
