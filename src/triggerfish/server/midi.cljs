@@ -10,6 +10,7 @@
 (defonce used-inputs (atom nil))
 (defonce midi-chan (chan))
 (defonce subscribers (atom {}))
+(defonce recently-fiddled (atom (take 6 (repeat nil))))
 
 (defn get-status-type [status-byte]
   "Tells you the status type, note that note-on may actually mean note-off if velocity is zero"
@@ -29,10 +30,19 @@
 (defn get-channel [status-byte]
   (+ 1 (bit-and channel-mask status-byte)))
 
-(defn subscribe [callback port-name status-type channel & [first-data-byte]]
-  (if first-data-byte ;;first-data-byte isn't used to identify pitch-bend, so it's optional here
-    (swap! subscribers assoc [port-name status-type channel first-data-byte] callback)
-    (swap! subscribers assoc [port-name status-type channel] callback)))
+(defn subscribe
+  ([callback port-name status-type channel]
+   (subscribe callback port-name status-type channel nil))
+  ([callback port-name status-type channel first-data-byte]
+   (if first-data-byte ;;first-data-byte isn't used to identify pitch-bend, so it's optional here
+     (swap! subscribers assoc [port-name status-type channel first-data-byte] callback)
+     (swap! subscribers assoc [port-name status-type channel] callback))))
+
+(defn fiddle-midi [port-name status-type channel]
+  (let [fiddled @recently-fiddled
+        ctl [port-name status-type channel]]
+    (when-not (some #(= ctl %) fiddled)
+      (reset! recently-fiddled (cons [port-name status-type channel] (butlast @recently-fiddled))))))
 
 (defonce midi-msg-handler
   (go-loop []
@@ -42,6 +52,7 @@
           channel     (get-channel status-byte)
           first-data-byte (second msg)
           second-data-byte (nth msg 2)]
+      (fiddle-midi port-name status-type channel)
       (if (= :pitch-bend status-type)
         (when-let [fun (get @subscribers [port-name status-type channel])]
           (fun first-data-byte second-data-byte))
