@@ -30,19 +30,40 @@
 (defn get-channel [status-byte]
   (+ 1 (bit-and channel-mask status-byte)))
 
-(defn subscribe
-  ([callback port-name status-type channel]
-   (subscribe callback port-name status-type channel nil))
-  ([callback port-name status-type channel first-data-byte]
-   (if first-data-byte ;;first-data-byte isn't used to identify pitch-bend, so it's optional here
-     (swap! subscribers assoc [port-name status-type channel first-data-byte] callback)
-     (swap! subscribers assoc [port-name status-type channel] callback))))
+(defn note? [type]
+  (or (= type :note-on) (= type :note-off)))
 
-(defn fiddle-midi [port-name status-type channel]
+(defn subscribe
+  ([callback port-name status-type channel first-data-byte]
+   (cond
+     (= status-type :pitch-bend)
+     (swap! subscribers assoc [port-name status-type channel nil] callback)
+
+     (note? status-type)
+     (swap! subscribers assoc [port-name :note channel first-data-byte] callback)
+
+     :default
+     (swap! subscribers assoc [port-name status-type channel first-data-byte] callback))))
+
+(defn unsubscribe
+  ([port-name status-type channel first-data-byte]
+   (cond
+     (= status-type :pitch-bend)
+     (swap! subscribers dissoc [port-name status-type channel nil])
+
+     (note? status-type)
+     (swap! subscribers dissoc [port-name :note channel first-data-byte])
+
+     :default
+     (swap! subscribers dissoc [port-name status-type channel first-data-byte]))))
+
+(defn fiddle-midi [port-name status-type channel first-data-byte]
   (let [fiddled @recently-fiddled
-        ctl [port-name status-type channel]]
+        status-type (if (note? status-type) :note status-type)
+        first-data-byte (if (= :pitch-bend status-type) nil first-data-byte)
+        ctl [port-name status-type channel first-data-byte]]
     (when-not (some #(= ctl %) fiddled)
-      (reset! recently-fiddled (cons [port-name status-type channel] (butlast @recently-fiddled))))))
+      (reset! recently-fiddled (cons [port-name status-type channel first-data-byte] (butlast @recently-fiddled))))))
 
 (defonce midi-msg-handler
   (go-loop []
@@ -52,14 +73,41 @@
           channel     (get-channel status-byte)
           first-data-byte (second msg)
           second-data-byte (nth msg 2)]
-      (fiddle-midi port-name status-type channel)
-      (if (= :pitch-bend status-type)
-        (when-let [fun (get @subscribers [port-name status-type channel])]
-          (fun first-data-byte second-data-byte))
+      (fiddle-midi port-name status-type channel first-data-byte)
+      (condp = status-type
+        :pitch-bend
+        (when-let [fun (get @subscribers [port-name status-type channel nil])] ;;gonna change resolution back to 0-127 cause whatever why not
+          ;;16383 / 129 is 127
+          ;; (fun (/ (+ (bit-shift-left first-data-byte 7) second-data-byte) 129.0))
+          ;;in theory pitch-bend should send 0-16383, my oxygen keyboard is sending 0-127 on the second data-byte,
+          ;;and 0 for the first (except at the very top, where it randomly sends 127)
+          ;;I think maybe I just won't use pitch bend
+          (fun (/ (+ (bit-shift-left first-data-byte 7) second-data-byte) 129.0)))
+        :note-on
+        (when-let [fun (get @subscribers [port-name :note channel first-data-byte])]
+          (fun second-data-byte))
+        :note-off ;;just pretend this is same as note on with zero velocity
+        (when-let [fun (get @subscribers [port-name :note channel first-data-byte])]
+          (fun 0))
+        ;;default
         (when-let [fun (get @subscribers [port-name status-type channel first-data-byte])]
           (fun second-data-byte))))
   (recur)))
 
+(comment
+  @subscribers
+  (subscribe #(println %1) "USB Oxygen 61 28:0" :pitch-bend 8 nil)
+  (subscribe #(println %1) "USB Oxygen 61 28:0" :note 8 42)
+  (subscribe #(println %1) "USB Oxygen 61 28:0" :control-change 2 74)
+  (subscribe #(println %1) "USB Oxygen 61 28:0" :control-change 2 74)
+  (second @recently-fiddled)
+  (subscribe #(println %) "QUNEO 24:0" :control-change 1 29)
+  (subscribe #(println %) "QUNEO 24:0" :control-change 1 30)
+  (subscribe #(println %) "QUNEO 24:0" :control-change 1 31)
+  (unsubscribe "QUNEO 24:0" :control-change 1 29)
+  (unsubscribe "QUNEO 24:0" :control-change 1 30)
+  (unsubscribe "QUNEO 24:0" :control-change 1 31)
+  )
 
 (defonce device-watch
   (add-watch midi-ports
