@@ -14,29 +14,28 @@
 
 (enable-console-print!)
 
-(def http (nodejs/require "http"))
-(def express (nodejs/require "express"))
-(def express-ws (nodejs/require "express-ws"))
-(def ws (nodejs/require "ws"))
-(def cookie-parser (nodejs/require "cookie-parser"))
-(def body-parser (nodejs/require "body-parser"))
-(def csurf (nodejs/require "csurf"))
-(def session (nodejs/require "express-session"))
+(defonce http (nodejs/require "http"))
+(defonce express (nodejs/require "express"))
+(defonce express-ws (nodejs/require "express-ws"))
+(defonce ws (nodejs/require "ws"))
+(defonce cookie-parser (nodejs/require "cookie-parser"))
+(defonce body-parser (nodejs/require "body-parser"))
+(defonce csurf (nodejs/require "csurf"))
+(defonce session (nodejs/require "express-session"))
 
-(let [;; Serializtion format, must use same val for client + server:
-      packer :edn ; Default packer, a good choice in most cases
-      user-id-fn (fn [ring-req] (:client-id ring-req))
-      ;; (sente-transit/get-flexi-packer :edn) ; Experimental, needs Transit dep
-      {:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
-              connected-uids]}
-      (sente-express/make-express-channel-socket-server! {:packer packer
-                                                          :user-id-fn user-id-fn})]
-  (def ajax-post                ajax-post-fn)
-  (def ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
-  (def ch-chsk                  ch-recv) ; ChannelSocket's receive channel
-  (def chsk-send!               send-fn) ; ChannelSocket's send API fn
-  (def connected-uids           connected-uids) ; Watchable, read-only atom
-  )
+(defonce _
+  (let [;; Serializtion format, must use same val for client + server:
+       packer :edn ; Default packer, a good choice in most cases
+       user-id-fn (fn [ring-req] (:client-id ring-req))
+       {:keys [ch-recv send-fn ajax-post-fn ajax-get-or-ws-handshake-fn
+               connected-uids]}
+       (sente-express/make-express-channel-socket-server! {:packer packer
+                                                           :user-id-fn user-id-fn})]
+   (defonce ajax-post                ajax-post-fn)
+   (defonce ajax-get-or-ws-handshake ajax-get-or-ws-handshake-fn)
+   (defonce ch-chsk                  ch-recv) ; ChannelSocket's receive channel
+   (defonce chsk-send!               send-fn) ; ChannelSocket's send API fn
+   (defonce uids           connected-uids))) ; Watchable, read-only atom
 
 (defn get-csrf-token
   "Sente uses 'csrf-token' in it's request but csurf usually uses
@@ -104,7 +103,7 @@
 
 ;;;; Sente event router (our `event-msg-handler` loop)
 (defonce router_ (atom nil))
-(defn  stop-router! [] (when-let [stop-f @router_] (stop-f)))
+(defn stop-router! [] (when-let [stop-f @router_] (stop-f)))
 (defn start-router! []
   (stop-router!)
   (reset! router_
@@ -113,7 +112,7 @@
 
 ;;;; Init stuff
 (defonce web-server_ (atom nil)) ; {:server _ :port _ :stop-fn (fn [])}
-(defn  stop-web-server! [] (when-let [m @web-server_] ((:stop-fn m))))
+(defn stop-web-server! [] (when-let [m @web-server_] ((:stop-fn m))))
 (defn start-web-server! [& [port]]
   (stop-web-server!)
   (let [{:keys [stop-fn port] :as server-map}
@@ -122,7 +121,7 @@
     (infof "Web server is running at `%s`" uri)
     (reset! web-server_ server-map)))
 
-(defn stop!  []  (stop-router!)  (stop-web-server!))
+(defn stop!  [] (stop-router!)  (stop-web-server!))
 (defn start! [] (start-router!) (start-web-server!))
 
 (defn -main [& _]
@@ -131,3 +130,9 @@
 (set! *main-cli-fn* -main) ;; this is required
 
 (defonce _start-once (start-router!))
+
+(defonce fiddler-on-the-roof ;;watch for most recently fiddled midi controls, send to the client
+  (add-watch midi/recently-fiddled :fiddled
+             (fn [key ref old-state new-state]
+               (doseq [uid (:any @uids)]
+                 (chsk-send! uid [:fiddled/recv new-state])))))

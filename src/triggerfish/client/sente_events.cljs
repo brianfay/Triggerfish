@@ -16,10 +16,10 @@
   (def chsk-send! send-fn)
   (def chsk-state state))
 
-(defn request-patch!
-  "Sends a request to :patch/notify, which will send out the current patch atom."
+(defn request-app-state!
+  "Sends a request to :app-state/get, which will send out the current patch atom and any other needed app state."
   []
-  (chsk-send! [:patch/notify]))
+  (chsk-send! [:app-state/get]))
 
 (defmulti -event-msg-handler
   "Multimethod to handle Sente `event-msg`s"
@@ -41,18 +41,23 @@
   [{:as ev-msg :keys [?data]}]
   ;;request a patch update when the socket opens
   (when (:first-open? ?data)
-    (request-patch!)))
+    (request-app-state!)))
 
 (defmethod -event-msg-handler :chsk/handshake
   [{:as ev-msg :keys [?data]}])
 
-(defmethod -event-msg-handler :apparent-success
-  [{:as ev-msg :keys [?data]}]
-  (println "got apparent-success from sente, not sure what this means."))
+;; (defmethod -event-msg-handler :apparent-success
+;;   [{:as ev-msg :keys [?data]}]
+;;   (println "got apparent-success from sente, not sure what this means."))
 
 (defmethod -event-msg-handler :patch/recv
   [{:as ev-msg :keys [?data]}]
   (dispatch [:patch-recv (:patch ?data)]))
+
+(defmethod -event-msg-handler :fiddled/recv
+  [{:as ev-msg :keys [?data]}]
+   (println "If I were a rich man I'd have all these controls: " ?data)
+)
 
 ;;Router
 (defonce router_ (atom nil))
