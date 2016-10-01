@@ -1,5 +1,4 @@
 (ns triggerfish.client.core
-  (:require-macros [reagent.ratom :refer [reaction]])
   (:require [reagent.core :as reagent]
             [re-frame.core :refer [dispatch
                                    dispatch-sync

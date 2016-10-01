@@ -4,7 +4,7 @@
   :license {:name "The MIT License (MIT)"
             :url "https://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [org.clojure/clojurescript "1.9.89"]
+                 [org.clojure/clojurescript "1.9.227"]
                  [org.clojure/core.async "0.2.374"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.stuartsierra/component "0.3.1"]
@@ -14,7 +14,7 @@
                  [figwheel-sidecar "0.5.4-7"]
                  [com.cemerick/piggieback "0.2.1"]
                  [reagent "0.6.0-rc"]
-                 [re-frame "0.8.0-alpha9"]]
+                 [re-frame "0.8.0"]]
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 
