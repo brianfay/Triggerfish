@@ -6,6 +6,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [org.clojure/clojurescript "1.9.227"]
                  [org.clojure/core.async "0.2.374"]
+                 [cljsjs/hammer "2.0.4-5"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.stuartsierra/component "0.3.1"]
                  [com.taoensso/sente "1.8.0-beta1"]

@@ -1,176 +1,71 @@
 (ns triggerfish.client.handlers
-  (:require [re-frame.core :refer [reg-event-db]]
-            [triggerfish.shared.object-definitions :as obj]
-            [triggerfish.client.sente-events :refer [chsk-send!]]))
+  (:require [re-frame.core :refer [reg-event-db]]))
 
 (def initial-state
-  {:objects {}
-   :connections {}
-   :positions {}
-   :toolbar-hidden true
-   :mode :insert
-   :selected-outlet [nil nil]
-   :obj-name-last-click {}
-   })
+  {:objects {1 {:x-pos 100 :y-pos 100}
+             2 {:x-pos 200 :y-pos 200}}
+   :pan     {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
+   :zoom    {:current-zoom 1 :scale 1}})
 
 (reg-event-db
  :initialize
- (fn
-   [db _]
+ (fn [db _]
    (merge db initial-state)))
 
 (reg-event-db
- :patch-recv
- (fn [db [ev-id patch]]
-   (assoc db :objects (dissoc patch :connections) :connections (:connections patch))))
-
-;;Updates the app-db with the DOM position of an inlet or outlet
-(reg-event-db
- :update-io-position
- (fn [db [ev-id obj-id inlet-or-outlet-name pos]]
-   (assoc-in db [:positions [obj-id inlet-or-outlet-name]] pos)))
-
-(reg-event-db
- :update-object-dom-position
- (fn [db [ev-id obj-id pos]]
-   (assoc-in db [:positions obj-id] pos)))
-
-(reg-event-db
- :dissoc-position
- (fn [db [ev-id obj-id inlet-or-outlet-name]]
-   (update-in db [:positions] dissoc [obj-id inlet-or-outlet-name])))
-
-(reg-event-db
- :move-object
- (fn [db [ev-id obj-id x y]]
-   (do
-     (chsk-send! [:patch/move-object {:obj-id obj-id :x-pos x :y-pos y}])
+ :offset-object
+ (fn [db [_ id delta-x delta-y]]
+   (let [zoom (get-in db [:zoom :current-zoom])
+         scale-offset (/ 1 zoom)
+         offset-x (* delta-x scale-offset)
+         offset-y (* delta-y scale-offset)]
      (-> db
-         (assoc-in [:objects obj-id :x-pos] (if (> x 10) x 10))
-         (assoc-in [:objects obj-id :y-pos] (if (> y 0) y 0))))))
+         (assoc-in [:objects id :offset-x] offset-x)
+         (assoc-in [:objects id :offset-y] offset-y)))))
 
 (reg-event-db
- :select-create-object
- (fn [db [ev-id name]]
-   (assoc db :selected-create-object name)))
+ :commit-object-position
+ (fn [db [_ id]]
+   (let [offset-x (get-in db [:objects id :offset-x])
+         offset-y (get-in db [:objects id :offset-y])
+         x-pos (get-in db [:objects id :x-pos])
+         y-pos (get-in db [:objects id :y-pos])]
+     (-> db
+        (assoc-in [:objects id :offset-x] 0)
+        (assoc-in [:objects id :offset-y] 0)
+        (assoc-in [:objects id :x-pos] (+ x-pos offset-x))
+        (assoc-in [:objects id :y-pos] (+ y-pos offset-y))))))
 
 (reg-event-db
- :close-control-window
- (fn [db [ev-id]]
-   (assoc db :selected-control-object nil)))
+ :commit-camera-pan
+ (fn [db _]
+   (let [x-pos (get-in db [:pan :x-pos])
+         y-pos (get-in db [:pan :y-pos])
+         offset-x (get-in db [:pan :offset-x])
+         offset-y (get-in db [:pan :offset-y])]
+     (-> db
+         (assoc-in [:pan :x-pos] (+ x-pos offset-x))
+         (assoc-in [:pan :y-pos] (+ y-pos offset-y))
+         (assoc-in [:pan :offset-x] 0)
+         (assoc-in [:pan :offset-y] 0)))))
 
 (reg-event-db
- :select-control-object
- (fn [db [ev-id obj-id]]
-   (assoc db :selected-control-object obj-id)))
+ :pan-camera
+ (fn [db [_ delta-x delta-y]]
+   (-> db
+       (assoc-in [:pan :offset-x] (+ (:x-pos db) delta-x))
+       (assoc-in [:pan :offset-y] (+ (:y-pos db) delta-y)))))
 
 (reg-event-db
- :optimistic-create
- (fn [db [ev-id obj-name x-pos y-pos]]
-   ;;todo - guarantee id is unique
-   (let [id (str "ghost" (rand-int 99999))]
-     (assoc-in db [:objects id]
-              (merge (obj-name obj/objects)
-                     {:id id
-                      :x-pos x-pos
-                      :y-pos y-pos
-                      :name obj-name
-                      :optimistic true})))))
-
-(defn get-connected-inlets
-  [connections obj-id]
-  (filter #(= obj-id (first (first %))) connections))
-
-(defn get-connected-outlets
-  [connections obj-id]
-  (filter #(= obj-id (first (second %))) connections))
+ :commit-camera-zoom
+ (fn [db _]
+   (let [current-zoom (get-in db [:zoom :current-zoom])
+         scale        (get-in db [:zoom :scale])]
+     (-> db
+         (assoc-in [:zoom :current-zoom] (* current-zoom scale))
+         (assoc-in [:zoom :scale] 1)))))
 
 (reg-event-db
- :optimistic-delete
- (fn [db [ev-id obj-id]]
-   (let [connections (:connections db)
-         connections-to-remove (keys (merge (into {} (get-connected-inlets connections obj-id))
-                                            (into {} (get-connected-outlets connections obj-id))))]
-     (-> (reduce #(update-in %1 [:connections] dissoc %2) db connections-to-remove)
-         (update-in [:objects] dissoc obj-id)
-         (update :selected-control-object #(if (= % obj-id) nil %))))))
-
-(reg-event-db
- :connect
- (fn [db [ev-id inlet-id inlet-name type]]
-   (let [selected-outlet (:selected-outlet db)
-         [outlet-id outlet-name outlet-type] selected-outlet]
-     (when (not (= inlet-id outlet-id))
-       (if (and (not (nil? selected-outlet)) (= type outlet-type))
-         (do
-           (chsk-send! [:patch/connect {:in-id inlet-id :in-name inlet-name :out-id outlet-id :out-name outlet-name}])
-           (assoc-in db [:connections [inlet-id inlet-name]] [outlet-id outlet-name]))
-         (if (not (nil? (get (:connections db) [inlet-id inlet-name])))
-           (do
-             (chsk-send! [:patch/disconnect {:in-id inlet-id :in-name inlet-name}])
-             (update-in db [:connections] dissoc [inlet-id inlet-name]))
-           db))))))
-
-(reg-event-db
- ;;select an outlet
- :select-outlet
- (fn [db [ev-id [id name type]]]
-   (let [prev-outlet (:selected-outlet db)]
-     (if (not (= prev-outlet [id name type]))
-       (assoc db :selected-outlet [id name type])
-       (dissoc db :selected-outlet)))))
-
-(reg-event-db
- :select-object
- (fn [db [ev-id obj-id]]
-   (if (not (= obj-id (first (:selected-outlet db))))
-     (assoc db :selected-outlet [obj-id nil nil])
-     db)))
-
-(reg-event-db
- :deselect-outlet
- (fn [db [ev-id [id name type]]]
-   (dissoc db :selected-outlet)))
-
-(reg-event-db
- :min-max
- (fn [db [ev-id obj-id current-val]]
-   (assoc-in db [:minimized obj-id] (not current-val))))
-
-(reg-event-db
- :set-mode
- (fn [db [ev-id mode]]
-   (if (= mode (:mode db))
-     (assoc db :mode nil)
-     (assoc db :mode mode))))
-
-(reg-event-db
- :open-toolbar
- (fn [db [ev-id]]
-   (assoc db :toolbar-hidden false)))
-
-(reg-event-db
- :close-toolbar
- (fn [db [ev-id]]
-   (assoc db :toolbar-hidden true)))
-
-(reg-event-db
- :update-patch-size
- (fn [db [ev-id width height]]
-   (assoc db :patch-size [width height])))
-
-(reg-event-db
- :optimistic-set-control
- (fn [db [ev-id obj-id ctrl-name value]]
-   (assoc-in db [:objects obj-id :controls ctrl-name :value] value)))
-
-(reg-event-db
- :click-obj-name
- (fn [db [ev-id id]]
-   (let [now (.now js/Date)
-         prev-click (get-in db [:obj-name-last-click id])]
-     (if (< (- now prev-click) 300)
-       (-> db
-           (assoc-in [:obj-name-last-click id] now)
-           (update-in [:minimized id] not))
-       (assoc-in db [:obj-name-last-click id] now)))))
+ :zoom-camera
+ (fn [db [_ scale]]
+   (assoc-in db [:zoom :scale] scale)))

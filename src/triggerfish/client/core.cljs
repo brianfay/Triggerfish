@@ -4,13 +4,14 @@
                                    dispatch-sync
                                    subscribe]]
             [triggerfish.client.sente-events :as sente-events]
+            [triggerfish.client.views.app :as app]
             [triggerfish.client.handlers]
             [triggerfish.client.subs]
-            [triggerfish.client.views :as views]))
+            [cljsjs.hammer]))
 
 (enable-console-print!)
 
-(reagent/render [views/app]
+(reagent/render [app/app-container]
                 (js/document.getElementById "app"))
 
 ;;;; Init stuff

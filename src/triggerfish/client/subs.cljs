@@ -1,62 +1,26 @@
 (ns triggerfish.client.subs
-  (:require [re-frame.core :refer [reg-sub]]))
+  (:require [re-frame.core :refer [reg-sub subscribe]]))
 
 (reg-sub
  :objects
- (fn
-   [db _]
-   (:objects db)))
+ (fn [db _]
+   (keys (:objects db))))
 
 (reg-sub
- :positions
- (fn
-   [db _]
-   (:positions db)))
+ :obj-params
+ (fn [db [_ id]]
+   (get-in db [:objects id])))
 
 (reg-sub
- :minimized
- (fn
-   [db _]
-   (:minimized db)))
+ :camera-position
+ (fn [db _]
+   (let [{:keys [x-pos y-pos offset-x offset-y]} (:pan db)
+         x-pos                                   (+ x-pos offset-x)
+         y-pos                                   (+ y-pos offset-y)]
+     [x-pos y-pos])))
 
 (reg-sub
- :connections
- (fn
-   [db _]
-   (:connections db)))
-
-(reg-sub
- :selected-create-object
- (fn
-   [db _]
-   (:selected-create-object db)))
-
-(reg-sub
- :selected-control-object
- (fn
-   [db _]
-   (:selected-control-object db)))
-
-(reg-sub
- :selected-outlet
- (fn
-   [db _]
-   (:selected-outlet db)))
-
-(reg-sub
- :mode
- (fn
-   [db _]
-   (:mode db)))
-
-(reg-sub
- :patch-size
- (fn
-   [db _]
-   (:patch-size db)))
-
-(reg-sub
- :toolbar-hidden
- (fn
-   [db _]
-   (:toolbar-hidden db)))
+ :zoom
+ (fn [db _]
+   (* (get-in db [:zoom :scale])
+      (get-in db [:zoom :current-zoom]))))
