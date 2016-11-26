@@ -11,6 +11,7 @@
      :compiler {:main "triggerfish.client.core"
                 :output-to "out/client_out/client.js"
                 :output-dir "out/client_out"
+                :preloads ['devtools.preload]
                 :source-map true}}
     {:id "server-dev"
      :source-paths ["src/triggerfish/server" "src/triggerfish/shared" "test/triggerfish_test/server"]

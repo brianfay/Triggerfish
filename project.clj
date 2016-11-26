@@ -12,6 +12,7 @@
                  [com.taoensso/sente "1.8.0-beta1"]
                  [com.taoensso/timbre "4.2.1"]
                  ;;these should maybe be in a :dev :dependencies?
+                 [binaryage/devtools "0.8.3"]
                  [figwheel-sidecar "0.5.4-7"]
                  [com.cemerick/piggieback "0.2.1"]
                  [reagent "0.6.0-rc"]
@@ -47,6 +48,7 @@
           :compiler {:main "triggerfish.client.core"
                      :output-to "out/client_out/client.js"
                      :output-dir "out/client_out"
+                     :preloads [devtools.preload]
                      :source-map true}}
         {:id "server-dev"
             :source-paths ["src/triggerfish/server" "src/triggerfish/shared" "test/triggerfish_test/server"]
