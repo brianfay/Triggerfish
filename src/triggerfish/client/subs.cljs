@@ -24,3 +24,8 @@
  (fn [db _]
    (* (get-in db [:zoom :scale])
       (get-in db [:zoom :current-zoom]))))
+
+(reg-sub
+ :selected-menu
+ (fn [db _]
+   (get-in db [:menu :selected])))
