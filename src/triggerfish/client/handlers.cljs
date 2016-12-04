@@ -102,20 +102,34 @@
                  :x-pos x
                  :y-pos y}])))
 
+(defn translate-and-scale-points [db x y]
+  (let [zoom (* (get-in db [:zoom :scale])
+                (get-in db [:zoom :current-zoom]))
+        {:keys [x-pos y-pos offset-x offset-y]} (:pan db)
+        x-translate (+ x-pos offset-x)
+        y-translate (+ y-pos offset-y)
+        x (-> x
+              (- x-translate)
+              (/ zoom))
+        y (-> y
+              (- y-translate)
+              (/ zoom))]
+    [x y]))
+
 (reg-event-fx
  :app-container-clicked
  standard-interceptors
  (fn [{:keys [db]} [ x y]]
-   (let [visible? (get-in db [:menu :visibility])
-         pan (:pan db)
-         selected-obj (get-in db [:menu :selected-obj])]
+   (let [visible?            (get-in db [:menu :visibility])
+         [scaled-x scaled-y] (translate-and-scale-points db x y)
+         selected-obj        (get-in db [:menu :selected-obj])]
      (merge
       {:db (-> db
                (assoc-in [:menu :visibility] (not visible?))
                (assoc-in [:menu :position :x] x)
                (assoc-in [:menu :position :y] y))}
       (if (and visible? selected-obj)
-        {:add-object [selected-obj x y]
+        {:add-object [selected-obj scaled-x scaled-y]
          :dispatch   [:select-obj-to-insert nil]}
         {})))))
 

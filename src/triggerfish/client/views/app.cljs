@@ -25,6 +25,7 @@ Can be translated and scaled for panning/zooming the patch"
            :transform (str "translate3d(" x-pos "px, " y-pos "px, 0px) "
                            "scale("     @zoom ", "   @zoom ")")}}
          (map (fn [[id _]]
+                ^{:key (str  "obj:" id)}
                 [obj/object id])
               @objs)]))))
 
