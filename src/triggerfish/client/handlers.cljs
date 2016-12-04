@@ -1,20 +1,30 @@
 (ns triggerfish.client.handlers
-  (:require [re-frame.core :refer [reg-event-db debug trim-v]]))
+  (:require [re-frame.core :refer [reg-event-db reg-event-fx reg-fx debug trim-v]]
+            [triggerfish.client.sente-events :refer [chsk-send!]]))
 
 (def standard-interceptors [trim-v #_debug])
 
 (def initial-state
-  {:objects {1 {:x-pos 100 :y-pos 100}
-             2 {:x-pos 200 :y-pos 200}}
+  {:objects {}
    :pan     {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
    :zoom    {:current-zoom 1 :scale 1}
-   :menu    {:selected 0}})
+   :menu    {:selected 0
+             :visibility false
+             :position {:x 0 :y 0}}})
 
 (reg-event-db
  :initialize
  standard-interceptors
  (fn [db _]
    (merge db initial-state)))
+
+(reg-event-db
+ :patch-recv
+ standard-interceptors
+ (fn [db [patch]]
+   (assoc db :objects patch)))
+
+;;Objects:
 
 (reg-event-db
  :offset-object
@@ -41,6 +51,8 @@
         (assoc-in [:objects id :offset-y] 0)
         (assoc-in [:objects id :x-pos] (+ x-pos offset-x))
         (assoc-in [:objects id :y-pos] (+ y-pos offset-y))))))
+
+;;Camera:
 
 (reg-event-db
  :commit-camera-pan
@@ -75,15 +87,48 @@
          (assoc-in [:zoom :scale] 1)))))
 
 (reg-event-db
+ :zoom-camera
+ standard-interceptors
+ (fn [db [scale]]
+   (assoc-in db [:zoom :scale] scale)))
+
+;;Menu:
+
+(reg-fx
+ :add-object
+ (fn [[obj-name x y]]
+   (chsk-send! [:patch/create-object
+                {:name obj-name
+                 :x-pos x
+                 :y-pos y}])))
+
+(reg-event-fx
+ :app-container-clicked
+ standard-interceptors
+ (fn [{:keys [db]} [ x y]]
+   (let [visible? (get-in db [:menu :visibility])
+         pan (:pan db)
+         selected-obj (get-in db [:menu :selected-obj])]
+     (merge
+      {:db (-> db
+               (assoc-in [:menu :visibility] (not visible?))
+               (assoc-in [:menu :position :x] x)
+               (assoc-in [:menu :position :y] y))}
+      (if (and visible? selected-obj)
+        {:add-object [selected-obj x y]
+         :dispatch   [:select-obj-to-insert nil]}
+        {})))))
+
+(reg-event-db
  :swipe-menu
  standard-interceptors
  (fn [db [direction total-menu-items]]
    (let [selected (get-in db [:menu :selected])
          new-val (condp = direction
                    (.-DIRECTION_LEFT js/Hammer)
-                     (inc selected)
+                   (inc selected)
                    (.-DIRECTION_RIGHT js/Hammer)
-                     (dec selected)
+                   (dec selected)
                    selected)]
      (if (and (>= new-val 0)
               (< new-val total-menu-items))
@@ -91,7 +136,10 @@
        db))))
 
 (reg-event-db
- :zoom-camera
+ :select-obj-to-insert
  standard-interceptors
- (fn [db [scale]]
-   (assoc-in db [:zoom :scale] scale)))
+ (fn [db [obj-name]]
+   (if (not= obj-name (get-in db [:menu :selected-obj]))
+     (assoc-in db [:menu :selected-obj] obj-name)
+     (assoc-in db [:menu :selected-obj] nil))))
+

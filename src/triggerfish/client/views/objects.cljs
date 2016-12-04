@@ -20,8 +20,7 @@
    [:h1 "super cool object"]
    "informational text"])
 
-(deftouchable object-impl [id init-params params expanded]
-  (add-tap ham-man (fn [ev] (swap! expanded not)))
+(deftouchable object-impl [id params expanded]
   (add-pan ham-man
            (fn [ev]
              (.stopPropagation (.-srcEvent ev)) ;; without this, you can pan the camera while moving an object by using two fingers.
@@ -36,7 +35,7 @@
              (fn [ev]
                (.stopPropagation (.-srcEvent ev))))
   (fn [id]
-    (let [{:keys [x-pos y-pos offset-x offset-y]} @params]
+    (let [{:keys [x-pos y-pos offset-x offset-y name]} @params]
       [:div {:class            "object"
              :style (merge (if @expanded
                              obj-expanded-style
@@ -45,12 +44,13 @@
                             :left             x-pos
                             :top              y-pos
                             :transform        (str "translate3d(" offset-x "px, " offset-y "px, 0px)")
-                            :transition       "min-width 0.25s, min-height 0.25s"})}
+                            :transition       "min-width 0.25s, min-height 0.25s"})
+             :on-click (fn [e] (.stopPropagation e) (swap! expanded not))}
        (if @expanded
          [obj-display]
-         [:p id])])))
+         [:p name])])))
 
-(defn object [id init-params]
+(defn object [id]
   (let [params (subscribe [:obj-params id])
         expanded (atom false)]
-    [object-impl id init-params params expanded]))
+    [object-impl id params expanded]))

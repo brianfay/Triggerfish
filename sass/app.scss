@@ -1,0 +1,18 @@
+$font-stack: monospace;
+$black-ish: hsl(226,21,11); //#161922
+$bg-color: $black-ish;
+html {
+    height: 100%;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    ms-user-select: none;
+    user-select: none;
+}
+
+body {
+/*     font: 100% $font-stack; */
+/*     color: lighten(complement($object-bg-color), 40%); */
+    /* background-color: $bg-color; */
+}

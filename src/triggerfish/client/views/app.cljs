@@ -24,9 +24,8 @@ Can be translated and scaled for panning/zooming the patch"
            :color "#FFF"
            :transform (str "translate3d(" x-pos "px, " y-pos "px, 0px) "
                            "scale("     @zoom ", "   @zoom ")")}}
-         (map (fn [id init-params]
-                ^{:key (str "obj: " id)}
-                [obj/object id init-params])
+         (map (fn [[id _]]
+                [obj/object id])
               @objs)]))))
 
 (deftouchable app-container []
@@ -45,6 +44,7 @@ Can be translated and scaled for panning/zooming the patch"
     [:div {:style
            {:width  "100%"
             :height "100%"}
-           :overflow "hidden"}
-     [patch-canvas]
-     [menu]]))
+           :overflow "hidden"
+           :on-click (fn [e] (dispatch [:app-container-clicked (.-clientX e) (.-clientY e)]))}
+     [menu]
+     [patch-canvas]]))

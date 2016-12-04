@@ -9,8 +9,7 @@
        "/chsk"
        {:type chsk-type
         :packer packer
-        :wrap-recv-evs? false ;;without this server-side pushes go to chsk/recv
-        })]
+        :wrap-recv-evs? false})] ;;without this server-side pushes go to chsk/recv
   (def chsk chsk)
   (def ch-chsk ch-recv)
   (def chsk-send! send-fn)
@@ -23,8 +22,7 @@
 
 (defmulti -event-msg-handler
   "Multimethod to handle Sente `event-msg`s"
-  :id ; Dispatch on event-id
-  )
+  :id)
 
 ;;Event handlers
 (defn event-msg-handler
@@ -56,8 +54,7 @@
 
 (defmethod -event-msg-handler :fiddled/recv
   [{:as ev-msg :keys [?data]}]
-   (println "If I were a rich man I'd have all these controls: " ?data)
-)
+   (println "If I were a rich man I'd have all these controls: " ?data))
 
 ;;Router
 (defonce router_ (atom nil))

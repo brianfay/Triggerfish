@@ -1,6 +1,5 @@
 $font-stack: monospace;
-$black-ish: hsl(226,21,11); //#161922
-$bg-color: $black-ish;
+$bg-color: hsl(226,21,11); //#161922
 $insert-color: #be4;
 $delete-color: #e44;
 $connect-color: #f2b500;
@@ -15,6 +14,7 @@ $outlet-color: darken($object-bg-color, 15%);
 html, body, #app {
     height: 100%;
     width: 100%;
+    overflow: hidden;
 }
 
 body {
@@ -33,11 +33,10 @@ Making a carousel-style menu - with flex we can tell the menu items to take up 1
 Otherwise we'd probably have to give each menu item absolute position and keep incrementing left by 100%.
 */
 .menu {
+    z-index: 1;
     position: absolute;
     height: 400px;
     width: 300px;
-    left:  200px;
-    top:   200px;
     background-color: lighten($bg-color, 10%);
     border-color: lighten($bg-color, 40%);
     border-style: solid;
@@ -55,5 +54,10 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
 .menu-item {
     min-height: 100%;
     min-width: 100%;
-    background-color: #EFC;
+    background-color: lighten($bg-color, 30%);
+    overflow: auto;
+}
+
+.selected-obj {
+    color: red;
 }
