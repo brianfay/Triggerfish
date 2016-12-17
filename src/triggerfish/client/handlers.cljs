@@ -37,12 +37,28 @@
       :y-pos y}])))
 
 (reg-event-db
- :select-outlet
+ :deselect-outlet
  standard-interceptors
- (fn [db [obj-id outlet-name]]
+ (fn [db]
+   (assoc db :selected-outlet nil)))
+
+(reg-event-db
+ :click-outlet
+ standard-interceptors
+ (fn [db [obj-id outlet-name type]]
    (if-not (= [obj-id outlet-name] (:selected-outlet db))
-     (assoc db :selected-outlet [obj-id outlet-name])
+     (assoc db :selected-outlet [obj-id outlet-name type])
      (assoc db :selected-outlet nil))))
+
+(reg-event-fx
+ :click-inlet
+ standard-interceptors
+ (fn [{:keys [db]} [obj-id inlet-name type]]
+   (let [selected-outlet (:selected-outlet db)
+         [out-obj-id _ outlet-type] selected-outlet]
+     (if (and selected-outlet (not= out-obj-id obj-id) (= type outlet-type))
+       {:dispatch [:deselect-outlet]}
+       {}))))
 
 (reg-event-db
  :offset-object

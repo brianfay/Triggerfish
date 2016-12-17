@@ -15,14 +15,18 @@
    })
 
 (defn inlet [obj-id [inlet-name inlet-params]]
-  [:div {:class "inlet"} inlet-name])
+  (let [{:keys [type]} inlet-params]
+    [:div {:class "inlet"
+           :on-click (fn [e] (dispatch [:click-inlet obj-id inlet-name type]))}
+     (str (when (= type :audio) "~") inlet-name)]))
 
 (defn outlet [obj-id [outlet-name outlet-params]]
-  (let [selected-outlet (subscribe [:selected-outlet])
-        selected? (= [obj-id outlet-name] @selected-outlet)]
+  (let [{:keys [type]}  outlet-params
+        selected-outlet (subscribe [:selected-outlet])
+        selected? (= [obj-id outlet-name type] @selected-outlet)]
     [:div {:class (if selected? "outlet selected-outlet" "outlet")
-           :on-click (fn [e] (dispatch [:select-outlet obj-id outlet-name]))}
-     outlet-name]))
+           :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
+     (str outlet-name (when (= type :audio) "~"))]))
 
 (defn obj-display [{:keys [id outlets inlets]} as params]
   [:div {:class "object-display"}
