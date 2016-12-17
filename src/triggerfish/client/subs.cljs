@@ -13,6 +13,11 @@
  (fn [db [_ id]]
    (get-in db [:objects id])))
 
+(reg-sub
+ :selected-outlet
+ (fn [db [_ id]]
+   (:selected-outlet db)))
+
 ;;Camera:
 
 (reg-sub

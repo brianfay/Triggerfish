@@ -27,6 +27,46 @@ body {
     background-color: $object-bg-color;
 }
 
+.object-display {
+    display: flex;
+    flex-direction: row;
+}
+
+.io-container {
+    display: flex;
+    flex-direction: column;
+}
+
+.inlet {
+    display: flex;
+    flex: 1;
+    background-color: $inlet-color;
+    border-top: solid 1px;
+    border-color: #444;
+    padding: 10px;
+    min-width: 30px;
+    min-height: 30px;
+    justify-content: right;
+    align-items: center;
+}
+
+.outlet {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    text-align: right;
+    align-items: center;
+    background-color: $outlet-color;
+    border-top: solid 1px;
+    border-color: #444;
+    min-width: 30px;
+    min-height: 30px;
+}
+
+.selected-outlet {
+    background-color: #d74;
+}
+
 /*
 Making a carousel-style menu - with flex we can tell the menu items to take up 100%, they will overflow past the menu
 

@@ -1,6 +1,7 @@
 (ns triggerfish.client.handlers
   (:require [re-frame.core :refer [reg-event-db reg-event-fx reg-fx debug trim-v]]
-            [triggerfish.client.sente-events :refer [chsk-send!]]))
+            [triggerfish.client.sente-events :refer [chsk-send!]]
+            [triggerfish.shared.object-definitions :as obj-def]))
 
 (def standard-interceptors [trim-v #_debug])
 
@@ -25,6 +26,14 @@
    (assoc db :objects patch)))
 
 ;;Objects:
+
+(reg-event-db
+ :select-outlet
+ standard-interceptors
+ (fn [db [obj-id outlet-name]]
+   (if-not (= [obj-id outlet-name] (:selected-outlet db))
+     (assoc db :selected-outlet [obj-id outlet-name])
+     (assoc db :selected-outlet nil))))
 
 (reg-event-db
  :offset-object
@@ -102,6 +111,19 @@
                  :x-pos x
                  :y-pos y}])))
 
+(reg-event-db      ;;a mock object for optimistic ui updates
+ :add-ghost-object
+ standard-interceptors
+ (fn [db [selected-obj x y]]
+   (println (:objects db))
+   (let [obj-def (get obj-def/objects selected-obj)]
+     (-> db
+         (assoc-in [:menu :selected-obj] nil)
+         (assoc-in [:objects (str "ghost-" (rand-int 100000))]
+                   (merge
+                    obj-def
+                    {:name selected-obj :x-pos x :y-pos y}))))))
+
 (defn translate-and-scale-points [db x y]
   (let [zoom (* (get-in db [:zoom :scale])
                 (get-in db [:zoom :current-zoom]))
@@ -130,7 +152,7 @@
                (assoc-in [:menu :position :y] y))}
       (if (and visible? selected-obj)
         {:add-object [selected-obj scaled-x scaled-y]
-         :dispatch   [:select-obj-to-insert nil]}
+         :dispatch   [:add-ghost-object     selected-obj scaled-x scaled-y]}
         {})))))
 
 (reg-event-db
@@ -156,4 +178,3 @@
    (if (not= obj-name (get-in db [:menu :selected-obj]))
      (assoc-in db [:menu :selected-obj] obj-name)
      (assoc-in db [:menu :selected-obj] nil))))
-
