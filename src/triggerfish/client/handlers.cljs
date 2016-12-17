@@ -27,6 +27,15 @@
 
 ;;Objects:
 
+(reg-fx
+ :move-object
+ (fn [[obj-id x y]]
+   (chsk-send!
+    [:patch/move-object
+     {:obj-id obj-id
+      :x-pos x
+      :y-pos y}])))
+
 (reg-event-db
  :select-outlet
  standard-interceptors
@@ -47,19 +56,22 @@
          (assoc-in [:objects id :offset-x] offset-x)
          (assoc-in [:objects id :offset-y] offset-y)))))
 
-(reg-event-db
+(reg-event-fx
  :commit-object-position
  standard-interceptors
- (fn [db [id]]
+ (fn [{:keys [db]} [id]]
    (let [offset-x (get-in db [:objects id :offset-x])
          offset-y (get-in db [:objects id :offset-y])
          x-pos (get-in db [:objects id :x-pos])
-         y-pos (get-in db [:objects id :y-pos])]
-     (-> db
-        (assoc-in [:objects id :offset-x] 0)
-        (assoc-in [:objects id :offset-y] 0)
-        (assoc-in [:objects id :x-pos] (+ x-pos offset-x))
-        (assoc-in [:objects id :y-pos] (+ y-pos offset-y))))))
+         y-pos (get-in db [:objects id :y-pos])
+         x (+ x-pos offset-x)
+         y (+ y-pos offset-y)]
+     {:db (-> db
+              (assoc-in [:objects id :offset-x] 0)
+              (assoc-in [:objects id :offset-y] 0)
+              (assoc-in [:objects id :x-pos] x)
+              (assoc-in [:objects id :y-pos] y))
+      :move-object [id x y]})))
 
 ;;Camera:
 
@@ -141,7 +153,7 @@
 (reg-event-fx
  :app-container-clicked
  standard-interceptors
- (fn [{:keys [db]} [ x y]]
+ (fn [{:keys [db]} [x y]]
    (let [visible?            (get-in db [:menu :visibility])
          [scaled-x scaled-y] (translate-and-scale-points db x y)
          selected-obj        (get-in db [:menu :selected-obj])]

@@ -204,8 +204,8 @@
   (reset!
     patch
     (-> @patch
-        (assoc-in [id :x-pos] (if (> x-pos 10) x-pos 10))
-        (assoc-in [id :y-pos] (if (> y-pos 0) y-pos 0)))))
+        (assoc-in [id :x-pos] x-pos)
+        (assoc-in [id :y-pos] y-pos))))
 
 (defn remove-object!
   "Removes object from the server, first disconnecting all inlets and outlets (which will update the patch)"
