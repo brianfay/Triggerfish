@@ -46,7 +46,7 @@
  :click-outlet
  standard-interceptors
  (fn [db [obj-id outlet-name type]]
-   (if-not (= [obj-id outlet-name] (:selected-outlet db))
+   (if-not (= [obj-id outlet-name type] (:selected-outlet db))
      (assoc db :selected-outlet [obj-id outlet-name type])
      (assoc db :selected-outlet nil))))
 
