@@ -15,18 +15,36 @@
    })
 
 (defn inlet [obj-id [inlet-name inlet-params]]
-  (let [{:keys [type]} inlet-params]
-    [:div {:class "inlet"
-           :on-click (fn [e] (dispatch [:click-inlet obj-id inlet-name type]))}
-     (str (when (= type :audio) "~") inlet-name)]))
+  (create-class
+   {:component-did-mount
+    (fn [this] ;;store inlet offset relative to parent div, so cables can be drawn correctly
+      (let [el (dom-node this)
+            offset-top (.-offsetTop el)
+            offset-height (.-offsetHeight el)]
+        (dispatch [:register-inlet-offset obj-id inlet-name (+ offset-top (/ offset-height 2))])))
+    :reagent-render
+    (fn [obj-id [inlet-name inlet-params]]
+      (let [{:keys [type]} inlet-params]
+        [:div {:class "inlet"
+               :on-click (fn [e] (dispatch [:click-inlet obj-id inlet-name type]))}
+         (str (when (= type :audio) "~") inlet-name)]))}))
 
 (defn outlet [obj-id [outlet-name outlet-params]]
-  (let [{:keys [type]}  outlet-params
-        selected-outlet (subscribe [:selected-outlet])
-        selected? (= [obj-id outlet-name type] @selected-outlet)]
-    [:div {:class (if selected? "outlet selected-outlet" "outlet")
-           :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
-     (str outlet-name (when (= type :audio) "~"))]))
+  (create-class
+   {:component-did-mount
+    (fn [this]
+      (let [el (dom-node this)
+            offset-top (.-offsetTop el)
+            offset-height (.-offsetHeight el)]
+        (dispatch [:register-outlet-offset obj-id outlet-name (+ offset-top (/ offset-height 2))])))
+    :reagent-render
+    (fn [obj-id [outlet-name outlet-params]]
+      (let [{:keys [type]}  outlet-params
+            selected-outlet (subscribe [:selected-outlet])
+            selected? (= [obj-id outlet-name type] @selected-outlet)]
+        [:div {:class (if selected? "outlet selected-outlet" "outlet")
+               :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
+         (str outlet-name (when (= type :audio) "~"))]))}))
 
 (defn obj-display [{:keys [id outlets inlets]} as params]
   [:div {:class "object-display"}
@@ -73,6 +91,12 @@
          [obj-display params])])))
 
 (defn object [id]
-  (let [params (subscribe [:obj-params id])
-        expanded (atom false)]
-    [object-impl id params expanded]))
+  (create-class
+   {:component-did-mount
+    (fn [this] ;;need to track object width to render cables properly
+      (dispatch [:register-object-width id (.-offsetWidth (dom-node this))]))
+    :reagent-render
+    (fn [id]
+      (let [params (subscribe [:obj-params id])
+            expanded (atom false)]
+        [object-impl id params expanded]))}))

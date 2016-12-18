@@ -8,9 +8,9 @@
   (:require-macros
    [triggerfish.client.utils.macros :refer [deftouchable]]))
 
-(defn cable [[[in-obj-id in-name] [out-obj-id outlet-name]]]
-  (let [inlet-pos  (subscribe [:object-position in-obj-id])
-        outlet-pos (subscribe [:object-position out-obj-id])]
+(defn cable [[[in-obj-id inlet-name] [out-obj-id outlet-name]]]
+  (let [inlet-pos  (subscribe [:inlet-position in-obj-id inlet-name])
+        outlet-pos (subscribe [:outlet-position out-obj-id outlet-name])]
         (fn [conn]
           (let [[in-x  in-y]   @inlet-pos
                 [out-x out-y]  @outlet-pos]
@@ -21,6 +21,7 @@
                             "L " out-x " " out-y)}]))))
 
 (defn cables []
+  "An svg element conaining lines that represent connections between inlets and outlets"
   (let [connections (subscribe [:connections])]
     [:svg
      (map (fn [conn] ^{:key (str "conn: " conn)} [cable conn]) @connections)]))

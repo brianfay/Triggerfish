@@ -96,6 +96,24 @@
               (assoc-in [:objects id :y-pos] y))
       :move-object [id x y]})))
 
+(reg-event-db
+ :register-object-width
+ standard-interceptors
+ (fn [db [obj-id width]]
+   (assoc-in db [:object-widths obj-id] width)))
+
+(reg-event-db ;;vertical offset from top of object element to middle of inlet
+ :register-inlet-offset
+ standard-interceptors
+ (fn [db [obj-id inlet-name offset]]
+   (assoc-in db [:inlet-offsets obj-id inlet-name] offset)))
+
+(reg-event-db ;;vertical offset from top of object element to middle of outlet
+ :register-outlet-offset
+ standard-interceptors
+ (fn [db [obj-id outlet-name offsetTop]]
+   (assoc-in db [:outlet-offsets obj-id outlet-name] offsetTop)))
+
 ;;Camera:
 
 (reg-event-db

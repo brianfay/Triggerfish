@@ -24,10 +24,19 @@
    (get-in db [:objects :connections])))
 
 (reg-sub
- :object-position
- (fn [db [_ id]]
-   (let [{:keys [x-pos y-pos offset-x offset-y]} (get-in db [:objects id])]
-     [(+ x-pos offset-x) (+ y-pos offset-y)])))
+ :inlet-position
+ (fn [db [_ obj-id inlet-name]]
+   (let [{:keys [x-pos y-pos offset-x offset-y]} (get-in db [:objects obj-id])
+         offset-top (get-in db [:inlet-offsets obj-id inlet-name])]
+     [(+ x-pos offset-x) (+ y-pos offset-y offset-top)])))
+
+(reg-sub
+ :outlet-position
+ (fn [db [_ obj-id outlet-name]]
+   (let [{:keys [x-pos y-pos offset-x offset-y]} (get-in db [:objects obj-id])
+         offset-top (get-in db [:outlet-offsets obj-id outlet-name])
+         obj-width  (get-in db [:object-widths obj-id])]
+     [(+ x-pos offset-x obj-width) (+ y-pos offset-y offset-top)])))
 
 ;;Camera:
 
