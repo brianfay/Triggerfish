@@ -18,6 +18,17 @@
  (fn [db [_ id]]
    (:selected-outlet db)))
 
+(reg-sub
+ :connections
+ (fn [db [_ id]]
+   (get-in db [:objects :connections])))
+
+(reg-sub
+ :object-position
+ (fn [db [_ id]]
+   (let [{:keys [x-pos y-pos offset-x offset-y]} (get-in db [:objects id])]
+     [(+ x-pos offset-x) (+ y-pos offset-y)])))
+
 ;;Camera:
 
 (reg-sub

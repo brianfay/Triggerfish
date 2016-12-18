@@ -28,6 +28,12 @@
 ;;Objects:
 
 (reg-fx
+ :connect
+ (fn [params]
+   (chsk-send!
+    [:patch/connect params])))
+
+(reg-fx
  :move-object
  (fn [[obj-id x y]]
    (chsk-send!
@@ -55,9 +61,10 @@
  standard-interceptors
  (fn [{:keys [db]} [obj-id inlet-name type]]
    (let [selected-outlet (:selected-outlet db)
-         [out-obj-id _ outlet-type] selected-outlet]
+         [out-obj-id outlet-name outlet-type] selected-outlet]
      (if (and selected-outlet (not= out-obj-id obj-id) (= type outlet-type))
-       {:dispatch [:deselect-outlet]}
+       {:dispatch [:deselect-outlet]
+        :connect  {:in-id obj-id :in-name inlet-name :out-id out-obj-id :out-name outlet-name}}
        {}))))
 
 (reg-event-db
@@ -143,7 +150,6 @@
  :add-ghost-object
  standard-interceptors
  (fn [db [selected-obj x y]]
-   (println (:objects db))
    (let [obj-def (get obj-def/objects selected-obj)]
      (-> db
          (assoc-in [:menu :selected-obj] nil)

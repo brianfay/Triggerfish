@@ -8,6 +8,23 @@
   (:require-macros
    [triggerfish.client.utils.macros :refer [deftouchable]]))
 
+(defn cable [[[in-obj-id in-name] [out-obj-id outlet-name]]]
+  (let [inlet-pos  (subscribe [:object-position in-obj-id])
+        outlet-pos (subscribe [:object-position out-obj-id])]
+        (fn [conn]
+          (let [[in-x  in-y]   @inlet-pos
+                [out-x out-y]  @outlet-pos]
+            [:path {:stroke       "#777"
+                    :fill         "transparent"
+                    :stroke-width 4
+                    :d (str "M"  in-x  " " in-y " "
+                            "L " out-x " " out-y)}]))))
+
+(defn cables []
+  (let [connections (subscribe [:connections])]
+    [:svg
+     (map (fn [conn] ^{:key (str "conn: " conn)} [cable conn]) @connections)]))
+
 (defn patch-canvas []
   "A zero-sized div that shows its contents (overflow visible), acting as a canvas for objects.
 Can be translated and scaled for panning/zooming the patch"
@@ -24,6 +41,7 @@ Can be translated and scaled for panning/zooming the patch"
            :color "#FFF"
            :transform (str "translate3d(" x-pos "px, " y-pos "px, 0px) "
                            "scale("     @zoom ", "   @zoom ")")}}
+         [cables]
          (map (fn [[id _]]
                 ^{:key (str  "obj:" id)}
                 [obj/object id])

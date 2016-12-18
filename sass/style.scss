@@ -37,6 +37,14 @@ body {
     flex-direction: column;
 }
 
+svg {
+    //overflow visible seems wonky for svg, cables clip randomly as you drag around objects.
+    //using position absolute with overflow visible seems to help, but I have no earthly idea why
+    position: absolute;
+    overflow: visible;
+    pointer-events: none;
+}
+
 .inlet {
     display: flex;
     flex: 1;

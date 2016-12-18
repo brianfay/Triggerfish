@@ -55,22 +55,18 @@
 
 (defmethod -event-msg-handler :patch/connect
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn connected-uids]}]
-  (let [session (:session ring-req)
-        uid     (:uid     session)
-        in-id (:in-id ?data)
-        in-name (:in-name ?data)
-        out-id (:out-id ?data)
-        out-name (:out-name ?data)]
+  (let [{:keys [in-id in-name out-id out-name]} ?data
+        session (:session ring-req)
+        uid     (:uid     session)]
     (p/connect! in-id in-name out-id out-name)
     (doseq [uid (:any @connected-uids)]
       (send-fn uid [:patch/recv {:patch (p/get-patch-map)}]))))
 
 (defmethod -event-msg-handler :patch/disconnect
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn connected-uids]}]
-  (let [session (:session ring-req)
-        uid     (:uid     session)
-        in-id (:in-id ?data)
-        in-name (:in-name ?data)]
+  (let [{:keys [in-id in-name]} ?data
+        session (:session ring-req)
+        uid     (:uid     session)]
     (p/disconnect! in-id in-name)
     (doseq [uid (:any @connected-uids)]
       (send-fn uid [:patch/recv {:patch (p/get-patch-map)}]))))
