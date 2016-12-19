@@ -13,6 +13,10 @@
              :visibility false
              :position {:x 0 :y 0}}})
 
+(defn inlet-connected?
+  [db obj-id inlet-name]
+  (not (empty? (filter #(= (first %) [obj-id inlet-name]) (get-in db [:objects :connections])))))
+
 (reg-event-db
  :initialize
  standard-interceptors
@@ -34,6 +38,12 @@
     [:patch/connect params])))
 
 (reg-fx
+ :disconnect
+ (fn [params]
+   (chsk-send!
+    [:patch/disconnect params])))
+
+(reg-fx
  :move-object
  (fn [[obj-id x y]]
    (chsk-send!
@@ -48,13 +58,14 @@
  (fn [db]
    (assoc db :selected-outlet nil)))
 
-(reg-event-db
+(reg-event-fx
  :click-outlet
  standard-interceptors
- (fn [db [obj-id outlet-name type]]
-   (if-not (= [obj-id outlet-name type] (:selected-outlet db))
-     (assoc db :selected-outlet [obj-id outlet-name type])
-     (assoc db :selected-outlet nil))))
+ (fn [{:keys [db]} [obj-id outlet-name type]]
+   {:db (if-not (= [obj-id outlet-name type] (:selected-outlet db))
+          (assoc db :selected-outlet [obj-id outlet-name type])
+          (assoc db :selected-outlet nil))
+    :dispatch [:close-menu]}))
 
 (reg-event-fx
  :click-inlet
@@ -62,10 +73,24 @@
  (fn [{:keys [db]} [obj-id inlet-name type]]
    (let [selected-outlet (:selected-outlet db)
          [out-obj-id outlet-name outlet-type] selected-outlet]
-     (if (and selected-outlet (not= out-obj-id obj-id) (= type outlet-type))
-       {:dispatch [:deselect-outlet]
-        :connect  {:in-id obj-id :in-name inlet-name :out-id out-obj-id :out-name outlet-name}}
-       {}))))
+     (if (and (nil? selected-outlet) (inlet-connected? db obj-id inlet-name))
+       {:disconnect  {:in-id obj-id :in-name inlet-name}
+        :dispatch    [:ghost-disconnect obj-id inlet-name]}
+       (if (and selected-outlet (not= out-obj-id obj-id) (= type outlet-type))
+         {:connect  {:in-id obj-id :in-name inlet-name :out-id out-obj-id :out-name outlet-name}
+          :dispatch [:ghost-connect obj-id inlet-name out-obj-id outlet-name]})))))
+
+(reg-event-db
+ :ghost-connect
+ standard-interceptors
+ (fn [db [obj-id inlet-name out-obj-id outlet-name]]
+   (assoc-in db [:objects :connections [obj-id inlet-name]] [out-obj-id outlet-name])))
+
+(reg-event-db
+ :ghost-disconnect
+ standard-interceptors
+ (fn [db [obj-id inlet-name]]
+   (update-in db [:objects :connections] #(dissoc % [obj-id inlet-name]))))
 
 (reg-event-db
  :offset-object
@@ -205,7 +230,13 @@
       (if (and visible? selected-obj)
         {:add-object [selected-obj scaled-x scaled-y]
          :dispatch   [:add-ghost-object     selected-obj scaled-x scaled-y]}
-        {})))))
+        {:dispatch   [:deselect-outlet]})))))
+
+(reg-event-db
+ :close-menu
+ standard-interceptors
+ (fn [db]
+   (assoc-in db [:menu :visibility] false)))
 
 (reg-event-db
  :swipe-menu
