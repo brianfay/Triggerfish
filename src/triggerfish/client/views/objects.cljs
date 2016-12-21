@@ -46,7 +46,7 @@
                :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
          (str outlet-name (when (= type :audio) "~"))]))}))
 
-(defn obj-display [{:keys [id outlets inlets]} as params]
+(defn obj-display [id {:keys [outlets inlets]} as params]
   [:div {:class "object-display"}
    [:div {:class "io-container"}
     (map (fn [in]
@@ -73,7 +73,7 @@
                (.stopPropagation (.-srcEvent ev)))
              (fn [ev]
                (.stopPropagation (.-srcEvent ev))))
-  (fn [id]
+  (fn [id params expanded]
     (let [params @params
           {:keys [x-pos y-pos offset-x offset-y name]} params]
       [:div {:class            "object"
@@ -88,7 +88,7 @@
              :on-click (fn [e] (.stopPropagation e) (swap! expanded not))}
        [:p name]
        (when true #_expanded
-         [obj-display params])])))
+         [obj-display id params])])))
 
 (defn object [id]
   (create-class
