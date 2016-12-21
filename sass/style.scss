@@ -103,7 +103,7 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
     min-height: 100%;
     min-width: 100%;
     background-color: lighten($bg-color, 30%);
-    overflow: auto;
+    /* overflow: auto; */ //overflow would be nice to turn enable for large menu items, but it breaks the hammer swipe gesture
 }
 
 .selected-obj {
