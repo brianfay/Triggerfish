@@ -1,2 +1,0 @@
-(ns triggerfish.client.views)
-
