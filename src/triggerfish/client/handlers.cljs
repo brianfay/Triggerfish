@@ -9,9 +9,8 @@
   {:objects {}
    :pan     {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
    :zoom    {:current-zoom 1 :scale 1}
-   :menu    {:selected 0
-             :visibility false
-             :position {:x 0 :y 0}}})
+   :menu    {:visibility false
+             :selected-action nil}})
 
 (defn inlet-connected?
   [db obj-id inlet-name]
@@ -58,14 +57,13 @@
  (fn [db]
    (assoc db :selected-outlet nil)))
 
-(reg-event-fx
+(reg-event-db
  :click-outlet
  standard-interceptors
- (fn [{:keys [db]} [obj-id outlet-name type]]
-   {:db (if-not (= [obj-id outlet-name type] (:selected-outlet db))
-          (assoc db :selected-outlet [obj-id outlet-name type])
-          (assoc db :selected-outlet nil))
-    :dispatch [:close-menu]}))
+ (fn [db [obj-id outlet-name type]]
+   (if-not (= [obj-id outlet-name type] (:selected-outlet db))
+     (assoc db :selected-outlet [obj-id outlet-name type])
+     (assoc db :selected-outlet nil))))
 
 (reg-event-fx
  :click-inlet
@@ -194,12 +192,16 @@
  standard-interceptors
  (fn [db [selected-obj x y]]
    (let [obj-def (get obj-def/objects selected-obj)]
-     (-> db
-         (assoc-in [:menu :selected-obj] nil)
-         (assoc-in [:objects (str "ghost-" (rand-int 100000))]
-                   (merge
-                    obj-def
-                    {:name selected-obj :x-pos x :y-pos y}))))))
+     (assoc-in db [:objects (str "ghost-" (rand-int 100000))]
+               (merge
+                obj-def
+                {:name selected-obj :x-pos x :y-pos y})))))
+
+(reg-fx
+ :delete-object
+ (fn [[obj-id]]
+   (chsk-send! [:patch/delete-object
+                {:obj-id obj-id}])))
 
 (defn translate-and-scale-points [db x y]
   (let [zoom (* (get-in db [:zoom :scale])
@@ -219,40 +221,51 @@
  :app-container-clicked
  standard-interceptors
  (fn [{:keys [db]} [x y]]
-   (let [visible?            (get-in db [:menu :visibility])
+   (let [selected-action     (get-in db [:menu :selected-action])
+         visible?            (get-in db [:menu :visibility])
          [scaled-x scaled-y] (translate-and-scale-points db x y)
          selected-obj        (get-in db [:menu :selected-obj])]
      (merge
-      {:db (-> db
-               (assoc-in [:menu :visibility] (not visible?))
-               (assoc-in [:menu :position :x] x)
-               (assoc-in [:menu :position :y] y))}
-      (if (and visible? selected-obj)
+      (when (= selected-action nil) {:db (assoc-in db [:menu :visibility] (not visible?))})
+      (if (= selected-action "add")
         {:add-object [selected-obj scaled-x scaled-y]
          :dispatch   [:add-ghost-object     selected-obj scaled-x scaled-y]}
         {:dispatch   [:deselect-outlet]})))))
+
+(defn get-object-connections [db obj-id]
+  "Returns [in-id inlet-name] of all connections involving a given object id"
+  (reduce
+   (fn [acc [[in-id inlet-name] [out-id outlet-name]]]
+     (if (or (= obj-id in-id) (= obj-id out-id))
+       (conj acc [in-id inlet-name])
+       acc))
+   []
+   (get-in db [:objects :connections])))
+
+(reg-event-fx
+ :object-clicked
+ standard-interceptors
+ (fn [{:keys [db]} [obj-id]]
+   (let [connections-to-remove (get-object-connections db obj-id)]
+     (if (= "delete" (get-in db [:menu :selected-action]))
+       {:delete-object [obj-id]
+        :db (-> db
+                (update-in [:objects] #(dissoc % obj-id))
+                (update-in [:objects :connections] #(apply dissoc % connections-to-remove)))}
+       {}))))
+
+(reg-event-db
+ :select-action
+ standard-interceptors
+ (fn [db [action]]
+   (let [current-action (get-in db [:menu :selected-action])]
+     (assoc-in db [:menu :selected-action] (when (not= current-action action) action)))))
 
 (reg-event-db
  :close-menu
  standard-interceptors
  (fn [db]
    (assoc-in db [:menu :visibility] false)))
-
-(reg-event-db
- :swipe-menu
- standard-interceptors
- (fn [db [direction total-menu-items]]
-   (let [selected (get-in db [:menu :selected])
-         new-val (condp = direction
-                   (.-DIRECTION_LEFT js/Hammer)
-                   (inc selected)
-                   (.-DIRECTION_RIGHT js/Hammer)
-                   (dec selected)
-                   selected)]
-     (if (and (>= new-val 0)
-              (< new-val total-menu-items))
-       (assoc-in db [:menu :selected] new-val)
-       db))))
 
 (reg-event-db
  :select-obj-to-insert

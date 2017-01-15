@@ -82,14 +82,12 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
 */
 .menu {
     z-index: 1;
+    transition: left 0.2s;
     position: absolute;
-    height: 400px;
-    width: 300px;
-    background-color: lighten($bg-color, 10%);
-    border-color: lighten($bg-color, 40%);
-    border-style: solid;
-    border-width: 1px;
-    overflow: hidden;
+    left:  -100%;
+    height: 100%;
+    max-width: 100%;
+    background-color: hsla(26,21,11,0.7); //#161922
 }
 
 .h-row {
@@ -99,13 +97,42 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
     flex-direction: row;
 }
 
-.menu-item {
-    min-height: 100%;
-    min-width: 100%;
-    background-color: lighten($bg-color, 30%);
-    /* overflow: auto; */ //overflow would be nice to turn enable for large menu items, but it breaks the hammer swipe gesture
-}
-
 .selected-obj {
     color: red;
+}
+
+.action-selector {
+    display: flex;
+}
+
+.action-toggle {
+    margin: 4px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid;
+    border-radius: 2px;
+}
+
+.add-toggle-active {
+    background-color: darken($insert-color, 30%);
+    color: #FFF;
+    border-color: $insert-color;
+}
+
+.add-toggle-inactive {
+    color: $insert-color;
+    border-color: $insert-color;
+}
+
+.delete-toggle-active {
+    background-color: darken($delete-color, 30%);
+    color: #FFF;
+    border-color: $delete-color;
+}
+
+.delete-toggle-inactive {
+    color: $delete-color;
+    border-color: $delete-color;
 }

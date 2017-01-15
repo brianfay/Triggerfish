@@ -62,14 +62,9 @@
    (get-in db [:menu :visibility])))
 
 (reg-sub
- :menu-position
+ :selected-action
  (fn [db _]
-   (select-keys (get-in db [:menu :position]) [:x :y])))
-
-(reg-sub
- :selected-menu
- (fn [db _]
-   (get-in db [:menu :selected])))
+   (get-in db [:menu :selected-action])))
 
 (reg-sub
  :selected-obj-to-insert

@@ -1,7 +1,7 @@
 (ns triggerfish.client.views.app
   (:require
-   [reagent.core :as reagent :refer [atom create-class dom-node]]
-   [triggerfish.client.utils.hammer :refer [hammer-manager add-pan add-pinch]]
+   [reagent.core :as reagent :refer [dom-node]]
+   [triggerfish.client.utils.hammer :refer [add-pan add-pinch]]
    [triggerfish.client.views.objects :as obj]
    [triggerfish.client.views.menu :refer [menu]]
    [re-frame.core :refer [subscribe dispatch]])
