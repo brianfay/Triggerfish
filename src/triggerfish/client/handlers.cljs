@@ -227,7 +227,7 @@
          selected-obj        (get-in db [:menu :selected-obj])]
      (merge
       (when (= selected-action nil) {:db (assoc-in db [:menu :visibility] (not visible?))})
-      (if (= selected-action "add")
+      (if (and (= selected-action "add") selected-obj)
         {:add-object [selected-obj scaled-x scaled-y]
          :dispatch   [:add-ghost-object     selected-obj scaled-x scaled-y]}
         {:dispatch   [:deselect-outlet]})))))
