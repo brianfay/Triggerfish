@@ -2,8 +2,7 @@
   (:require
    [com.stuartsierra.dependency :as dep]
    [triggerfish.server.scsynth :as sc]
-   [triggerfish.server.objects :as obj]
-   [triggerfish.shared.object-definitions :as obj-def]
+   [triggerfish.server.object.core :as obj]
    [triggerfish.shared.constants :as c]))
 
 (declare connect! disconnect!)
@@ -137,8 +136,8 @@
   (let [[id i-or-o name bus] action
         obj (get p id)]
     (condp = i-or-o
-      :inlet (obj/connect-inlet! obj name bus)
-      :outlet (obj/connect-outlet! obj name bus))))
+      :inlet (obj/connect-inlet obj name bus)
+      :outlet (obj/connect-outlet obj name bus))))
 
 (defn update-patch!
   "Updates the patch by sorting nodes in order based on their dependencies,
@@ -185,18 +184,19 @@
           outlet (get (:connections @patch) [in-id inlet-name])
           [out-id outlet-name] outlet]
       (when (not (outlet-connected? new-patch out-id outlet-name))
-        (obj/disconnect-outlet! (get new-patch out-id) outlet-name))
-      (obj/disconnect-inlet! (get new-patch in-id) inlet-name)
+        (obj/disconnect-outlet (get new-patch out-id) outlet-name))
+      (obj/disconnect-inlet (get new-patch in-id) inlet-name)
       (update-patch! new-patch))))
 
 
 (defn add-object!
   "Adds a new object to the patch."
-  ([obj-name]
-   (add-object! obj-name (rand-int 500) (rand-int 600)))
-  ([obj-name x-pos y-pos]
-   (let [obj (obj/obj-constructor (assoc (obj-name obj-def/objects) :name obj-name :x-pos x-pos :y-pos y-pos))]
-     (swap! patch assoc (:id obj) obj))))
+  ([obj-type]
+   (add-object! obj-type (rand-int 500) (rand-int 600)))
+  ([obj-type x-pos y-pos]
+   (let [obj (obj/create-object obj-type)
+         obj-map (assoc obj :x-pos x-pos :y-pos y-pos)]
+     (swap! patch assoc (:obj-id obj-map) obj-map))))
 
 (defn move-object!
   "Adjusts the x and y position of an object"
@@ -210,17 +210,17 @@
 (defn remove-object!
   "Removes object from the server, first disconnecting all inlets and outlets (which will update the patch)"
   [obj]
-  (let [id (:id obj)
+  (let [id (:obj-id obj)
         inlets-to-disconnect (keys (merge (into {} (get-connected-inlets @patch id)) (into {} (get-connected-outlets @patch id))))]
     (do
       (doall (map #(apply disconnect! %) inlets-to-disconnect))
-      (obj/obj-destructor obj)
+      (obj/destroy-object obj)
       (swap! patch dissoc id))))
 
 (defn set-control!
   [obj-id ctrl-name value]
-  (obj/set-control! (get @patch obj-id) ctrl-name value)
-  (reset! patch (assoc-in @patch [obj-id :controls ctrl-name :value] value)))
+  (let [new-obj-map (obj/control-object (get @patch obj-id) ctrl-name value)])
+  (swap! patch assoc obj-id obj-map))
 
 (defn remove-object-by-id!
   [id]
@@ -229,7 +229,7 @@
 (defn kill-patch!
   "Removes all running nodes from the server and resets the patch to an empty atom"
   []
-  (doall (map obj/obj-destructor (vals (filter #(not (= (first %) :connections)) @patch))))
+  (doall (map obj/destroy-object (vals (filter #(not (= (first %) :connections)) @patch))))
   (reset! patch {})
   (reset! dag (dep/graph))
   (reset! sorted-dag []))

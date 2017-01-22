@@ -1,4 +1,4 @@
-(ns triggerfish.server.object)
+(ns triggerfish.server.object.macros)
 
 (defmacro defobject
   "Registers an object and its implementation. Expected arguments are a name, constructor, destructor, and optionally inlets, outlets, and controls.
@@ -10,7 +10,7 @@
         inlet-forms      (filter #(contains? #{'inlet-ar 'inlet-kr} (first %)) forms)
         outlet-forms     (filter #(contains? #{'outlet-ar 'outlet-kr} (first %)) forms)
         control-forms    (filter #(= (first %) 'control) forms)]
-    `(triggerfish.server.objects/register-object
+    `(triggerfish.server.object.core/register-object
       (keyword '~object-name)
       {:constructor ~constructor-form
        :destructor  ~destructor-form
@@ -40,7 +40,7 @@
   `(fn [obj-id#]
      (let ~bindings
        (do
-         (triggerfish.server.objects/set-private-object-state obj-id# (locals))
+         (triggerfish.server.object.core/set-private-object-state obj-id# (locals))
          ~@body))))
 
 (defmacro destructor
@@ -49,8 +49,8 @@
   [imports & body]
   (let [imports-list (into (list) imports)]
     `(fn [obj-id#]
-       (let [{:keys [~@imports-list]} (triggerfish.server.objects/get-private-object-state obj-id#)]
-         (triggerfish.server.objects/dissoc-private-object-state obj-id#)
+       (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
+         (triggerfish.server.object.core/dissoc-private-object-state obj-id#)
          (do ~@body)))))
 
 (defmacro control
@@ -65,9 +65,9 @@
       :type :type-is-currently-unused
       :fn (fn [obj-id# val#]
             (let [~'val    val#
-                  return# (let [{:keys [~@imports-list]} (triggerfish.server.objects/get-private-object-state obj-id#)]
+                  return# (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
                             (do ~@body))]
-              (triggerfish.server.objects/update-private-state-if-bindings-provided obj-id# return#)))}))
+              (triggerfish.server.object.core/update-private-state-if-bindings-provided obj-id# return#)))}))
 
 (defmacro in-or-out-let
   "Returns a map with the type of an inlet or outlet, a connect function, and a disconnect function.
@@ -80,13 +80,13 @@
     `{:name ~in-or-out-name
       :type ~type
       :connect    (fn [obj-id# bus#]
-                    (let [{:keys [~@imports-list]} (triggerfish.server.objects/get-private-object-state obj-id#)]
-                      (triggerfish.server.objects/update-private-state-if-bindings-provided
+                    (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
+                      (triggerfish.server.object.core/update-private-state-if-bindings-provided
                         obj-id#
                         (~connect-cb bus#))))
       :disconnect (fn [obj-id#]
-                    (let [{:keys [~@imports-list]} (triggerfish.server.objects/get-private-object-state obj-id#)]
-                      (triggerfish.server.objects/update-private-state-if-bindings-provided
+                    (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
+                      (triggerfish.server.object.core/update-private-state-if-bindings-provided
                        obj-id#
                        (~disconnect-cb))))}))
 

@@ -64,7 +64,4 @@
                      :output-to "out/client_prod/client.js"
                      :output-dir "out/client_prod"
                      :optimizations :advanced}}]}
-  ;; :figwheel {
-  ;;            :websocket-host :js-client-host
-  ;;            :css-dirs ["css"]}
-  )
+)

@@ -1,9 +1,9 @@
 (ns ^:figwheel-always triggerfish.server.core
   (:require
    [triggerfish-test.server.manual] ;;just so we can play with it at the repl
-   [triggerfish.server.patch :as p]
    [triggerfish.server.events :as events]
    [triggerfish.server.midi :as midi]
+   [triggerfish.server.object.core :as obj]
    [cljs.nodejs        :as nodejs]
    [clojure.string     :as str]
    [cljs.core.async    :as async  :refer (<! >! put! chan)]
@@ -136,3 +136,8 @@
              (fn [key ref old-state new-state]
                (doseq [uid (:any @uids)]
                  (chsk-send! uid [:fiddled/recv new-state])))))
+
+(defonce obj-defs ;;watch for new object-defs
+  (add-watch obj/object-registry :obj-defs
+             (fn [key ref old-state new-state]
+               (println "obj-defs: " (obj/get-public-obj-defs)) )))

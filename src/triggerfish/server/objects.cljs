@@ -3,101 +3,7 @@
    [triggerfish.server.scsynth :as sc]
    [triggerfish.shared.constants :as c]
    [triggerfish.server.id-allocator :as id-alloc])
-  (:require-macros
-   [triggerfish.server.object :refer [constructor destructor control
-                                      outlet-ar outlet-kr inlet-ar inlet-kr
-                                      defobject]]))
-
-;;an atom of all object types (not running object instances)
-(defonce object-registry (atom {}))
-
-;;an atom of private state used by running object instances
-(defonce private-object-state (atom {}))
-
-(defn register-object [obj-name obj-map]
-  (swap! object-registry assoc obj-name obj-map))
-
-(defn symbols-binding->keywords-binding [bindings]
-  (let [partitioned-bindings (partition 2 bindings)
-        ks                   (map (comp keyword first) partitioned-bindings)
-        vals                 (map second partitioned-bindings)]
-    (vec (interleave ks vals))))
-
-(defn set-private-object-state [obj-id locals]
-  (swap! private-object-state assoc obj-id locals))
-
-(defn update-private-state-if-bindings-provided [obj-id return-val]
-  (when (and (vector? return-val) (even? (count return-val)))
-    (swap! private-object-state (fn [m] (update-in m [obj-id] #(apply assoc % return-val))))))
-
-(defn get-private-object-state [obj-id]
-  (get @private-object-state obj-id))
-
-(defn dissoc-private-object-state [obj-id]
-  (swap! private-object-state dissoc obj-id))
-
-(defn create-object [obj-type]
-  "Constructs a new object of the given type and returns an 'obj-map' of public information about the object."
-  (let [obj-id (id-alloc/new-obj-id)
-        obj-def    (get @object-registry obj-type)
-        {:keys [constructor controls inlets outlets]} obj-def]
-    (constructor obj-id)
-    {:type obj-type
-     :name obj-type ;;might be cool to have object be individually nameable some day, I'll leave this here for now
-     :id   obj-id
-     :controls (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type :val]))) {} controls)
-     :inlets   (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} inlets)
-     :outlets  (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} outlets)}))
-
-(defn control-object [obj-map control-name val]
-  "Sets a control on an object by calling its control function. Returns a map with updated controls."
-  (let [{:keys [obj-id type]} obj-map
-        obj-def (get @object-registry type)
-        ctl-fn  (get-in obj-def [:controls control-name :fn])]
-    (ctl-fn obj-id val)
-    (assoc-in obj-map [:controls control-name :value] val)))
-
-(defn connect-inlet [obj-map inlet-name bus]
-  (let [{:keys [obj-id type]} obj-map
-        obj-def (get @object-registry type)
-        {:keys [inlets]} obj-def
-        inlet (get inlets inlet-name)
-        connect-fn (:connect inlet)]
-    (connect-fn obj-id bus)
-    nil))
-
-(defn disconnect-inlet [obj-map inlet-name]
-  (let [{:keys [obj-id type]} obj-map
-        obj-def (get @object-registry type)
-        {:keys [inlets]} obj-def
-        inlet (get inlets inlet-name)
-        disconnect-fn (:disconnect inlet)]
-    (disconnect-fn obj-id)))
-
-(defn connect-outlet [obj-map outlet-name bus]
-  (let [{:keys [obj-id type]} obj-map
-        obj-def (get @object-registry type)
-        {:keys [outlets]} obj-def
-        outlet (get outlets outlet-name)
-        connect-fn (:connect outlet)]
-    (connect-fn obj-id bus)
-    nil))
-
-(defn disconnect-outlet [obj-map outlet-name]
-  (let [{:keys [obj-id type]} obj-map
-        obj-def (get @object-registry type)
-        {:keys [outlets]} obj-def
-        outlet (get outlets outlet-name)
-        disconnect-fn (:disconnect outlet)]
-    (disconnect-fn obj-id)))
-
-(defn destroy-object [obj-id obj-type]
-  "Given an object and its type, removes it from the server"
-  (let [obj-def (get @object-registry obj-type)
-        destructor (:destructor obj-def)]
-    (destructor obj-id)
-    (id-alloc/free-obj-id obj-id)
-    nil))
+  )
 
 (comment
   (let [{:keys [constructor controls inlets outlets]} (get @object-registry :saw)]
@@ -128,22 +34,7 @@
 
   )
 
-(defobject saw
-  (constructor
-    [synth-id (id-alloc/new-node-id) freq 220]
-    (sc/add-synth-to-head "saw" synth-id sc/default-group ["freq" freq "out" c/junk-audio-bus]))
-  (destructor
-    [synth-id]
-    (sc/free-node synth-id)
-    (id-alloc/free-node-id synth-id))
-  (control :freq 220
-    [synth-id freq] ;;imports
-    (sc/set-control synth-id "freq" val)
-    [:freq val])    ;;exports
-  (outlet-ar :out
-    [synth-id]
-    :connect    (fn [bus] (sc/set-control synth-id "out" bus))
-    :disconnect (fn [] (sc/set-control synth-id "out" c/junk-audio-bus))))
+
 
 (defprotocol PObject
   "A Triggerfish Object corresponds to one supercollider node (could be a group or a synth).
