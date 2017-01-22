@@ -15,7 +15,6 @@
 (defonce private-object-state (atom {}))
 
 (defn register-object [obj-name obj-map]
-  (println "registering object: " obj-name obj-map)
   (swap! object-registry assoc obj-name obj-map))
 
 (defn symbols-binding->keywords-binding [bindings]
@@ -58,6 +57,40 @@
     (ctl-fn obj-id val)
     (assoc-in obj-map [:controls control-name :value] val)))
 
+(defn connect-inlet [obj-map inlet-name bus]
+  (let [{:keys [obj-id type]} obj-map
+        obj-def (get @object-registry type)
+        {:keys [inlets]} obj-def
+        inlet (get inlets inlet-name)
+        connect-fn (:connect inlet)]
+    (connect-fn obj-id bus)
+    nil))
+
+(defn disconnect-inlet [obj-map inlet-name]
+  (let [{:keys [obj-id type]} obj-map
+        obj-def (get @object-registry type)
+        {:keys [inlets]} obj-def
+        inlet (get inlets inlet-name)
+        disconnect-fn (:disconnect inlet)]
+    (disconnect-fn obj-id)))
+
+(defn connect-outlet [obj-map outlet-name bus]
+  (let [{:keys [obj-id type]} obj-map
+        obj-def (get @object-registry type)
+        {:keys [outlets]} obj-def
+        outlet (get outlets outlet-name)
+        connect-fn (:connect outlet)]
+    (connect-fn obj-id bus)
+    nil))
+
+(defn disconnect-outlet [obj-map outlet-name]
+  (let [{:keys [obj-id type]} obj-map
+        obj-def (get @object-registry type)
+        {:keys [outlets]} obj-def
+        outlet (get outlets outlet-name)
+        disconnect-fn (:disconnect outlet)]
+    (disconnect-fn obj-id)))
+
 (defn destroy-object [obj-id obj-type]
   "Given an object and its type, removes it from the server"
   (let [obj-def (get @object-registry obj-type)
@@ -71,6 +104,9 @@
     (constructor 5))
   (id-alloc/free-obj-id 5)
   (def saw-instance30 (create-object :saw))
+  (connect-outlet saw-instance30 :out 0)
+  (disconnect-outlet saw-instance30 :out)
+  (control-object saw-instance30 :freq 475)
 
   (:val (first (:controls (get @object-registry :saw))))
   (macroexpand '(defobject saw
