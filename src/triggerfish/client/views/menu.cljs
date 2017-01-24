@@ -1,7 +1,6 @@
 (ns triggerfish.client.views.menu
   (:require
-   [re-frame.core :refer [subscribe dispatch]]
-   [triggerfish.shared.object-definitions :as obj]))
+   [re-frame.core :refer [subscribe dispatch]]))
 
 (defn object-li [obj-name selected-obj]
   (let [selected? (= @selected-obj obj-name)]
@@ -12,12 +11,13 @@
      obj-name]))
 
 (defn object-selector []
-  (let [selected-obj (subscribe [:selected-obj-to-insert])]
+  (let [obj-defs     (subscribe [:obj-defs])
+        selected-obj (subscribe [:selected-obj-to-insert])]
     [:div
      (map (fn [obj-name]
             ^{:key (str "object-li: " obj-name)}
             [object-li obj-name selected-obj])
-          (keys obj/objects))]))
+          (keys @obj-defs))]))
 
 (defn action-toggle [action-name]
   (let [selected-action (subscribe [:selected-action])

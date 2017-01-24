@@ -9,6 +9,11 @@
    (:objects db)))
 
 (reg-sub
+ :obj-defs
+ (fn [db _]
+   (:obj-defs db)))
+
+(reg-sub
  :obj-params
  (fn [db [_ id]]
    (get-in db [:objects id])))

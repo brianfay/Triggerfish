@@ -37,20 +37,19 @@
   "Returns a function that can be used to construct an object.
   Bindings are saved so that they can be imported in the destructor, controls, etc"
   [bindings & body]
-  `(fn [obj-id#]
-     (let ~bindings
-       (do
-         (triggerfish.server.object.core/set-private-object-state obj-id# (locals))
-         ~@body))))
+  `(fn [~'obj-id]
+    (let ~bindings
+      (do ~@body
+          (triggerfish.server.object.core/set-private-object-state ~'obj-id (locals))))))
 
 (defmacro destructor
   "Returns a function that can be used to destruct an object.
   First arg should be a vector of symbols to import from the object's private state."
   [imports & body]
   (let [imports-list (into (list) imports)]
-    `(fn [obj-id#]
-       (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
-         (triggerfish.server.object.core/dissoc-private-object-state obj-id#)
+    `(fn [~'obj-id]
+       (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
+         (triggerfish.server.object.core/dissoc-private-object-state ~'obj-id)
          (do ~@body)))))
 
 (defmacro control
@@ -63,11 +62,11 @@
     `{:name ~control-name
       :val  ~init-val
       :type :type-is-currently-unused
-      :fn (fn [obj-id# val#]
+      :fn (fn [~'obj-id val#]
             (let [~'val    val#
-                  return# (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
+                  return# (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
                             (do ~@body))]
-              (triggerfish.server.object.core/update-private-state-if-bindings-provided obj-id# return#)))}))
+              (triggerfish.server.object.core/update-private-state-if-bindings-provided ~'obj-id return#)))}))
 
 (defmacro in-or-out-let
   "Returns a map with the type of an inlet or outlet, a connect function, and a disconnect function.
@@ -79,15 +78,15 @@
         [_ disconnect-cb] (first (filter (fn [[kw fun]] (= kw :disconnect)) partitioned-cb))]
     `{:name ~in-or-out-name
       :type ~type
-      :connect    (fn [obj-id# bus#]
-                    (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
+      :connect    (fn [~'obj-id bus#]
+                    (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
                       (triggerfish.server.object.core/update-private-state-if-bindings-provided
-                        obj-id#
+                        ~'obj-id
                         (~connect-cb bus#))))
-      :disconnect (fn [obj-id#]
-                    (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state obj-id#)]
+      :disconnect (fn [~'obj-id]
+                    (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
                       (triggerfish.server.object.core/update-private-state-if-bindings-provided
-                       obj-id#
+                       ~'obj-id
                        (~disconnect-cb))))}))
 
 (defmacro outlet-ar

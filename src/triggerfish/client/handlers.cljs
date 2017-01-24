@@ -1,15 +1,15 @@
 (ns triggerfish.client.handlers
   (:require [re-frame.core :refer [reg-event-db reg-event-fx reg-fx debug trim-v]]
-            [triggerfish.client.sente-events :refer [chsk-send!]]
-            [triggerfish.shared.object-definitions :as obj-def]))
+            [triggerfish.client.sente-events :refer [chsk-send!]]))
 
 (def standard-interceptors [trim-v #_debug])
 
 (def initial-state
-  {:objects {}
-   :pan     {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
-   :zoom    {:current-zoom 1 :scale 1}
-   :menu    {:visibility false
+  {:objects  {}
+   :obj-defs nil
+   :pan      {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
+   :zoom     {:current-zoom 1 :scale 1}
+   :menu     {:visibility false
              :selected-action nil}})
 
 (defn inlet-connected?
@@ -27,6 +27,12 @@
  standard-interceptors
  (fn [db [patch]]
    (assoc db :objects patch)))
+
+(reg-event-db
+ :obj-defs
+ standard-interceptors
+ (fn [db [obj-defs]]
+   (assoc db :obj-defs obj-defs)))
 
 ;;Objects:
 
@@ -191,7 +197,7 @@
  :add-ghost-object
  standard-interceptors
  (fn [db [selected-obj x y]]
-   (let [obj-def (get obj-def/objects selected-obj)]
+   (let [obj-def (get (:obj-defs db) selected-obj)]
      (assoc-in db [:objects (str "ghost-" (rand-int 100000))]
                (merge
                 obj-def

@@ -2,6 +2,7 @@
   (:require
    [triggerfish.server.scsynth :as sc]
    [triggerfish.shared.constants :as c]
+   [triggerfish.server.object.core]
    [triggerfish.server.id-allocator :as id-alloc])
   (:require-macros
    [triggerfish.server.object.macros :refer
@@ -9,23 +10,46 @@
      outlet-ar outlet-kr inlet-ar inlet-kr
      defobject]]))
 
+(defn synth [synthdef obj-id args]
+  "Default method of adding a synth - by putting it at the head of the default group"
+  (sc/add-synth-to-head synthdef obj-id sc/default-group args))
+
 (defobject saw
   (constructor
-   [synth-id (id-alloc/new-node-id) freq 220]
-   (sc/add-synth-to-head "saw" synth-id sc/default-group ["freq" freq "out" c/junk-audio-bus]))
+   [freq (rand-int 1000)]
+   (synth "saw" obj-id ["freq" freq "out" c/junk-audio-bus]))
   (destructor
-   [synth-id]
-   (sc/free-node synth-id)
-   (id-alloc/free-node-id synth-id))
+   []
+   (sc/free-node obj-id))
   (control :freq 220
-           [synth-id freq] ;;imports
-           (sc/set-control synth-id "freq" val)
+           [freq] ;;imports
+           (sc/set-control obj-id "freq" val)
            [:freq val])    ;;exports
   (inlet-kr :freq
-    [synth-id freq]
-    :connect    (fn [bus] (sc/map-control-to-bus synth-id "freq" bus))
-    :disconnect (fn [] (sc/set-control synth-id "freq" freq)))
+    [freq]
+    :connect    (fn [bus] (sc/map-control-to-bus obj-id "freq" bus))
+    :disconnect (fn [] (sc/set-control obj-id "freq" freq)))
   (outlet-ar :out
-    [synth-id]
-    :connect    (fn [bus] (sc/set-control synth-id "out" bus))
-    :disconnect (fn [] (sc/set-control synth-id "out" c/junk-audio-bus))))
+    []
+    :connect    (fn [bus] (sc/set-control obj-id "out" bus))
+    :disconnect (fn [] (sc/set-control obj-id "out" c/junk-audio-bus))))
+
+(defobject dac
+  (constructor
+   []
+   (synth "stereo-dac" obj-id ["inL" c/silent-audio-bus "inR" c/silent-audio-bus "outL" c/junk-audio-bus "outR" c/junk-audio-bus]))
+  (destructor
+   []
+   (sc/free-node obj-id))
+  (inlet-ar :inL
+    []
+    :connect    (fn [bus] (sc/set-control obj-id "inL" bus)
+                          (sc/set-control obj-id "outL" 0))
+    :disconnect (fn [] (sc/set-control obj-id "inL"  c/silent-audio-bus)
+                       (sc/set-control obj-id "outL" c/junk-audio-bus)))
+  (inlet-ar :inR
+    []
+    :connect    (fn [bus] (sc/set-control obj-id "inR" bus)
+                          (sc/set-control obj-id "outR" 1))
+    :disconnect (fn [] (sc/set-control obj-id "inR"    c/silent-audio-bus)
+                       (sc/set-control obj-id "outR"   c/junk-audio-bus))))

@@ -56,6 +56,10 @@
   [{:as ev-msg :keys [?data]}]
    (println "If I were a rich man I'd have all these controls: " ?data))
 
+(defmethod -event-msg-handler :obj-defs/recv
+  [{:as ev-msg :keys [?data]}]
+  (dispatch [:obj-defs ?data]))
+
 ;;Router
 (defonce router_ (atom nil))
 (defn stop-router! [] (when-let [stop-f @router_] (stop-f)))

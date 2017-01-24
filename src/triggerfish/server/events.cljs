@@ -1,6 +1,7 @@
 (ns triggerfish.server.events
   (:require
    [triggerfish.server.patch :as p]
+   [triggerfish.server.object.core :as obj]
    [triggerfish.server.midi :as midi]))
 
 ;;;; Sente event handlers
@@ -23,10 +24,12 @@
 
 (defmethod -event-msg-handler :app-state/get
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn]}]
-  (let [session (:session ring-req)
-        uid     (:uid     session)]
-    (send-fn (:client-id (:params ring-req)) [:patch/recv {:patch (p/get-patch-map)}])
-    (send-fn (:client-id (:params ring-req)) [:fiddled/recv @midi/recently-fiddled])))
+  (let [session   (:session   ring-req)
+        uid       (:uid       session)
+        client-id (:client-id (:params ring-req))]
+    (send-fn client-id [:patch/recv {:patch (p/get-patch-map)}])
+    (send-fn client-id [:fiddled/recv @midi/recently-fiddled])
+    (send-fn client-id [:obj-defs/recv (obj/get-public-obj-defs)])))
 
 (defmethod -event-msg-handler :patch/create-object
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn connected-uids]}]

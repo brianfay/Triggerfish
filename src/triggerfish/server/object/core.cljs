@@ -1,6 +1,5 @@
 (ns triggerfish.server.object.core
   (:require
-   [triggerfish.server.object.object-definitions] ;;requiring so that these definitions will be loaded
    [triggerfish.server.id-allocator :as id-alloc]))
 
 ;;an atom of all object types (not running object instances)
@@ -23,7 +22,8 @@
      :outlets  (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} outlets)}))
 
 (defn get-public-obj-defs []
-  (map get-public-obj-def (keys @object-registry)))
+  (let [ks (keys @object-registry)]
+    (zipmap ks (map get-public-obj-def ks))))
 
 (defn symbols-binding->keywords-binding [bindings]
   (let [partitioned-bindings (partition 2 bindings)
@@ -46,7 +46,7 @@
 
 (defn create-object [obj-type]
   "Constructs a new object of the given type and returns an 'obj-map' of public information about the object."
-  (let [obj-id (id-alloc/new-obj-id)
+  (let [obj-id     (id-alloc/new-node-id)
         obj-def    (get @object-registry obj-type)
         {:keys [constructor controls inlets outlets]} obj-def]
     (constructor obj-id)
@@ -105,5 +105,5 @@
         obj-def (get @object-registry type)
         destructor (:destructor obj-def)]
     (destructor obj-id)
-    (id-alloc/free-obj-id obj-id)
+    (id-alloc/free-node-id obj-id)
     nil))

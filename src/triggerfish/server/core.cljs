@@ -4,6 +4,7 @@
    [triggerfish.server.events :as events]
    [triggerfish.server.midi :as midi]
    [triggerfish.server.object.core :as obj]
+   [triggerfish.server.object.object-definitions] ;;requiring so these object definitions will load
    [cljs.nodejs        :as nodejs]
    [clojure.string     :as str]
    [cljs.core.async    :as async  :refer (<! >! put! chan)]
@@ -140,4 +141,5 @@
 (defonce obj-defs ;;watch for new object-defs
   (add-watch obj/object-registry :obj-defs
              (fn [key ref old-state new-state]
-               (println "obj-defs: " (obj/get-public-obj-defs)) )))
+               (doseq [uid (:any @uids)]
+                 (chsk-send! uid [:obj-defs/recv (obj/get-public-obj-defs)])))))

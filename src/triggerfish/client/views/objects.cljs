@@ -6,6 +6,8 @@
   (:require-macros
    [triggerfish.client.utils.macros :refer [deftouchable]]))
 
+(defn alphabetical-comparator [[k1 v1] [k2 v2]] (< k1 k2))
+
 (defn inlet [obj-id [inlet-name inlet-params]]
   (create-class
    {:component-did-mount
@@ -19,7 +21,7 @@
       (let [{:keys [type]} inlet-params]
         [:div {:class "inlet"
                :on-click (fn [e] (dispatch [:click-inlet obj-id inlet-name type]))}
-         (str (when (= type :audio) "~") inlet-name)]))}))
+         (str (when (= type :audio) "~") (name inlet-name))]))}))
 
 (defn outlet [obj-id [outlet-name outlet-params]]
   (create-class
@@ -36,7 +38,7 @@
             selected? (= [obj-id outlet-name type] @selected-outlet)]
         [:div {:class (if selected? "outlet selected-outlet" "outlet")
                :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
-         (str outlet-name (when (= type :audio) "~"))]))}))
+         (str (name outlet-name) (when (= type :audio) "~"))]))}))
 
 (defn obj-display [id {:keys [outlets inlets]} as params]
   [:div {:class "object-display"}
@@ -44,12 +46,12 @@
     (map (fn [in]
            ^{:key (str id "inlet:" (first in))}
            [inlet id in])
-         inlets)]
+         (sort alphabetical-comparator inlets))]
    [:div {:class "io-container"}
     (map (fn [out]
            ^{:key (str id "outlet:" (first out))}
            [outlet id out])
-         outlets)]])
+         (sort alphabetical-comparator outlets))]])
 
 (deftouchable object-impl [id params]
   (add-pan ham-man

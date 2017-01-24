@@ -98,46 +98,46 @@
 (defrecord BufferSynth [id synthdef inlets outlets controls name])
 
 ;;A DAC needs to write to the junk bus when it is not connected to anything
-(defrecord DAC [id synthdef inlets outputs]
-  PObject
-  (add-to-server! [this]
-    (let [default-controls (get-control-val-pair (merge inlets outputs))]
-      (sc/add-synth-to-head synthdef id sc/default-group default-controls)))
-  (remove-from-server! [this]
-    (sc/free-node id))
-  (connect-inlet! [this inlet-name bus]
-    (let [props (get inlets inlet-name)
-          output-name (clojure.string/replace inlet-name #"in" "out")
-          hardware-out (:hardware-out (get outputs output-name))]
-      (if (= (:type props) :audio)
-        (do (sc/set-control id inlet-name bus) (sc/set-control id output-name hardware-out))
-        (sc/map-control-to-bus id inlet-name bus))))
-  (disconnect-inlet! [this inlet-name]
-    (let [inlet-props (get inlets inlet-name)
-          output-name (clojure.string/replace inlet-name #"in" "out")
-          output-props (get outputs output-name)]
-      (if (= (:type inlet-props) :audio)
-        (do (sc/set-control id inlet-name (:default inlet-props)) (sc/set-control id output-name (:default output-props))))))
-  (set-control! [this name value]
-    (sc/set-control id name value)))
+;; (defrecord DAC [id synthdef inlets outputs]
+;;   PObject
+;;   (add-to-server! [this]
+;;     (let [default-controls (get-control-val-pair (merge inlets outputs))]
+;;       (sc/add-synth-to-head synthdef id sc/default-group default-controls)))
+;;   (remove-from-server! [this]
+;;     (sc/free-node id))
+;;   (connect-inlet! [this inlet-name bus]
+;;     (let [props (get inlets inlet-name)
+;;           output-name (clojure.string/replace inlet-name #"in" "out")
+;;           hardware-out (:hardware-out (get outputs output-name))]
+;;       (if (= (:type props) :audio)
+;;         (do (sc/set-control id inlet-name bus) (sc/set-control id output-name hardware-out))
+;;         (sc/map-control-to-bus id inlet-name bus))))
 
-(defn obj-constructor
-  [obj-map]
-  (let [obj-type (:type obj-map)
-        obj-id   (id-alloc/new-obj-id)
-        obj-map  (assoc obj-map :id obj-id)
-        obj      (condp = obj-type
-                   :BasicSynth
-                   (map->BasicSynth obj-map)
-                   :DAC
-                   (map->DAC obj-map)
-                   ;;default
-                   (do (id-alloc/free-obj-id obj-id)
-                       (throw obj-type " is not a valid object type.")))]
-    (add-to-server! obj)
-    obj))
+;;     (let [inlet-props (get inlets inlet-name)
+;;           output-name (clojure.string/replace inlet-name #"in" "out")
+;;           output-props (get outputs output-name)]
+;;       (if (= (:type inlet-props) :audio)
+;;         (do (sc/set-control id inlet-name (:default inlet-props)) (sc/set-control id output-name (:default output-props))))))
+;;   (set-control! [this name value]
+;;     (sc/set-control id name value)))
 
-(defn obj-destructor
-  [obj]
-  (remove-from-server! obj)
-  (id-alloc/free-obj-id (:id obj)))
+;; (defn obj-constructor
+;;   [obj-map]
+;;   (let [obj-type (:type obj-map)
+;;         obj-id   (id-alloc/new-obj-id)
+;;         obj-map  (assoc obj-map :id obj-id)
+;;         obj      (condp = obj-type
+;;                    :BasicSynth
+;;                    (map->BasicSynth obj-map)
+;;                    :DAC
+;;                    (map->DAC obj-map)
+;;                    ;;default
+;;                    (do (id-alloc/free-obj-id obj-id)
+;;                        (throw obj-type " is not a valid object type.")))]
+;;     (add-to-server! obj)
+;;     obj))
+
+;; (defn obj-destructor
+;;   [obj]
+;;   (remove-from-server! obj)
+;;   (id-alloc/free-obj-id (:id obj)))
