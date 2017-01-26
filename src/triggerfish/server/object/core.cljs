@@ -47,9 +47,9 @@
 (defn create-object [obj-type]
   "Constructs a new object of the given type and returns an 'obj-map' of public information about the object."
   (let [obj-id     (id-alloc/new-node-id)
-        obj-def    (get @object-registry obj-type)
-        {:keys [constructor controls inlets outlets]} obj-def]
-    (constructor obj-id)
+        obj-map    (assoc (get @object-registry obj-type) :obj-id obj-id)
+        {:keys [constructor controls inlets outlets]} obj-map]
+    (constructor obj-map)
     {:type obj-type
      :name obj-type ;;might be cool to have object be individually nameable some day, I'll leave this here for now
      :obj-id   obj-id
@@ -59,51 +59,51 @@
 
 (defn control-object [obj-map control-name val]
   "Sets a control on an object by calling its control function. Returns a map with updated controls."
-  (let [{:keys [obj-id type]} obj-map
+  (let [{:keys [type]} obj-map
         obj-def (get @object-registry type)
         ctl-fn  (get-in obj-def [:controls control-name :fn])]
-    (ctl-fn obj-id val)
+    (ctl-fn obj-map val)
     (assoc-in obj-map [:controls control-name :value] val)))
 
 (defn connect-inlet [obj-map inlet-name bus]
-  (let [{:keys [obj-id type]} obj-map
+  (let [{:keys [type]} obj-map
         obj-def (get @object-registry type)
         {:keys [inlets]} obj-def
         inlet (get inlets inlet-name)
         connect-fn (:connect inlet)]
-    (connect-fn obj-id bus)
+    (connect-fn obj-map bus)
     nil))
 
 (defn disconnect-inlet [obj-map inlet-name]
-  (let [{:keys [obj-id type]} obj-map
+  (let [{:keys [type]} obj-map
         obj-def (get @object-registry type)
         {:keys [inlets]} obj-def
         inlet (get inlets inlet-name)
         disconnect-fn (:disconnect inlet)]
-    (disconnect-fn obj-id)))
+    (disconnect-fn obj-map)))
 
 (defn connect-outlet [obj-map outlet-name bus]
-  (let [{:keys [obj-id type]} obj-map
+  (let [{:keys [type]} obj-map
         obj-def (get @object-registry type)
         {:keys [outlets]} obj-def
         outlet (get outlets outlet-name)
         connect-fn (:connect outlet)]
-    (connect-fn obj-id bus)
+    (connect-fn obj-map bus)
     nil))
 
 (defn disconnect-outlet [obj-map outlet-name]
-  (let [{:keys [obj-id type]} obj-map
+  (let [{:keys [type]} obj-map
         obj-def (get @object-registry type)
         {:keys [outlets]} obj-def
         outlet (get outlets outlet-name)
         disconnect-fn (:disconnect outlet)]
-    (disconnect-fn obj-id)))
+    (disconnect-fn obj-map)))
 
 (defn destroy-object [obj-map]
   "Given an object and its type, removes it from the server"
   (let [{:keys [obj-id type]} obj-map
         obj-def (get @object-registry type)
         destructor (:destructor obj-def)]
-    (destructor obj-id)
+    (destructor obj-map)
     (id-alloc/free-node-id obj-id)
     nil))

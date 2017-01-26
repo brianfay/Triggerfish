@@ -5,11 +5,11 @@
   NB: Doesn't actually def it to a var, but using def in the name
   helps with cider/clj-fmt formatting"
   [object-name & forms]
-  (let [constructor-form (first (filter #(= (first %) 'constructor) forms))
-        destructor-form  (first (filter #(= (first %) 'destructor) forms))
-        inlet-forms      (filter #(contains? #{'inlet-ar 'inlet-kr} (first %)) forms)
-        outlet-forms     (filter #(contains? #{'outlet-ar 'outlet-kr} (first %)) forms)
-        control-forms    (filter #(= (first %) 'control) forms)]
+  (let [constructor-form (first (filter #(contains? #{'constructor 'simple-constructor} (first %)) forms))
+        destructor-form  (first (filter #(contains? #{'destructor 'simple-destructor} (first %)) forms))
+        inlet-forms      (filter #(contains? #{'inlet-ar 'inlet-kr 'simple-inlet-ar 'simple-inlet-kr} (first %)) forms)
+        outlet-forms     (filter #(contains? #{'outlet-ar 'outlet-kr 'simple-outlet-ar 'simple-outlet-kr} (first %)) forms)
+        control-forms    (filter #(contains? #{'control 'simple-control} (first %)) forms)]
     `(triggerfish.server.object.core/register-object
       (keyword '~object-name)
       {:constructor ~constructor-form
@@ -37,7 +37,7 @@
   "Returns a function that can be used to construct an object.
   Bindings are saved so that they can be imported in the destructor, controls, etc"
   [bindings & body]
-  `(fn [~'obj-id]
+  `(fn [{:keys [~'obj-id] :as ~'obj-map}]
     (let ~bindings
       (do ~@body
           (triggerfish.server.object.core/set-private-object-state ~'obj-id (locals))))))
@@ -47,7 +47,7 @@
   First arg should be a vector of symbols to import from the object's private state."
   [imports & body]
   (let [imports-list (into (list) imports)]
-    `(fn [~'obj-id]
+    `(fn [{:keys [~'obj-id] :as ~'obj-map}]
        (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
          (triggerfish.server.object.core/dissoc-private-object-state ~'obj-id)
          (do ~@body)))))
@@ -62,7 +62,7 @@
     `{:name ~control-name
       :val  ~init-val
       :type :type-is-currently-unused
-      :fn (fn [~'obj-id val#]
+      :fn (fn [{:keys [~'obj-id] :as ~'obj-map} val#]
             (let [~'val    val#
                   return# (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
                             (do ~@body))]
@@ -78,12 +78,12 @@
         [_ disconnect-cb] (first (filter (fn [[kw fun]] (= kw :disconnect)) partitioned-cb))]
     `{:name ~in-or-out-name
       :type ~type
-      :connect    (fn [~'obj-id bus#]
+      :connect    (fn [{:keys [~'obj-id] :as ~'obj-map} bus#]
                     (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
                       (triggerfish.server.object.core/update-private-state-if-bindings-provided
                         ~'obj-id
                         (~connect-cb bus#))))
-      :disconnect (fn [~'obj-id]
+      :disconnect (fn [{:keys [~'obj-id] :as ~'obj-map}]
                     (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
                       (triggerfish.server.object.core/update-private-state-if-bindings-provided
                        ~'obj-id
