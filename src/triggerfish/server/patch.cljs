@@ -128,7 +128,8 @@
   "Given an old sorted-dag and a new one, returns a vector of the actions needed to sort the nodes (for unit-testing), and also
   performs them as a side-effect."
   [old-sorted-dag new-sorted-dag]
-  (sc/order-nodes 0 sc/default-group new-sorted-dag))
+  (when-not (or (= old-sorted-dag new-sorted-dag) (empty? new-sorted-dag))
+    (sc/order-nodes 0 sc/default-group new-sorted-dag)))
 
 (defn make-connection!
   "Takes an action of form [id :inlet-or-:outlet name bus-number] and  performs the action."
@@ -212,10 +213,10 @@
   [obj]
   (let [id (:obj-id obj)
         inlets-to-disconnect (keys (merge (into {} (get-connected-inlets @patch id)) (into {} (get-connected-outlets @patch id))))]
-    (do
-      (doall (map #(apply disconnect! %) inlets-to-disconnect))
-      (obj/destroy-object obj)
-      (swap! patch dissoc id))))
+    (doseq [inlet inlets-to-disconnect]
+      (apply disconnect! inlet))
+    (obj/destroy-object obj)
+    (swap! patch dissoc id)))
 
 (defn set-control!
   [obj-id ctrl-name value]
