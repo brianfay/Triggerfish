@@ -10,7 +10,7 @@
 
 (defn add-pan [ham-man callback]
   (.add ham-man (new js/Hammer.Pan #js {"event" "pan"}))
-  (.on ham-man "pan" callback))
+  (.on ham-man "pan panstart panend" callback))
 
 (defn add-swipe [ham-man callback]
   (.add ham-man (new js/Hammer.Swipe #js {"event" "swipe"}))

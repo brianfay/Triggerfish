@@ -7,6 +7,7 @@
 (def initial-state
   {:objects  {}
    :obj-defs nil
+   :num-moving-objects 0
    :pan      {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
    :zoom     {:current-zoom 1 :scale 1}
    :menu     {:visibility false
@@ -56,6 +57,18 @@
      {:obj-id obj-id
       :x-pos x
       :y-pos y}])))
+
+;;when objects are being dragged, need to prevent dragging the patch canvas.
+;;for touch we can just check the target of the pan event, but for mouse it's picking up the
+(reg-event-db
+ :start-moving-object
+ (fn [db]
+   (update db :num-moving-objects inc)))
+
+(reg-event-db
+ :stop-moving-object
+ (fn [db]
+   (update db :num-moving-objects dec)))
 
 (reg-event-db
  :deselect-outlet
@@ -163,9 +176,11 @@
  :pan-camera
  standard-interceptors
  (fn [db [delta-x delta-y]]
-   (-> db
-       (assoc-in [:pan :offset-x] (+ (:x-pos db) delta-x))
-       (assoc-in [:pan :offset-y] (+ (:y-pos db) delta-y)))))
+   (if (= 0 (:num-moving-objects db))
+     (-> db
+        (assoc-in [:pan :offset-x] (+ (:x-pos db) delta-x))
+        (assoc-in [:pan :offset-y] (+ (:y-pos db) delta-y)))
+     db)))
 
 (reg-event-db
  :commit-camera-zoom

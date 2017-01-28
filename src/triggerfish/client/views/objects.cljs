@@ -59,9 +59,14 @@
              (.stopPropagation (.-srcEvent ev)) ;; without this, you can pan the camera while moving an object by using two fingers.
              (let [delta-x (.-deltaX ev)
                    delta-y (.-deltaY ev)]
-               (if-not (.-isFinal ev)
-                 (dispatch [:offset-object id delta-x delta-y])
-                 (dispatch [:commit-object-position id])))))
+               (when (= "panstart" (.-type ev))
+                 (dispatch [:start-moving-object]))
+               (if (= "panend" (.-type ev))
+                 (do
+                   (dispatch [:stop-moving-object])
+                   (dispatch [:commit-object-position id]))
+                 (do
+                   (dispatch [:offset-object id delta-x delta-y]))))))
   (add-pinch ham-man
              (fn [ev]
                (.stopPropagation (.-srcEvent ev)))
