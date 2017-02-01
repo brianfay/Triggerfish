@@ -17,7 +17,6 @@
   "A not so simple function that generates a simple constructor.
 Expects that we're working with one synthdef, and that controls, inlets and outlets are set up correctly in the defobject."
   (constructor
-   []
    (let [{:keys [controls inlets outlets]} obj-map
          ctl-names (map name (keys controls))
          ctl-vals  (map :val (vals controls))
@@ -40,40 +39,34 @@ Expects that we're working with one synthdef, and that controls, inlets and outl
 
 (defn simple-destructor []
   "A basic destructor that does nothing but free the node associated with the obj-id."
-  (destructor [] (sc/free-node obj-id)))
+  (destructor (sc/free-node obj-id)))
 
 (defn simple-control [ctl-name init-ctl-val]
   "A basic control that sets the control on the associated obj-id to the provided val."
   (control ctl-name init-ctl-val
-    []
-    (sc/set-control obj-id (name ctl-name) val)
-    []))
+    (sc/set-control obj-id (name ctl-name) val)))
 
 (defn simple-inlet-kr [inlet-name]
   "A basic control inlet. On connect, maps the control to read from the bus. On disconnect, returns to the
 last set value for the associated control."
   (inlet-kr inlet-name
-    []
     :connect    (fn [bus] (sc/map-control-to-bus obj-id (name inlet-name) bus))
     :disconnect (fn []    (sc/set-control obj-id (name inlet-name) (get-in obj-map [:controls inlet-name :val])))))
 
 (defn simple-inlet-ar [inlet-name]
   "A basic audio inlet. On connect, sets the control to read from the provided bus. On disconnect, reads from the silent audio bus."
   (inlet-ar inlet-name
-    []
     :connect    (fn [bus] (sc/set-control obj-id (name inlet-name) bus))
     :disconnect (fn [] (sc/set-control obj-id (name inlet-name) c/silent-audio-bus))))
 
 (defn simple-outlet-ar [outlet-name]
   "A basic audio outlet. On connect, sets the control to write to the provided bus. On disconnect, writes to the junk audio bus."
   (outlet-ar outlet-name
-    []
     :connect    (fn [bus] (sc/set-control obj-id (name outlet-name) bus))
     :disconnect (fn [] (sc/set-control obj-id (name outlet-name) c/junk-audio-bus))))
 
 (defn simple-outlet-kr [outlet-name]
   "A basic control outlet. On connect, sets the control to write to the provided bus. On disconnect, writes to the junk audio bus."
   (outlet-kr outlet-name
-    []
     :connect    (fn [bus] (sc/set-control obj-id (name outlet-name) bus))
     :disconnect (fn [] (sc/set-control obj-id (name outlet-name) c/junk-control-bus))))

@@ -8,10 +8,9 @@
                                               simple-inlet-ar simple-inlet-kr simple-outlet-ar
                                               simple-outlet-kr simple-control]])
   (:require-macros
-   [triggerfish.server.object.macros :refer
-    [constructor destructor control
-     outlet-ar outlet-kr inlet-ar inlet-kr
-     defobject]]))
+   [triggerfish.server.object.macros :refer [constructor destructor control
+                                             outlet-ar outlet-kr inlet-ar inlet-kr
+                                             defobject]]))
 
 (defobject saw
   (simple-constructor "saw")
@@ -29,11 +28,13 @@
 
 (defobject adc
   (simple-constructor "stereo-adc")
+  (simple-destructor)
   (simple-outlet-ar :outL)
   (simple-outlet-ar :outR))
 
 (defobject delay
   (simple-constructor "delay")
+  (simple-destructor)
   (simple-outlet-ar   :out)
   (simple-inlet-ar    :in)
   (simple-control     :delaytime 0.3)
@@ -45,14 +46,12 @@
   (simple-constructor "stereo-dac")
   (simple-destructor)
   (inlet-ar :inL
-    []
     :connect    (fn [bus] (sc/set-control obj-id "inL" bus)
-                          (sc/set-control obj-id "outL" 0))
+                  (sc/set-control obj-id "outL" 0))
     :disconnect (fn [] (sc/set-control obj-id "inL"  c/silent-audio-bus)
-                       (sc/set-control obj-id "outL" c/junk-audio-bus)))
+                  (sc/set-control obj-id "outL" c/junk-audio-bus)))
   (inlet-ar :inR
-    []
     :connect    (fn [bus] (sc/set-control obj-id "inR" bus)
-                          (sc/set-control obj-id "outR" 1))
+                  (sc/set-control obj-id "outR" 1))
     :disconnect (fn [] (sc/set-control obj-id "inR"    c/silent-audio-bus)
-                       (sc/set-control obj-id "outR"   c/junk-audio-bus))))
+                  (sc/set-control obj-id "outR"   c/junk-audio-bus))))
