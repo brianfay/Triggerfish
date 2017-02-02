@@ -40,18 +40,24 @@
                :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
          (str (name outlet-name) (when (= type :audio) "~"))]))}))
 
+(defn obj-header [name]
+  [:div {:class "object-header"}
+   name])
+
 (defn obj-display [id {:keys [outlets inlets]} as params]
   [:div {:class "object-display"}
-   [:div {:class "io-container"}
-    (map (fn [in]
-           ^{:key (str id "inlet:" (first in))}
-           [inlet id in])
-         (sort alphabetical-comparator inlets))]
-   [:div {:class "io-container"}
-    (map (fn [out]
-           ^{:key (str id "outlet:" (first out))}
-           [outlet id out])
-         (sort alphabetical-comparator outlets))]])
+   (when (not-empty inlets)
+     [:div {:class "io-container"}
+      (map (fn [in]
+             ^{:key (str id "inlet:" (first in))}
+             [inlet id in])
+           (sort alphabetical-comparator inlets))])
+   (when (not-empty outlets)
+     [:div {:class "io-container"}
+      (map (fn [out]
+             ^{:key (str id "outlet:" (first out))}
+             [outlet id out])
+           (sort alphabetical-comparator outlets))])])
 
 (deftouchable object-impl [id params]
   (add-pan ham-man
@@ -80,12 +86,11 @@
              :style {:position         "fixed"
                      :left             x-pos
                      :top              y-pos
-                     :transform        (str "translate3d(" offset-x "px, " offset-y "px, 0px)")
-                     :transition       "min-width 0.25s, min-height 0.25s"}
+                     :transform        (str "translate3d(" offset-x "px, " offset-y "px, 0px)")}
              :on-click (fn [e]
                          (.stopPropagation e)
                          (when (= @selected-action "delete") (dispatch [:object-clicked id])))}
-       [:p name]
+       [obj-header name]
        [obj-display id params]])))
 
 (defn object [id]

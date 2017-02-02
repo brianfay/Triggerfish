@@ -40,7 +40,7 @@
   [:div
    {:class "menu"
     :on-click (fn [ev] (.stopPropagation ev))
-    :style {:left (if @menu-visible? "0%" "-100%")}}
+    :style {:transform (if @menu-visible? "translateX(-100%)" nil)}}
    [action-selector]
    (condp = @selected-action
        "add" [object-selector]
