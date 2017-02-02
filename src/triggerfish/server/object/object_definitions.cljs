@@ -15,14 +15,14 @@
 (defobject saw
   (simple-constructor "saw")
   (simple-destructor)
-  (simple-control :freq 220)
+  (simple-control  :freq {:type :dial :min 50 :max 15000} 220)
   (simple-inlet-kr :freq)
   (simple-outlet-ar :out))
 
 (defobject sine
   (simple-constructor "sine")
   (simple-destructor)
-  (simple-control :freq 220)
+  (simple-control :freq {:type :dial :min 50 :max 15000} 220)
   (simple-inlet-kr :freq)
   (simple-outlet-ar :out))
 
@@ -32,15 +32,16 @@
   (simple-outlet-ar :outL)
   (simple-outlet-ar :outR))
 
+
 (defobject delay
   (simple-constructor "delay")
   (simple-destructor)
-  (simple-outlet-ar   :out)
-  (simple-inlet-ar    :in)
-  (simple-control     :delaytime 0.3)
-  (simple-control     :decaytime 2)
-  (simple-inlet-kr    :delaytime)
-  (simple-inlet-kr    :decaytime))
+  (simple-outlet-ar :out)
+  (simple-inlet-ar  :in)
+  (simple-control   :delaytime {:type :dial :min 0.1 :max 5} 0.3)
+  (simple-control   :decaytime {:type :dial :min 0.1 :max 5} 2)
+  (simple-inlet-kr  :delaytime)
+  (simple-inlet-kr  :decaytime))
 
 (defobject dac
   (simple-constructor "stereo-dac")

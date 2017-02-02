@@ -65,12 +65,12 @@
   "Returns a function that can be used to control an object. The control value of this function will be bound to the symbol 'val.
   First (optional) arg is a vector of desired symbols to import from the object's private state. Second arg is the initial value of the control.
   When the return of the body is a vector of keyword-value pairs, these will be assoc'ed into the object's private state."
-  [control-name init-val & body]
+  [control-name type init-val & body]
   (let [imports-list (when (vector? (first body)) (into (list) (first body)))
         body         (if (not-empty imports-list) (rest body) body)]
     `{:name ~control-name
       :val  ~init-val
-      :type :type-is-currently-unused
+      :type ~type
       :fn (fn [{:keys [~'obj-id] :as ~'obj-map} val#]
             (let [~'val   val#
                   return# (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]

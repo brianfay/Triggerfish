@@ -4,7 +4,6 @@
 
 ;;an atom of all object types (not running object instances)
 (defonce object-registry (atom {}))
-
 ;;an atom of private state used by running object instances
 (defonce private-object-state (atom {}))
 

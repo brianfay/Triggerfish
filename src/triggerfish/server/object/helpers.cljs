@@ -41,9 +41,9 @@ Expects that we're working with one synthdef, and that controls, inlets and outl
   "A basic destructor that does nothing but free the node associated with the obj-id."
   (destructor (sc/free-node obj-id)))
 
-(defn simple-control [ctl-name init-ctl-val]
+(defn simple-control [ctl-name type init-ctl-val]
   "A basic control that sets the control on the associated obj-id to the provided val."
-  (control ctl-name init-ctl-val
+  (control ctl-name type init-ctl-val
     (sc/set-control obj-id (name ctl-name) val)))
 
 (defn simple-inlet-kr [inlet-name]
