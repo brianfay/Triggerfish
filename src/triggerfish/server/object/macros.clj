@@ -59,7 +59,7 @@
            (do ~@(rest body))))
       `(fn [{:keys [~'obj-id] :as ~'obj-map}]
          (triggerfish.server.object.core/dissoc-private-object-state ~'obj-id)
-         (do ~@(rest body))))))
+         (do ~@body)))))
 
 (defmacro control
   "Returns a function that can be used to control an object. The control value of this function will be bound to the symbol 'val.
