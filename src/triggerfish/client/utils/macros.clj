@@ -9,12 +9,14 @@ The last form should be a function to use as the reagent-render."
     `(defn ~tname ~args
       (let [ham-man-atom# (atom nil)]
         (reagent.core/create-class
-         {:component-did-mount
+         {:component-will-unmount
+          (fn [this#]
+            (when-let [~'ham-man @ham-man-atom#]
+              (.destroy ~'ham-man)))
+          :component-did-mount
           (fn [this#]
             (let [~'dom-node (reagent.core/dom-node this#)
                   ~'ham-man  (triggerfish.client.utils.hammer/hammer-manager ~'dom-node)]
+              (reset! ham-man-atom# ~'ham-man)
               ~@touch-handlers))
-          :reagent-render ~render-fn
-          :component-will-unmount
-          (when-let [~'ham-man @ham-man-atom#]
-            (.destroy ~'ham-man))})))))
+          :reagent-render ~render-fn})))))
