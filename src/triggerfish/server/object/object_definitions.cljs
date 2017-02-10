@@ -32,7 +32,6 @@
   (simple-outlet-ar :outL)
   (simple-outlet-ar :outR))
 
-
 (defobject delay
   (simple-constructor "delay")
   (simple-destructor)

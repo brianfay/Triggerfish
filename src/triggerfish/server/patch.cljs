@@ -219,9 +219,9 @@
     (swap! patch dissoc id)))
 
 (defn set-control!
-  [obj-id ctrl-name value]
-  (let [new-obj-map (obj/control-object (get @patch obj-id) ctrl-name value)])
-  (swap! patch assoc obj-id obj-map))
+  [obj-id ctl-name val]
+  (obj/control-object (get @patch obj-id) ctl-name val)
+  (swap! patch assoc-in [[obj-id :controls ctl-name] val]))
 
 (defn remove-object-by-id!
   [id]

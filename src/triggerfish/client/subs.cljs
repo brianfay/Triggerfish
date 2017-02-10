@@ -1,32 +1,50 @@
 (ns triggerfish.client.subs
-  (:require [re-frame.core :refer [reg-sub subscribe]]))
+  (:require [re-frame.core :refer [reg-sub]]))
 
 ;;Objects:
 
 (reg-sub
- :objects
+ :object-ids
  (fn [db _]
-   (:objects db)))
+   (keys (:objects db))))
 
 (reg-sub
- :obj-defs
+ :obj-types
  (fn [db _]
-   (:obj-defs db)))
+   (keys (:obj-defs db))))
 
 (reg-sub
  :obj-params
  (fn [db [_ id]]
-   (get-in db [:objects id])))
+   (select-keys (get-in db [:objects id]) [:x-pos :y-pos :inlets :outlets :name :offset-x :offset-y])))
+
+
+(reg-sub
+ :inspected-object
+ (fn [db [_]]
+   (let [selected-obj-id (get-in db [:menu :inspected-object])
+         {:keys [controls name obj-id]}(get-in db [:objects selected-obj-id])]
+     {:control-names (keys controls) :name name :obj-id obj-id})))
 
 (reg-sub
  :selected-outlet
- (fn [db [_ id]]
+ (fn [db [_]]
    (:selected-outlet db)))
+
+(reg-sub
+ :control-params
+ (fn [db [_ obj-id ctl-name]]
+   (get-in db [:objects obj-id :controls ctl-name :params])))
+
+(reg-sub
+ :control-val
+ (fn [db [_ obj-id ctl-name]]
+   (get-in db [:objects obj-id :controls ctl-name :val])))
 
 (reg-sub
  :connections
  (fn [db [_ id]]
-   (get-in db [:objects :connections])))
+   (:connections db)))
 
 (reg-sub
  :inlet-position
@@ -67,11 +85,11 @@
    (get-in db [:menu :visibility])))
 
 (reg-sub
- :selected-action
+ :menu-displaying
  (fn [db _]
-   (get-in db [:menu :selected-action])))
+   (get-in db [:menu :displaying])))
 
 (reg-sub
- :selected-obj-to-insert
+ :selected-add-obj
  (fn [db _]
-   (get-in db [:menu :selected-obj])))
+   (get-in db [:menu :selected-add-obj])))

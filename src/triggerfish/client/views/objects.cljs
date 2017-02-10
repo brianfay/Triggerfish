@@ -40,47 +40,48 @@
                :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
          (str (name outlet-name) (when (= type :audio) "~"))]))}))
 
-(defn obj-header [name]
-  [:div {:class "object-header"}
+(defn obj-header [obj-id name]
+  [:div {:class "object-header"
+         :on-click (fn [e] (dispatch [:object-header-clicked obj-id]))}
    name])
 
-(defn obj-display [id {:keys [outlets inlets]} as params]
+(defn obj-display [obj-id {:keys [outlets inlets]} as params]
   [:div {:class "object-display"}
    (when (not-empty inlets)
      [:div {:class "io-container"}
       (map (fn [in]
-             ^{:key (str id "inlet:" (first in))}
-             [inlet id in])
+             ^{:key (str obj-id "inlet:" (first in))}
+             [inlet obj-id in])
            (sort alphabetical-comparator inlets))])
    (when (not-empty outlets)
      [:div {:class "io-container"}
       (map (fn [out]
-             ^{:key (str id "outlet:" (first out))}
-             [outlet id out])
+             ^{:key (str obj-id "outlet:" (first out))}
+             [outlet obj-id out])
            (sort alphabetical-comparator outlets))])])
 
-(deftouchable object-impl [id params]
+(deftouchable object-impl [obj-id params]
   (add-pan ham-man
            (fn [ev]
              (.stopPropagation (.-srcEvent ev)) ;; without this, you can pan the camera while moving an object by using two fingers.
              (let [delta-x (.-deltaX ev)
-                   delta-y (.-deltaY ev)]
-               (when (= "panstart" (.-type ev))
+                   delta-y (.-deltaY ev)
+                   type    (.-type ev)]
+               (when (= "panstart" type)
                  (dispatch [:start-moving-object]))
-               (if (= "panend" (.-type ev))
+               (if (or (= "panend" type) (= "pancancel" type))
                  (do
                    (dispatch [:stop-moving-object])
-                   (dispatch [:commit-object-position id]))
+                   (dispatch [:commit-object-position obj-id]))
                  (do
-                   (dispatch [:offset-object id delta-x delta-y]))))))
+                   (dispatch [:offset-object obj-id delta-x delta-y]))))))
   (add-pinch ham-man
              (fn [ev]
                (.stopPropagation (.-srcEvent ev)))
              (fn [ev]
                (.stopPropagation (.-srcEvent ev))))
-  (fn [id params]
+  (fn [obj-id params]
     (let [params @params
-          selected-action (subscribe [:selected-action])
           {:keys [x-pos y-pos offset-x offset-y name]} params]
       [:div {:class "object"
              :style {:position         "fixed"
@@ -88,17 +89,16 @@
                      :top              y-pos
                      :transform        (str "translate3d(" offset-x "px, " offset-y "px, 0px)")}
              :on-click (fn [e]
-                         (.stopPropagation e)
-                         (when (= @selected-action "delete") (dispatch [:object-clicked id])))}
-       [obj-header name]
-       [obj-display id params]])))
+                         (.stopPropagation e))}
+       [obj-header obj-id name]
+       [obj-display obj-id params]])))
 
-(defn object [id]
+(defn object [obj-id]
   (create-class
    {:component-did-mount
     (fn [this] ;;need to track object width to render cables properly
-      (dispatch [:register-object-width id (.-offsetWidth (dom-node this))]))
+      (dispatch [:register-object-width obj-id (.-offsetWidth (dom-node this))]))
     :reagent-render
-    (fn [id]
-      (let [params (subscribe [:obj-params id])]
-        [object-impl id params]))}))
+    (fn [obj-id]
+      (let [params (subscribe [:obj-params obj-id])]
+        [object-impl obj-id params]))}))

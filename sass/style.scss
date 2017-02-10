@@ -108,15 +108,11 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
     flex-direction: row;
 }
 
-.selected-obj {
+.selected-add-obj {
     color: red;
 }
 
-.action-selector {
-    display: flex;
-}
-
-.action-toggle {
+.delete-button {
     margin: 4px;
     display: flex;
     justify-content: center;
@@ -124,26 +120,7 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
     padding: 15px;
     border: 2px solid;
     border-radius: 2px;
-}
-
-.add-toggle-active {
-    background-color: darken($insert-color, 30%);
-    color: #FFF;
-    border-color: $insert-color;
-}
-
-.add-toggle-inactive {
-    color: $insert-color;
-    border-color: $insert-color;
-}
-
-.delete-toggle-active {
     background-color: darken($delete-color, 30%);
     color: #FFF;
-    border-color: $delete-color;
-}
-
-.delete-toggle-inactive {
-    color: $delete-color;
     border-color: $delete-color;
 }

@@ -10,12 +10,24 @@
    :num-moving-objects 0
    :pan      {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
    :zoom     {:current-zoom 1 :scale 1}
-   :menu     {:visibility false
-             :selected-action nil}})
+   :menu     {:visibility        true
+              :displaying        :main-menu
+              :inspected-object nil}})
+
+(defn assoc-if [m pred & kvs]
+  (if pred
+    (apply assoc (concat [m] kvs))
+    m))
 
 (defn inlet-connected?
   [db obj-id inlet-name]
-  (not (empty? (filter #(= (first %) [obj-id inlet-name]) (get-in db [:objects :connections])))))
+  (not (empty? (filter #(= (first %) [obj-id inlet-name]) (:connections db)))))
+
+;;(assoc db :selected-outlet [obj-id outlet-name type])
+(defn inlet-connected-to-selected-outlet?
+  [db obj-id inlet-name]
+  (let [[out-obj-id outlet-name _] (:selected-outlet db)]
+    (= (get (:connections db) [obj-id inlet-name])) [out-obj-id outlet-name]))
 
 (reg-event-db
  :initialize
@@ -27,7 +39,9 @@
  :patch-recv
  standard-interceptors
  (fn [db [patch]]
-   (assoc db :objects patch)))
+   (let [objects (dissoc patch :connections)
+         connections (:connections patch)]
+     (assoc db :objects objects :connections connections))))
 
 (reg-event-db
  :obj-defs
@@ -90,7 +104,9 @@
  (fn [{:keys [db]} [obj-id inlet-name type]]
    (let [selected-outlet (:selected-outlet db)
          [out-obj-id outlet-name outlet-type] selected-outlet]
-     (if (and (nil? selected-outlet) (inlet-connected? db obj-id inlet-name))
+     (if (and (or (nil? selected-outlet)
+                  (inlet-connected-to-selected-outlet? db obj-id inlet-name))
+              (inlet-connected? db obj-id inlet-name))
        {:disconnect  {:in-id obj-id :in-name inlet-name}
         :dispatch    [:ghost-disconnect obj-id inlet-name]}
        (if (and selected-outlet (not= out-obj-id obj-id) (= type outlet-type))
@@ -101,13 +117,13 @@
  :ghost-connect
  standard-interceptors
  (fn [db [obj-id inlet-name out-obj-id outlet-name]]
-   (assoc-in db [:objects :connections [obj-id inlet-name]] [out-obj-id outlet-name])))
+   (assoc-in db [:connections [obj-id inlet-name]] [out-obj-id outlet-name])))
 
 (reg-event-db
  :ghost-disconnect
  standard-interceptors
  (fn [db [obj-id inlet-name]]
-   (update-in db [:objects :connections] #(dissoc % [obj-id inlet-name]))))
+   (update-in db [:connections] #(dissoc % [obj-id inlet-name]))))
 
 (reg-event-db
  :offset-object
@@ -211,12 +227,12 @@
 (reg-event-db      ;;a mock object for optimistic ui updates
  :add-ghost-object
  standard-interceptors
- (fn [db [selected-obj x y]]
-   (let [obj-def (get (:obj-defs db) selected-obj)]
+ (fn [db [selected-add-obj x y]]
+   (let [obj-def (get (:obj-defs db) selected-add-obj)]
      (assoc-in db [:objects (str "ghost-" (rand-int 100000))]
                (merge
                 obj-def
-                {:name selected-obj :x-pos x :y-pos y})))))
+                {:name selected-add-obj :x-pos x :y-pos y})))))
 
 (reg-fx
  :delete-object
@@ -238,20 +254,33 @@
               (/ zoom))]
     [x y]))
 
+(def opening-menu-state
+  {:visibility true
+   :displaying :main-menu})
+
+(def closing-menu-state
+  {:visibility false})
+
+
+
 (reg-event-fx
  :app-container-clicked
  standard-interceptors
  (fn [{:keys [db]} [x y]]
-   (let [selected-action     (get-in db [:menu :selected-action])
-         visible?            (get-in db [:menu :visibility])
+   (let [visible?            (get-in db [:menu :visibility])
+         displaying          (get-in db [:menu :displaying])
          [scaled-x scaled-y] (translate-and-scale-points db x y)
-         selected-obj        (get-in db [:menu :selected-obj])]
+         selected-add-obj    (get-in db [:menu :selected-add-obj])
+         menu-state (-> (:menu db)
+                        (assoc :displaying :main-menu)
+                        (assoc-if (not visible?) :visibility true)
+                        (assoc-if (and visible? (= displaying :main-menu) (nil? selected-add-obj)) :visibility false)
+                        )]
      (merge
-      (when (= selected-action nil) {:db (assoc-in db [:menu :visibility] (not visible?))})
-      (if (and (= selected-action "add") selected-obj)
-        {:add-object [selected-obj scaled-x scaled-y]
-         :dispatch   [:add-ghost-object     selected-obj scaled-x scaled-y]}
-        {:dispatch   [:deselect-outlet]})))))
+      {:db (update db :menu #(merge % menu-state))}
+      (when (and selected-add-obj (= displaying :main-menu))
+        {:add-object [selected-add-obj scaled-x scaled-y]
+         :dispatch   [:add-ghost-object     selected-add-obj scaled-x scaled-y]})))))
 
 (defn get-object-connections [db obj-id]
   "Returns [in-id inlet-name] of all connections involving a given object id"
@@ -261,26 +290,26 @@
        (conj acc [in-id inlet-name])
        acc))
    []
-   (get-in db [:objects :connections])))
+   (:connections db)))
+
+(reg-event-db
+ :object-header-clicked
+ standard-interceptors
+ (fn [{:keys [menu] :as db} [obj-id]]
+   (if (and (:visibility menu) (= :inspector (:displaying menu)) (= obj-id (:inspected-object menu)))
+     (update db :menu #(assoc % :visibility false))
+     (update db :menu #(assoc % :visibility true, :displaying :inspector, :inspected-object obj-id)))))
 
 (reg-event-fx
- :object-clicked
+ :delete-object
  standard-interceptors
  (fn [{:keys [db]} [obj-id]]
    (let [connections-to-remove (get-object-connections db obj-id)]
-     (if (= "delete" (get-in db [:menu :selected-action]))
-       {:delete-object [obj-id]
-        :db (-> db
-                (update-in [:objects] #(dissoc % obj-id))
-                (update-in [:objects :connections] #(apply dissoc % connections-to-remove)))}
-       {}))))
-
-(reg-event-db
- :select-action
- standard-interceptors
- (fn [db [action]]
-   (let [current-action (get-in db [:menu :selected-action])]
-     (assoc-in db [:menu :selected-action] (when (not= current-action action) action)))))
+     {:delete-object [obj-id]
+      :db (-> db
+              (assoc-in [:menu :displaying] :main-menu)
+              (update-in [:objects] #(dissoc % obj-id))
+              (update :connections #(apply dissoc % connections-to-remove)))})))
 
 (reg-event-db
  :close-menu
@@ -289,9 +318,63 @@
    (assoc-in db [:menu :visibility] false)))
 
 (reg-event-db
- :select-obj-to-insert
+ :select-add-obj
  standard-interceptors
  (fn [db [obj-name]]
-   (if (not= obj-name (get-in db [:menu :selected-obj]))
-     (assoc-in db [:menu :selected-obj] obj-name)
-     (assoc-in db [:menu :selected-obj] nil))))
+   (if (not= obj-name (get-in db [:menu :selected-add-obj]))
+     (assoc-in db [:menu :selected-add-obj] obj-name)
+     (assoc-in db [:menu :selected-add-obj] nil))))
+
+;; Controls
+(reg-fx
+ :set-control
+ (fn [ctl-params] ;;obj-id ctl-name val
+   (chsk-send!
+    [:patch/set-control ctl-params])))
+
+(defn clip [min max x]
+  (cond (> x max) max
+        (< x min) min
+        :else     x))
+
+(defn calc-new-dial-val [db obj-id ctl-name delta-y]
+  (let [init-val (get-in db [:init-dial-val obj-id ctl-name])
+        {:keys [min max]} (get-in db [:objects obj-id :controls ctl-name :params])
+        dial-range (- max min)
+        percent-moved (/ delta-y 500) ;;500px seems like a good distance to move a dial 100% in either direction
+        movement (* dial-range percent-moved)]
+    (clip min max (- init-val movement))))
+
+(reg-event-db
+ :update-control
+ standard-interceptors
+ (fn [db [[obj-id ctl-name val]]]
+   (assoc-in db [:objects obj-id :controls ctl-name :val] val)))
+
+(reg-event-fx
+ :start-moving-dial
+ standard-interceptors
+ (fn [{:keys [db]} [obj-id ctl-name init-val delta-y]]
+   (let [new-val (calc-new-dial-val db obj-id ctl-name delta-y)]
+     {:set-control [obj-id ctl-name new-val]
+      :db (-> db
+              (assoc-in [:init-dial-val obj-id ctl-name] init-val)
+              (assoc-in [:objects obj-id :controls ctl-name :val] new-val))})))
+
+(reg-event-fx
+ :move-dial
+ standard-interceptors
+ (fn [{:keys [db]} [obj-id ctl-name delta-y]]
+   (let [new-val (calc-new-dial-val db obj-id ctl-name delta-y)]
+     {:set-control [obj-id ctl-name new-val]
+      :db (assoc-in db [:objects obj-id :controls ctl-name :val] new-val)})))
+
+(reg-event-fx
+ :stop-moving-dial
+ standard-interceptors
+ (fn [{:keys [db]} [obj-id ctl-name delta-y]]
+   (let [new-val (calc-new-dial-val db obj-id ctl-name delta-y)]
+     {:set-control [obj-id ctl-name new-val]
+      :db (-> db
+              (assoc-in  [:objects obj-id :controls ctl-name :val] new-val)
+              (update-in [:init-dial-val obj-id] #(dissoc % ctl-name)))})))

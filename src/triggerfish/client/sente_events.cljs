@@ -60,6 +60,10 @@
   [{:as ev-msg :keys [?data]}]
   (dispatch [:obj-defs ?data]))
 
+(defmethod -event-msg-handler :control/recv
+  [{:as ev-msg :keys [?data]}]
+   (dispatch [:update-control ?data]))
+
 ;;Router
 (defonce router_ (atom nil))
 (defn stop-router! [] (when-let [stop-f @router_] (stop-f)))

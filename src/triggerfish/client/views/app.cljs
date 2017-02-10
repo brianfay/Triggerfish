@@ -29,7 +29,7 @@
 (defn patch-canvas []
   "A zero-sized div that shows its contents (overflow visible), acting as a canvas for objects.
 Can be translated and scaled for panning/zooming the patch"
-  (let [objs (subscribe [:objects])
+  (let [objs (subscribe [:object-ids])
         pan  (subscribe [:camera-position])
         zoom (subscribe [:zoom])]
     (fn []
@@ -43,7 +43,7 @@ Can be translated and scaled for panning/zooming the patch"
            :transform (str "translate3d(" x-pos "px, " y-pos "px, 0px) "
                            "scale("     @zoom ", "   @zoom ")")}}
          [cables]
-         (map (fn [[id _]]
+         (map (fn [id]
                 ^{:key (str  "obj:" id)}
                 [obj/object id])
               @objs)]))))

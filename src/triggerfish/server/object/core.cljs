@@ -16,7 +16,7 @@
         {:keys [controls inlets outlets]} obj-def]
     {:type obj-type
      :name obj-type
-     :controls (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type :val]))) {} controls)
+     :controls (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:params :val]))) {} controls)
      :inlets   (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} inlets)
      :outlets  (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} outlets)}))
 
@@ -52,7 +52,7 @@
     {:type obj-type
      :name obj-type ;;might be cool to have object be individually nameable some day, I'll leave this here for now
      :obj-id   obj-id
-     :controls (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type :val]))) {} controls)
+     :controls (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:params :val]))) {} controls)
      :inlets   (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} inlets)
      :outlets  (reduce (fn [acc [k v]] (assoc acc k (select-keys v [:type]))) {} outlets)}))
 
@@ -62,7 +62,7 @@
         obj-def (get @object-registry type)
         ctl-fn  (get-in obj-def [:controls control-name :fn])]
     (ctl-fn obj-map val)
-    (assoc-in obj-map [:controls control-name :value] val)))
+    nil))
 
 (defn connect-inlet [obj-map inlet-name bus]
   (let [{:keys [type]} obj-map

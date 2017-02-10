@@ -78,10 +78,7 @@
   [{:as ev-msg :keys [event id ?data ring-req ?reply-fn send-fn connected-uids]}]
   (let [session   (:session ring-req)
         uid       (:uid     session)
-        obj-id    (:obj-id ?data)
-        ctrl-name (:ctrl-name ?data)
-        value     (:value ?data)]
-    (p/set-control! obj-id ctrl-name value)
-    ;;TODO throttle this, or send just the control path/value so it doesn't constantly spam the crap out of other clients with the whole patch
+        [obj-id ctl-name val] ?data]
+    (p/set-control! obj-id ctl-name val)
     (doseq [uid (filter #(not= % (:client-id (:params ring-req))) (:any @connected-uids))]
-      (send-fn uid [:patch/recv {:patch (p/get-patch-map)}]))))
+      (send-fn uid [:control/recv [obj-id ctl-name val]]))))

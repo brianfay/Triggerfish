@@ -70,7 +70,7 @@
         body         (if (not-empty imports-list) (rest body) body)]
     `{:name ~control-name
       :val  ~init-val
-      :type ~type
+      :params ~type
       :fn (fn [{:keys [~'obj-id] :as ~'obj-map} val#]
             (let [~'val   val#
                   return# (let [{:keys [~@imports-list]} (triggerfish.server.object.core/get-private-object-state ~'obj-id)]
