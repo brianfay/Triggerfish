@@ -55,19 +55,19 @@
  :connect
  (fn [params]
    (chsk-send!
-    [:patch/connect params])))
+    [:obj/connect params])))
 
 (reg-fx
  :disconnect
  (fn [params]
    (chsk-send!
-    [:patch/disconnect params])))
+    [:obj/disconnect params])))
 
 (reg-fx
  :move-object
  (fn [[obj-id x y]]
    (chsk-send!
-    [:patch/move-object
+    [:obj/move
      {:obj-id obj-id
       :x-pos x
       :y-pos y}])))
@@ -219,7 +219,7 @@
 (reg-fx
  :add-object
  (fn [[obj-name x y]]
-   (chsk-send! [:patch/create-object
+   (chsk-send! [:obj/create
                 {:name obj-name
                  :x-pos x
                  :y-pos y}])))
@@ -237,7 +237,7 @@
 (reg-fx
  :delete-object
  (fn [[obj-id]]
-   (chsk-send! [:patch/delete-object
+   (chsk-send! [:obj/delete
                 {:obj-id obj-id}])))
 
 (defn translate-and-scale-points [db x y]
@@ -330,7 +330,7 @@
  :set-control
  (fn [ctl-params] ;;obj-id ctl-name val
    (chsk-send!
-    [:patch/set-control ctl-params])))
+    [:obj/set-control ctl-params])))
 
 (defn clip [min max x]
   (cond (> x max) max

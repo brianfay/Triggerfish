@@ -1,7 +1,8 @@
 (ns triggerfish.server.midi
   (:require
    [cljs.core.async :as a :refer [chan >! <! put!]]
-   [cljs.nodejs :as nodejs])
+   [cljs.nodejs :as nodejs]
+   [triggerfish.server.midi-control-adapters :as ctl-adapters])
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (defonce midi (js/require "midi"))

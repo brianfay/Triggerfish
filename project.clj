@@ -9,8 +9,7 @@
                  [cljsjs/hammer "2.0.4-5"]
                  [com.stuartsierra/dependency "0.2.0"]
                  [com.stuartsierra/component "0.3.1"]
-                 [com.taoensso/sente "1.8.0-beta1"]
-                 [com.taoensso/timbre "4.2.1"]
+                 [com.taoensso/sente "1.11.0"]
                  ;;these should maybe be in a :dev :dependencies?
                  [binaryage/devtools "0.8.3"]
                  [figwheel-sidecar "0.5.4-7"]
@@ -26,13 +25,11 @@
 
   :npm {:dependencies [[express "4.13.3"]
                        [serve-static "1.10.0"]
-                       [body-parser "1.14.1"]
                        [cookie-parser "1.4.0"]
                        [express-session "1.11.3"]
                        [csurf "1.8.3"]
                        [express-ws "1.0.0-rc.2"]
                        [midi "0.9.5"]
-                       [nexusui "lsu-emdm/nexusUI"]
                        [ws "0.8.0"]
                        [osc-min "0.2.0"]]}
 
