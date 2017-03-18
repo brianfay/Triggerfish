@@ -81,8 +81,6 @@
     (doseq [uid (filter #(not= % (:client-id (:params ring-req))) (:any @connected-uids))]
       (send-fn uid [:control/recv [obj-id ctl-name val]]))))
 
-;;TODO this shouldn't be in a random namespace called events it doesn't really make sense, nor does my naming convention for these endpoints (why :patch/ ?)
-;;nor does dissocing all of these keys that I don't need
 (defmethod -event-msg-handler :patch/subscribe-midi
   [{:keys [?data send-fn connected-uids]}]
   (let [[obj-id ctl-name port-name status-type channel first-data-byte] ?data

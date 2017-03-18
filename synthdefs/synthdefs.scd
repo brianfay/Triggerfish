@@ -1,13 +1,13 @@
 SynthDef("saw",
 	{|out, freq=440|
 		ReplaceOut.ar(out,
-			Saw.ar(freq));
+			Saw.ar(freq, mul: 0.3));
 }).store;
 
 SynthDef("sine",
 	{|out, freq=440|
 		ReplaceOut.ar(out,
-			SinOsc.ar(freq));
+			SinOsc.ar(freq, mul: 0.03));
 }).store;
 
 SynthDef("lopass",

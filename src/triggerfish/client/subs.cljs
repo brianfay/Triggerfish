@@ -93,3 +93,9 @@
  :selected-add-obj
  (fn [db _]
    (get-in db [:menu :selected-add-obj])))
+
+;;MIDI:
+(reg-sub
+ :recently-fiddled
+ (fn [db _]
+   (get-in db [:recently-fiddled])))

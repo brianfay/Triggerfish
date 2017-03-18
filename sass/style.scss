@@ -124,3 +124,12 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
     color: #FFF;
     border-color: $delete-color;
 }
+
+.midi-control {
+    animation: fadein 1s;
+}
+
+@keyframes fadein {
+    from {opacity: 0;}
+    to   {opacity: 1;}
+}

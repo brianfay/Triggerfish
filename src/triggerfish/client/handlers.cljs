@@ -378,3 +378,10 @@
       :db (-> db
               (assoc-in  [:objects obj-id :controls ctl-name :val] new-val)
               (update-in [:init-dial-val obj-id] #(dissoc % ctl-name)))})))
+
+;;MIDI
+(reg-event-db
+ :midi/fiddled
+ standard-interceptors
+ (fn [db [recently-fiddled]]
+   (assoc db :recently-fiddled recently-fiddled)))

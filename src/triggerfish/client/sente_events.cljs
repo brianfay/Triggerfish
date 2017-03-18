@@ -46,11 +46,12 @@
 
 (defmethod -event-msg-handler :patch/recv
   [{:as ev-msg :keys [?data]}]
+  (def data ?data)
   (dispatch [:patch-recv (:patch ?data)]))
 
 (defmethod -event-msg-handler :fiddled/recv
   [{:as ev-msg :keys [?data]}]
-   (println "If I were a rich man I'd have all these controls: " ?data))
+  (dispatch [:midi/fiddled ?data]))
 
 (defmethod -event-msg-handler :obj-defs/recv
   [{:as ev-msg :keys [?data]}]

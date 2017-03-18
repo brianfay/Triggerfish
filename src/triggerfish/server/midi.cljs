@@ -12,6 +12,8 @@
 (defonce midi-chan (chan))
 (defonce subscribers (atom {}))
 (defonce recently-fiddled (atom (take 6 (repeat nil))))
+(comment
+  (reset! recently-fiddled (take 6 (repeat nil))))
 
 (defn get-status-type [status-byte]
   "Tells you the status type, note that note-on may actually mean note-off if velocity is zero"
@@ -58,13 +60,21 @@
      :default
      (swap! subscribers dissoc [port-name status-type channel first-data-byte]))))
 
-(defn fiddle-midi [port-name status-type channel first-data-byte]
+(defn fiddle-midi
+  "Updates a list of midi controls that have recently been fiddled with."
+  [port-name status-type channel first-data-byte]
   (let [fiddled @recently-fiddled
         status-type (if (note? status-type) :note status-type)
         first-data-byte (if (= :pitch-bend status-type) nil first-data-byte)
         ctl [port-name status-type channel first-data-byte]]
-    (when-not (some #(= ctl %) fiddled)
-      (reset! recently-fiddled (cons [port-name status-type channel first-data-byte] (butlast @recently-fiddled))))))
+    (when-not (= (first fiddled) ctl);; don't update the list if the same control is being used multiple times in a row
+      (if (some #(= ctl %) fiddled)
+        ;; if the control has already been fiddled recently, move it to the top of the list
+        (reset! recently-fiddled
+                (cons [port-name status-type channel first-data-byte] (remove #(= ctl %) @recently-fiddled)))
+        ;; otherwise the control has never been fiddled; put it at the top of the list and remove the oldest one
+        (reset! recently-fiddled  
+                (cons [port-name status-type channel first-data-byte] (butlast @recently-fiddled))))))))
 
 (defonce midi-msg-handler
   (go-loop []
