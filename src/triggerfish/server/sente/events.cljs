@@ -84,11 +84,12 @@
 (defmethod -event-msg-handler :patch/subscribe-midi
   [{:keys [?data send-fn connected-uids]}]
   (let [[obj-id ctl-name port-name status-type channel first-data-byte] ?data
-        {:as ctl :keys [type params]} (get-in @p/patch [obj-id :controls ctl-name])
-        adapter (partial (ctl-adapters/adapters type) params)
+        {:as ctl :keys [params]} (get-in @p/patch [obj-id :controls ctl-name])
+        adapter (partial (ctl-adapters/adapters (:type params)) params)
         cb (fn [val]
              (let [adapted-val (adapter val)]
                (p/set-control! obj-id ctl-name adapted-val)
                (doseq [uid (:any (deref connected-uids))]
                  (send-fn uid [:control/recv [obj-id ctl-name adapted-val]]))))]
-    (midi/subscribe cb port-name status-type channel first-data-byte)))
+    ;;TODO update object with subscription, remove subscription when object is destroyed
+    (midi/subscribe cb port-name status-type channel first-data-byte obj-id ctl-name)))

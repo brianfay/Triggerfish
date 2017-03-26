@@ -34,14 +34,15 @@
           [ctl/control obj-id ctl-name])
         control-names)])
 
-(defn midi-control [[status-type channel first-data-byte]]
-  [:div {:class "midi-control"}
+(defn midi-control [obj-id ctl-name device-name [status-type channel first-data-byte]]
+  [:div {:class "midi-control"
+         :on-click (fn [e] (dispatch [:subscribe-midi [obj-id ctl-name device-name status-type channel first-data-byte]]))}
    [:p (interpose " " [status-type channel first-data-byte])]])
 
-(defn midi-device [[device-name ctl-list]]
+(defn midi-device [obj-id ctl-name [device-name ctl-list]]
   [:div
    [:h2 device-name]
-   (map (fn [ctl] ^{:key (str "midi-control-" ctl)} [midi-control ctl])
+   (map (fn [ctl] ^{:key (str "midi-control-" ctl)} [midi-control obj-id ctl-name device-name ctl])
         ctl-list)])
 
 (defn control-inspector
@@ -49,12 +50,12 @@
   []
   (let [fiddled (subscribe [:recently-fiddled])
         inspected-ctl (subscribe [:inspected-control])
-        [obj-id ctl] @inspected-ctl]
+        [obj-id ctl-name] @inspected-ctl]
     [:div
-     [:h1 (str obj-id " " (name ctl))]
+     [:h1 (str obj-id " " (name ctl-name))]
      [:div (map (fn [m]
                   ^{:key (str "midi-device-" (first m))}
-                  [midi-device m])
+                  [midi-device obj-id ctl-name m])
                 (filter some? @fiddled))]]))
 
 (defn obj-inspector

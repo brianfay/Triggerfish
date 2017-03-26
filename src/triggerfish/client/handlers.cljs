@@ -391,3 +391,17 @@
  standard-interceptors
  (fn [db [recently-fiddled]]
    (assoc db :recently-fiddled recently-fiddled)))
+
+(reg-fx
+ :subscribe-midi-fx
+ (fn [params]
+   (println "mad-params: " params)
+   (chsk-send!
+    [:patch/subscribe-midi params])))
+
+(reg-event-fx
+ :subscribe-midi
+ standard-interceptors
+ (fn [{:keys [db]} [params]]
+   {:subscribe-midi-fx params}))
+

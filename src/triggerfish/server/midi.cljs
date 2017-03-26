@@ -35,28 +35,29 @@
   (or (= type :note-on) (= type :note-off)))
 
 (defn subscribe
-  ([callback port-name status-type channel first-data-byte]
+  ([callback port-name status-type channel first-data-byte obj-id ctl-name]
    (cond
      (= status-type :pitch-bend)
-     (swap! subscribers assoc [port-name status-type channel nil] callback)
+     (swap! subscribers assoc [port-name status-type channel nil] {[obj-id ctl-name] callback})
 
      (note? status-type)
-     (swap! subscribers assoc [port-name :note channel first-data-byte] callback)
+     (swap! subscribers assoc [port-name :note channel first-data-byte] {[obj-id ctl-name] callback})
 
      :default
-     (swap! subscribers assoc [port-name status-type channel first-data-byte] callback))))
+     (swap! subscribers assoc [port-name status-type channel first-data-byte] {[obj-id ctl-name] callback}))))
 
 (defn unsubscribe
-  ([port-name status-type channel first-data-byte]
+  ([port-name status-type channel first-data-byte obj-id ctl-name]
    (cond
      (= status-type :pitch-bend)
-     (swap! subscribers dissoc [port-name status-type channel nil])
+     ;; (swap! subscribers dissoc [port-name status-type channel nil])
+     (swap! subscribers update-in [[port-name status-type channel nil]] dissoc [obj-id ctl-name])
 
      (note? status-type)
-     (swap! subscribers dissoc [port-name :note channel first-data-byte])
+     (swap! subscribers update-in [[port-name :note channel first-data-byte]] dissoc [obj-id ctl-name])
 
      :default
-     (swap! subscribers dissoc [port-name status-type channel first-data-byte]))))
+     (swap! subscribers update-in [[port-name status-type channel first-data-byte]] dissoc [obj-id ctl-name]))))
 
 (def max-fiddled-list 6);; maximum number of controls to store in the recently fiddled list (per each device)
 
@@ -86,22 +87,30 @@
       (fiddle-midi port-name status-type channel first-data-byte)
       (condp = status-type
         :pitch-bend
-        (when-let [fun (get @subscribers [port-name status-type channel nil])] ;;gonna change resolution back to 0-127 cause whatever why not
+        (when-let [subs (get @subscribers [port-name status-type channel nil])] 
           ;;16383 / 129 is 127
           ;; (fun (/ (+ (bit-shift-left first-data-byte 7) second-data-byte) 129.0))
           ;;in theory pitch-bend should send 0-16383, my oxygen keyboard is sending 0-127 on the second data-byte,
           ;;and 0 for the first (except at the very top, where it randomly sends 127)
           ;;I think maybe I just won't use pitch bend
-          (fun (/ (+ (bit-shift-left first-data-byte 7) second-data-byte) 129.0)))
+          (let [funs (map second subs)]
+            (doseq [fun funs]
+              (fun (/ (+ (bit-shift-left first-data-byte 7) second-data-byte) 129.0)))))
         :note-on
-        (when-let [fun (get @subscribers [port-name :note channel first-data-byte])]
-          (fun second-data-byte))
+        (when-let [subs (get @subscribers [port-name :note channel first-data-byte])]
+          (let [funs (map second subs)]
+            (doseq [fun funs]
+              (fun second-data-byte))))
         :note-off ;;just pretend this is same as note on with zero velocity
-        (when-let [fun (get @subscribers [port-name :note channel first-data-byte])]
-          (fun 0))
+        (when-let [subs (get @subscribers [port-name :note channel first-data-byte])]
+          (let [funs (map second subs)]
+            (doseq [fun funs]
+              (fun 0))))
         ;;default
-        (when-let [fun (get @subscribers [port-name status-type channel first-data-byte])]
-          (fun second-data-byte))))
+        (when-let [subs (get @subscribers [port-name status-type channel first-data-byte])]
+          (let [funs (map second subs)]
+            (doseq [fun funs]
+              (fun second-data-byte))))))
   (recur)))
 
 (defonce device-watch
