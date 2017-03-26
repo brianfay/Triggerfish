@@ -104,21 +104,6 @@
           (fun second-data-byte))))
   (recur)))
 
-(comment
-  @subscribers
-  (subscribe #(println %1) "USB Oxygen 61 28:0" :pitch-bend 8 nil)
-  (subscribe #(println %1) "USB Oxygen 61 28:0" :note 8 42)
-  (subscribe #(println %1) "USB Oxygen 61 28:0" :control-change 2 74)
-  (subscribe #(println %1) "USB Oxygen 61 28:0" :control-change 2 74)
-  (second @recently-fiddled)
-  (subscribe #(println %) "QUNEO 24:0" :control-change 1 29)
-  (subscribe #(println %) "QUNEO 24:0" :control-change 1 30)
-  (subscribe #(println %) "QUNEO 24:0" :control-change 1 31)
-  (unsubscribe "QUNEO 24:0" :control-change 1 29)
-  (unsubscribe "QUNEO 24:0" :control-change 1 30)
-  (unsubscribe "QUNEO 24:0" :control-change 1 31)
-  )
-
 (defonce device-watch
   (add-watch midi-ports
              :midi-port-watch

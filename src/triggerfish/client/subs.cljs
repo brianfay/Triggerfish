@@ -27,6 +27,11 @@
      {:control-names (keys controls) :name name :obj-id obj-id})))
 
 (reg-sub
+ :inspected-control
+ (fn [db [_]]
+   (get-in db [:menu :inspected-control])))
+
+(reg-sub
  :selected-outlet
  (fn [db [_]]
    (:selected-outlet db)))
@@ -85,9 +90,9 @@
    (get-in db [:menu :visibility])))
 
 (reg-sub
- :menu-displaying
+ :current-menu
  (fn [db _]
-   (get-in db [:menu :displaying])))
+   (get-in db [:menu :current-view])))
 
 (reg-sub
  :selected-add-obj

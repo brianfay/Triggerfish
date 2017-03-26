@@ -11,8 +11,9 @@
    :pan      {:x-pos 0 :y-pos 0 :offset-x 0 :offset-y 0}
    :zoom     {:current-zoom 1 :scale 1}
    :menu     {:visibility        true
-              :displaying        :main-menu
-              :inspected-object nil}})
+              :current-view      :main-menu
+              :inspected-object  nil
+              :inspected-control nil}})
 
 (defn assoc-if [m pred & kvs]
   (if pred
@@ -255,30 +256,28 @@
     [x y]))
 
 (def opening-menu-state
-  {:visibility true
-   :displaying :main-menu})
+  {:visibility   true
+   :current-view :main-menu})
 
 (def closing-menu-state
   {:visibility false})
-
-
 
 (reg-event-fx
  :app-container-clicked
  standard-interceptors
  (fn [{:keys [db]} [x y]]
    (let [visible?            (get-in db [:menu :visibility])
-         displaying          (get-in db [:menu :displaying])
+         current-view          (get-in db [:menu :current-view])
          [scaled-x scaled-y] (translate-and-scale-points db x y)
          selected-add-obj    (get-in db [:menu :selected-add-obj])
          menu-state (-> (:menu db)
-                        (assoc :displaying :main-menu)
+                        (assoc :current-view :main-menu)
                         (assoc-if (not visible?) :visibility true)
-                        (assoc-if (and visible? (= displaying :main-menu) (nil? selected-add-obj)) :visibility false)
+                        (assoc-if (and visible? (= current-view :main-menu) (nil? selected-add-obj)) :visibility false)
                         )]
      (merge
       {:db (update db :menu #(merge % menu-state))}
-      (when (and selected-add-obj (= displaying :main-menu))
+      (when (and selected-add-obj (= current-view :main-menu))
         {:add-object [selected-add-obj scaled-x scaled-y]
          :dispatch   [:add-ghost-object     selected-add-obj scaled-x scaled-y]})))))
 
@@ -296,9 +295,16 @@
  :object-header-clicked
  standard-interceptors
  (fn [{:keys [menu] :as db} [obj-id]]
-   (if (and (:visibility menu) (= :inspector (:displaying menu)) (= obj-id (:inspected-object menu)))
+   (if (and (:visibility menu) (= :obj-inspector (:current-view menu)) (= obj-id (:inspected-object menu)))
      (update db :menu #(assoc % :visibility false))
-     (update db :menu #(assoc % :visibility true, :displaying :inspector, :inspected-object obj-id)))))
+     (update db :menu #(assoc % :visibility true, :current-view :obj-inspector, :inspected-object obj-id)))))
+
+(reg-event-db
+ :inspect-control
+ standard-interceptors
+ (fn [db [obj-id ctl-name]]
+   (update db :menu #(assoc % :inspected-control [obj-id ctl-name]
+                              :current-view :control-inspector))))
 
 (reg-event-fx
  :delete-object
@@ -307,7 +313,7 @@
    (let [connections-to-remove (get-object-connections db obj-id)]
      {:delete-object [obj-id]
       :db (-> db
-              (assoc-in [:menu :displaying] :main-menu)
+              (assoc-in [:menu :current-view] :main-menu)
               (update-in [:objects] #(dissoc % obj-id))
               (update :connections #(apply dissoc % connections-to-remove)))})))
 

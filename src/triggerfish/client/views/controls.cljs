@@ -59,7 +59,7 @@
   (let [ctl-params (subscribe [:control-params obj-id ctl-name])
         {:keys [type] :as params} @ctl-params]
     [:div
-     [:h3 ctl-name]
+     [:h3 {:on-click (fn [e] (dispatch [:inspect-control obj-id ctl-name]))} ctl-name]
      (condp = type
        :dial [dial obj-id ctl-name params]
        [:p "unsupported ctl-type: " type])]))

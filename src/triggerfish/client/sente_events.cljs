@@ -36,7 +36,7 @@
   (println "Unhandled event: " event))
 
 (defmethod -event-msg-handler :chsk/state
-  [{:keys [?data]}]
+  [{:keys [?data] :as thing}]
   ;;request a patch update when the socket opens
   (when (:first-open? (second ?data)) ;;?data is [old-state new-state]
     (request-app-state!)))

@@ -34,22 +34,30 @@
           [ctl/control obj-id ctl-name])
         control-names)])
 
-(defn midi-control [[port-name status-type channel first-data-byte]]
+(defn midi-control [[status-type channel first-data-byte]]
   [:div {:class "midi-control"}
-   ;; [:p port-name]
    [:p (interpose " " [status-type channel first-data-byte])]])
 
-(defn midi-controls
-  [obj-id control-names]
-  (let [fiddled (subscribe [:recently-fiddled])]
+(defn midi-device [[device-name ctl-list]]
+  [:div
+   [:h2 device-name]
+   (map (fn [ctl] ^{:key (str "midi-control-" ctl)} [midi-control ctl])
+        ctl-list)])
+
+(defn control-inspector
+  "Manage MIDI subscriptions for a specific control"
+  []
+  (let [fiddled (subscribe [:recently-fiddled])
+        inspected-ctl (subscribe [:inspected-control])
+        [obj-id ctl] @inspected-ctl]
     [:div
-     [:div control-names]
+     [:h1 (str obj-id " " (name ctl))]
      [:div (map (fn [m]
-                  ^{:key (str "midi-control-" m)}
-                  [midi-control m])
+                  ^{:key (str "midi-device-" (first m))}
+                  [midi-device m])
                 (filter some? @fiddled))]]))
 
-(defn inspector
+(defn obj-inspector
   "A display for interactions with a specific object - like setting controls, subscribing MIDI listeners, deleting the object"
   []
   (let [obj (subscribe [:inspected-object])
@@ -63,7 +71,6 @@
             [:div name]]
       [:hr]]
     [touch-controls obj-id control-names]
-     ;; [midi-controls obj-id control-names]
      [:div {:class "delete-button"
             :on-click (fn [e] (dispatch [:delete-object obj-id]))}
       "delete"]]))
@@ -72,12 +79,13 @@
   "A menu on the right-hand side of the screen that handles interactions like selecting object types or interacting with objects"
   []
   (let [menu-visible? (subscribe [:menu-visibility])
-        displaying    (subscribe [:menu-displaying])]
+        displaying    (subscribe [:current-menu])]
     [:div
      {:class "menu"
       :on-click (fn [ev] (.stopPropagation ev))
       :style {:transform (if @menu-visible? "translateX(-100%)" nil)}}
      (condp = @displaying
-       :main-menu    [main-menu]
-       :inspector    [inspector]
+       :main-menu         [main-menu]
+       :obj-inspector     [obj-inspector]
+       :control-inspector [control-inspector]
        nil)]))
