@@ -34,6 +34,8 @@
 (defn note? [type]
   (or (= type :note-on) (= type :note-off)))
 
+;;subscription is a mapping of [port-name status-type channel data-byte] to {[obj-id ctl-name] callback}
+;;it's kinda nasty but allows one MIDI control to map to multiple triggerfish controls
 (defn subscribe
   ([callback port-name status-type channel first-data-byte obj-id ctl-name]
    (cond
@@ -58,6 +60,29 @@
 
      :default
      (swap! subscribers update-in [[port-name status-type channel first-data-byte]] dissoc [obj-id ctl-name]))))
+
+(defn serialize-subscribers []
+  "The subscribers map without the callback functions (can be sent to the client)"
+  (reduce (fn [acc [k v]] (assoc acc k (first (keys v)))) {} @subscribers))
+
+;;loop over each k-v in the subscribers map
+;;loop over each subscribed [obj-id ctl-name] pair
+;;if the obj-id matches, add it to the list of keys to dissoc
+(defn unsubscribe-object [obj-id]
+  (let [subs @subscribers
+        kvs-to-remove
+          (filter identity
+            (for [sub @subscribers
+                  v (val sub)]
+              (when (= (ffirst v) obj-id)
+                [(key sub) (first v)])))]
+    ;;if the subscriber is the only one for that midi control, dissoc the midi control
+    ;;otherwise only dissoc the specific subscriber
+    (->> (reduce (fn [acc [k v]] (if (= (count (get acc k)) 1)
+                               (dissoc acc k)
+                               (update acc k dissoc v)))
+                subs kvs-to-remove)
+        (reset! subscribers))))
 
 (def max-fiddled-list 6);; maximum number of controls to store in the recently fiddled list (per each device)
 

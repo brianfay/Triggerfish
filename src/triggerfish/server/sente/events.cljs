@@ -51,6 +51,7 @@
   (let [session (:session ring-req)
         uid     (:uid     session)]
     (p/remove-object-by-id! (:obj-id ?data))
+    (midi/unsubscribe-object (:obj-id ?data))
     (doseq [uid (:any @connected-uids)]
       (send-fn uid [:patch/recv {:patch (p/get-patch-map)}]))))
 
