@@ -1,8 +1,7 @@
 (ns triggerfish.server.midi
   (:require
    [cljs.core.async :as a :refer [chan >! <! put!]]
-   [cljs.nodejs :as nodejs]
-   [triggerfish.server.midi-control-adapters :as ctl-adapters])
+   [cljs.nodejs :as nodejs])
   (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (defonce midi (js/require "midi"))
@@ -153,7 +152,8 @@
           (range (.getPortCount input))))
 
 (defn handle-midi-msg-fn [port-name]
-  (fn [delta-time msg] (put! midi-chan [port-name delta-time msg])))
+  (fn [delta-time msg]
+    (put! midi-chan [port-name delta-time msg])))
 
 (defn setup-input [state]
   ;;close old ports

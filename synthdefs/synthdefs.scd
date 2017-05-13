@@ -48,5 +48,5 @@ SynthDef(\loop, {arg in, bufnum, trigger= -1.0, rate=1, out=0;
 	loopEnd = Latch.ar(recordHead, trigger.neg); //where the loop stops in samples
 	BufWr.ar(input + existingSig, bufnum, recordHead, 0);
 	output = BufRd.ar(1,bufnum,Phasor.ar(trigger.neg, BufRateScale.kr(bufnum) * rate, 0, loopEnd)) * (trigger < 0);
-	Out.ar(out, output);
-}).add;
+	ReplaceOut.ar(out, output);
+}).store;

@@ -41,7 +41,7 @@
     ;; (println "sending msg to scsynth: " (js-obj "address" addr "args" (clj->js args)))
     (.send udp-socket msg 0 (.-length msg) 57110 "localhost"
            (fn [err bytes]
-             (if (not (= 0 err)) (println (str "There was an error: " (.toString err))))))))
+             (if (and err (not (= 0 err))) (println (str "There was an error: " err)))))))
 
 (defn load-synthdefs
   []

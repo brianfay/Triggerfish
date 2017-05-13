@@ -86,7 +86,7 @@
   [{:keys [?data send-fn connected-uids]}]
   (let [[obj-id ctl-name port-name status-type channel first-data-byte] ?data
         {:as ctl :keys [params]} (get-in @p/patch [obj-id :controls ctl-name])
-        adapter (partial (ctl-adapters/adapters (:type params)) params)
+        adapter (partial (ctl-adapters/adapters (:type params)) ctl)
         cb (fn [val]
              (let [adapted-val (adapter val)]
                (p/set-control! obj-id ctl-name adapted-val)

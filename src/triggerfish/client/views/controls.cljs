@@ -55,6 +55,21 @@
         (deref val) ;;deref val to trigger update, even though dial-canvas derefs on its own
         [dial-canvas obj-id ctl-name val])})))
 
+(def toggle-style-on {:width            40
+                      :height           40
+                      :border           "solid 3px"
+                      :border-color     "#e33"
+                      :background-color "#d22"})
+
+(def toggle-style-off (assoc toggle-style-on :background-color "#433"))
+
+(defn toggle [obj-id ctl-name params]
+  (let [val (subscribe [:control-val obj-id ctl-name])]
+    [:div {:style    (if (pos? @val) toggle-style-on toggle-style-off)
+           :on-click (fn [e]
+                       (dispatch [:set-control obj-id ctl-name (* -1 @val)]))}
+     @val]))
+
 (defn control [obj-id ctl-name]
   (let [ctl-params (subscribe [:control-params obj-id ctl-name])
         {:keys [type] :as params} @ctl-params]
@@ -62,4 +77,5 @@
      [:h3 {:on-click (fn [e] (dispatch [:inspect-control obj-id ctl-name]))} ctl-name]
      (condp = type
        :dial [dial obj-id ctl-name params]
+       :toggle [toggle obj-id ctl-name params]
        [:p "unsupported ctl-type: " type])]))

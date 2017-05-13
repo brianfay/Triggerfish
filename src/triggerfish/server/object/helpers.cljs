@@ -13,29 +13,32 @@
   "Default method of adding a synth - by putting it at the head of the default group"
   (sc/add-synth-to-head synthdef obj-id sc/default-group args))
 
+(defn simple-synth [synthdef obj-id obj-map]
+  (let [{:keys [controls inlets outlets]} obj-map
+        ctl-names (map name (keys controls))
+        ctl-vals  (map :val (vals controls))
+        ctl-vec   (interleave ctl-names ctl-vals)
+
+        ;;control inlets don't read from anything by default
+        ;;inlet-krs
+        inlet-ars (filter (fn [[k v]] (= (:type v) :audio)) inlets)
+        inlet-ar-names (map name (keys inlet-ars))
+        inlet-ar-vec (interleave inlet-ar-names (repeat (count inlet-ar-names) c/silent-audio-bus))
+
+        outlet-krs (filter (fn [[k v]] (= (:type v) :control)) outlets)
+        outlet-kr-names (map name (keys outlet-krs))
+        outlet-kr-vec (interleave outlet-kr-names (repeat (count outlet-kr-names) c/junk-control-bus))
+
+        outlet-ars (filter (fn [[k v]] (= (:type v) :audio)) outlets)
+        outlet-ar-names (map name (keys outlet-ars))
+        outlet-ar-vec (interleave outlet-ar-names (repeat (count outlet-ar-names) c/junk-audio-bus))]
+    (synth synthdef obj-id (vec (concat ctl-vec inlet-ar-vec outlet-kr-vec outlet-ar-vec)))))
+
 (defn simple-constructor [synthdef]
   "A not so simple function that generates a simple constructor.
-Expects that we're working with one synthdef, and that controls, inlets and outlets are set up correctly in the defobject."
-  (constructor
-   (let [{:keys [controls inlets outlets]} obj-map
-         ctl-names (map name (keys controls))
-         ctl-vals  (map :val (vals controls))
-         ctl-vec   (interleave ctl-names ctl-vals)
-
-         ;;control inlets don't read from anything by default
-         ;;inlet-krs
-         inlet-ars (filter (fn [[k v]] (= (:type v) :audio)) inlets)
-         inlet-ar-names (map name (keys inlet-ars))
-         inlet-ar-vec (interleave inlet-ar-names (repeat (count inlet-ar-names) c/silent-audio-bus))
-
-         outlet-krs (filter (fn [[k v]] (= (:type v) :control)) outlets)
-         outlet-kr-names (map name (keys outlet-krs))
-         outlet-kr-vec (interleave outlet-kr-names (repeat (count outlet-kr-names) c/junk-control-bus))
-
-         outlet-ars (filter (fn [[k v]] (= (:type v) :audio)) outlets)
-         outlet-ar-names (map name (keys outlet-ars))
-         outlet-ar-vec (interleave outlet-ar-names (repeat (count outlet-ar-names) c/junk-audio-bus))]
-     (synth synthdef obj-id (vec (concat ctl-vec inlet-ar-vec outlet-kr-vec outlet-ar-vec))))))
+Expects that we're working with one synthdef, and that controls, inlets and outlets are set up correctly in the defobject.
+Assumes that controls directly map to supercollider controls TODO: think about implications of that"
+  (constructor (simple-synth synthdef obj-id obj-map)))
 
 (defn simple-destructor []
   "A basic destructor that does nothing but free the node associated with the obj-id."

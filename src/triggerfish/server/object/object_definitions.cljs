@@ -6,7 +6,7 @@
    [triggerfish.server.id-allocator :as id-alloc]
    [triggerfish.server.object.helpers :refer [simple-constructor simple-destructor
                                               simple-inlet-ar simple-inlet-kr simple-outlet-ar
-                                              simple-outlet-kr simple-control]])
+                                              simple-outlet-kr simple-control synth]])
   (:require-macros
    [triggerfish.server.object.macros :refer [constructor destructor control
                                              outlet-ar outlet-kr inlet-ar inlet-kr
@@ -41,6 +41,25 @@
   (simple-control   :decaytime {:type :dial :min 0.1 :max 5} 2)
   (simple-inlet-kr  :delaytime)
   (simple-inlet-kr  :decaytime))
+
+;;require patch, update-control-val! for controls that need to modify other controls
+(defobject loop
+  (constructor
+   (let [buf-id (id-alloc/new-buffer-id)]
+     (sc/alloc-buffer buf-id (* 48000 60) 1)
+     ;;LOUSYLOUSYLOUSYBAD hack to get around async buffer creation
+     ;;fix ultimately might be to move buffer creation to user, so we can share buffers
+     ;;might also listen for /sync response in scsynth.cljs before sending new messages
+     (js/setTimeout
+      (fn []
+        (synth "loop" obj-id ["in" c/silent-audio-bus "bufnum" buf-id "trigger" -1 "rate" 1 "out" c/junk-audio-bus])) 10)))
+  (simple-inlet-ar :in)
+  (simple-outlet-ar :out)
+  (simple-control :rate    {:type :dial :min -3 :max 3} 1)
+  (simple-control :trigger {:type :toggle} -1)
+  (destructor [buf-id]
+   (sc/free-buffer buf-id)
+   (sc/free-node obj-id)))
 
 (defobject dac
   (simple-constructor "stereo-dac")

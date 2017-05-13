@@ -338,6 +338,15 @@
    (chsk-send!
     [:obj/set-control ctl-params])))
 
+;;call this when setting a control from the front end -
+;;will send to the server and optimistically update UI state
+(reg-event-fx
+ :set-control
+ standard-interceptors
+ (fn [db [obj-id ctl-name val]]
+   {:set-control [obj-id ctl-name val]
+    :dispatch [:update-control [obj-id ctl-name val]]}))
+
 (defn clip [min max x]
   (cond (> x max) max
         (< x min) min
