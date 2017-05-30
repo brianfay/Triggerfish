@@ -55,8 +55,8 @@
         (synth "loop" obj-id ["in" c/silent-audio-bus "bufnum" buf-id "trigger" -1 "rate" 1 "out" c/junk-audio-bus])) 10)))
   (simple-inlet-ar :in)
   (simple-outlet-ar :out)
-  (simple-control :rate    {:type :dial :min -3 :max 3} 1)
   (simple-control :trigger {:type :toggle} -1)
+  (simple-control :rate    {:type :dial :min -3 :max 3} 1)
   (destructor [buf-id]
    (sc/free-buffer buf-id)
    (sc/free-node obj-id)))

@@ -5,11 +5,11 @@
 
 (defn object-li [obj-name selected-add-obj]
   (let [selected? (= @selected-add-obj obj-name)]
-    [:p {:class (when selected? "selected-add-obj")
+    [:div {:class "add-obj"
          :on-click (fn [e]
                      (.stopPropagation e)
-                     (dispatch [:select-add-obj obj-name]))}
-     obj-name]))
+                     (dispatch [:add-object obj-name]))}
+     [:p {:style {:verticalAlign "middle"}} obj-name]]))
 
 (defn main-menu
   "The menu that displays on app startup - displays a list of objects that can be added"

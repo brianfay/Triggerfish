@@ -218,7 +218,7 @@
 ;;Menu:
 
 (reg-fx
- :add-object
+ :add-object-fx
  (fn [[obj-name x y]]
    (chsk-send! [:obj/create
                 {:name obj-name
@@ -228,12 +228,12 @@
 (reg-event-db      ;;a mock object for optimistic ui updates
  :add-ghost-object
  standard-interceptors
- (fn [db [selected-add-obj x y]]
-   (let [obj-def (get (:obj-defs db) selected-add-obj)]
+ (fn [db [obj-name x y]]
+   (let [obj-def (get (:obj-defs db) obj-name)]
      (assoc-in db [:objects (str "ghost-" (rand-int 100000))]
                (merge
                 obj-def
-                {:name selected-add-obj :x-pos x :y-pos y})))))
+                {:name obj-name :x-pos x :y-pos y})))))
 
 (reg-fx
  :delete-object
@@ -267,19 +267,15 @@
  standard-interceptors
  (fn [{:keys [db]} [x y]]
    (let [visible?            (get-in db [:menu :visibility])
-         current-view          (get-in db [:menu :current-view])
+         current-view        (get-in db [:menu :current-view])
          [scaled-x scaled-y] (translate-and-scale-points db x y)
-         selected-add-obj    (get-in db [:menu :selected-add-obj])
-         menu-state (-> (:menu db)
-                        (assoc :current-view :main-menu)
-                        (assoc-if (not visible?) :visibility true)
-                        (assoc-if (and visible? (= current-view :main-menu) (nil? selected-add-obj)) :visibility false)
-                        )]
+         menu-state          (-> (:menu db)
+                                 (assoc :current-view :main-menu)
+                                 (assoc :visibility (not visible?)))]
      (merge
-      {:db (update db :menu #(merge % menu-state))}
-      (when (and selected-add-obj (= current-view :main-menu))
-        {:add-object [selected-add-obj scaled-x scaled-y]
-         :dispatch   [:add-ghost-object     selected-add-obj scaled-x scaled-y]})))))
+      {:db (-> db
+               (update :menu #(merge % menu-state))
+               (assoc :obj-drop-zone [scaled-x scaled-y]))}))))
 
 (defn get-object-connections [db obj-id]
   "Returns [in-id inlet-name] of all connections involving a given object id"
@@ -322,6 +318,16 @@
  standard-interceptors
  (fn [db]
    (assoc-in db [:menu :visibility] false)))
+
+(reg-event-fx
+ :add-object
+ standard-interceptors
+ (fn [{:keys [db]} [obj-name]]
+   (let [obj-drop-zone (:obj-drop-zone db)
+         [x y]         obj-drop-zone]
+     {:add-object-fx [obj-name x y]
+      :db (assoc-in db [:menu :visibility] nil)
+      :dispatch      [:add-ghost-object obj-name x y]})))
 
 (reg-event-db
  :select-add-obj

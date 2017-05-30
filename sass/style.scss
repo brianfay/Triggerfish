@@ -108,6 +108,16 @@ Otherwise we'd probably have to give each menu item absolute position and keep i
     flex-direction: row;
 }
 
+.add-obj {
+    width:  80px;
+    height: 50px;
+    border: solid 1px;
+    text-align: center;
+    margin-top: 20px;
+    border-color: lighten($bg-color, 35%);
+    background-color: lighten($bg-color, 20%);
+}
+
 .selected-add-obj {
     color: red;
 }
