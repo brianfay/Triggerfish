@@ -26,6 +26,14 @@
   (simple-inlet-kr :freq)
   (simple-outlet-ar :out))
 
+(defobject lf-sine
+  (simple-constructor "lfsine")
+  (simple-destructor)
+  (simple-control :freq {:type :dial :min 0 :max 20} 1)
+  (simple-control :mul  {:type :dial :min 0 :max 1000} 100)
+  (simple-control :add  {:type :dial :min 0 :max 5000} 200)
+  (simple-outlet-kr :out))
+
 (defobject adc
   (simple-constructor "stereo-adc")
   (simple-destructor)

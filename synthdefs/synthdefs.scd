@@ -10,6 +10,11 @@ SynthDef("sine",
 			SinOsc.ar(freq, mul: 0.03));
 }).store;
 
+SynthDef("lfsine",
+	{|out, freq=1, mul=100, add=200|
+		ReplaceOut.kr(out, SinOsc.kr(freq, mul: mul, add: add))
+}).store;
+
 SynthDef("lopass",
 	{|in, out, cutoff=440, res=1|
 		ReplaceOut.ar(out, RLPF.ar(In.ar(in), cutoff, res));
