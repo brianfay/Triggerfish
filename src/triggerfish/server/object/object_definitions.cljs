@@ -23,7 +23,7 @@
   (simple-constructor "sine")
   (simple-destructor)
   (simple-control :freq {:type :dial :min 50 :max 15000} 220)
-  (simple-inlet-kr :freq)
+  (simple-inlet-kr :freqIn)
   (simple-outlet-ar :out))
 
 (defobject lf-sine

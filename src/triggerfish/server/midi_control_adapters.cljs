@@ -9,12 +9,9 @@
     (+ min (* ratio val))))
 
 (defn toggle [ctl val]
-
   (let [old-val (:val ctl)]
-    (if (> val 0) ;;when the midi ctl is non-zero, swap toggle value (ignore note-offs)
-      (if (= old-val -1)
-        1
-        -1)
+    (if (< 0 val) ;;when the midi ctl is non-zero, swap toggle value (ignore note-offs)
+      (* old-val -1)
       old-val)))
 
 (def adapters

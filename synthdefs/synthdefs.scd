@@ -5,9 +5,9 @@ SynthDef("saw",
 }).store;
 
 SynthDef("sine",
-	{|out, freq=440|
+	{|out, freq=440, freqIn=0|
 		ReplaceOut.ar(out,
-			SinOsc.ar(freq, mul: 0.03));
+			SinOsc.ar(freq+freqIn, mul: 0.03));
 }).store;
 
 SynthDef("lfsine",
