@@ -13,12 +13,18 @@
         outlet-pos (subscribe [:outlet-position out-obj-id outlet-name])]
         (fn [conn]
           (let [[in-x  in-y]   @inlet-pos
-                [out-x out-y]  @outlet-pos]
+                [out-x out-y]  @outlet-pos
+                cx1            (+ in-x (/ (- out-x in-x) 2))
+                cy1            in-y
+                cx2            cx1
+                cy2            out-y]
             [:path {:stroke       "#777"
                     :fill         "transparent"
-                    :stroke-width 4
+                    :stroke-width 2
                     :d (str "M"  in-x  " " in-y " "
-                            "L " out-x " " out-y)}]))))
+                            "C " cx1   " " cy1  " "
+                            cx2   " " cy2  " "
+                            out-x " " out-y)}]))))
 
 (defn cables []
   "An svg element conaining lines that represent connections between inlets and outlets"
