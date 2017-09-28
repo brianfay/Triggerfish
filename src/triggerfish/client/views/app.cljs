@@ -49,6 +49,7 @@ Can be translated and scaled for panning/zooming the patch"
            :transform (str "translate3d(" x-pos "px, " y-pos "px, 0px) "
                            "scale("     @zoom ", "   @zoom ")")}}
          [cables]
+         [menu]
          (map (fn [id]
                 ^{:key (str  "obj:" id)}
                 [obj/object id])
@@ -72,5 +73,5 @@ Can be translated and scaled for panning/zooming the patch"
             :height "100%"}
            :overflow "hidden"
            :on-click (fn [e] (dispatch [:app-container-clicked (.-clientX e) (.-clientY e)]))}
-     [menu]
+     ;; [menu]
      [patch-canvas]]))

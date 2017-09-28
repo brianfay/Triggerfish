@@ -5,13 +5,14 @@
 
 (defn object-li [obj-name selected-add-obj]
   (let [selected? (= @selected-add-obj obj-name)]
-    [:div {:class "add-obj"
+    [:div {
+         :class "add-obj"
          :on-click (fn [e]
                      (.stopPropagation e)
                      (dispatch [:add-object obj-name]))}
-     [:p {:style {:verticalAlign "middle"}} obj-name]]))
+     [:p obj-name]]))
 
-(defn main-menu
+(defn obj-selector
   "The menu that displays on app startup - displays a list of objects that can be added"
   []
   (let [obj-types     (subscribe [:obj-types])
@@ -80,13 +81,21 @@
   "A menu on the right-hand side of the screen that handles interactions like selecting object types or interacting with objects"
   []
   (let [menu-visible? (subscribe [:menu-visibility])
+        menu-position (subscribe [:menu-position])
+        [x y]         @menu-position
         displaying    (subscribe [:current-menu])]
     [:div
-     {:class "menu"
-      :on-click (fn [ev] (.stopPropagation ev))
-      :style {:transform (if @menu-visible? "translateX(-100%)" nil)}}
+     {:on-click (fn [ev] (.stopPropagation ev))
+      :style {:position  "fixed"
+              :left      x
+              :z-index   1
+              :top       y
+              :min-width 200
+              :background-color "#68749c"
+              :visibility (if @menu-visible? "visible" "hidden")}}
+     [:h1 {:style {:textAlign "center"}} "Add Object"]
      (condp = @displaying
-       :main-menu         [main-menu]
+       :main-menu         [obj-selector]
        :obj-inspector     [obj-inspector]
        :control-inspector [control-inspector]
        nil)]))

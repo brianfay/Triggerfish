@@ -255,27 +255,21 @@
               (/ zoom))]
     [x y]))
 
-(def opening-menu-state
-  {:visibility   true
-   :current-view :main-menu})
-
-(def closing-menu-state
-  {:visibility false})
-
-(reg-event-fx
+(reg-event-db
  :app-container-clicked
  standard-interceptors
- (fn [{:keys [db]} [x y]]
+ (fn [db [x y]]
    (let [visible?            (get-in db [:menu :visibility])
          current-view        (get-in db [:menu :current-view])
          [scaled-x scaled-y] (translate-and-scale-points db x y)
          menu-state          (-> (:menu db)
                                  (assoc :current-view :main-menu)
-                                 (assoc :visibility (not visible?)))]
-     (merge
-      {:db (-> db
-               (update :menu #(merge % menu-state))
-               (assoc :obj-drop-zone [scaled-x scaled-y]))}))))
+                                 (assoc :visibility (not visible?))
+                                 (assoc :x scaled-x)
+                                 (assoc :y scaled-y))]
+     (-> db
+         (update :menu #(merge % menu-state))
+         (assoc :obj-drop-zone [scaled-x scaled-y])))))
 
 (defn get-object-connections [db obj-id]
   "Returns [in-id inlet-name] of all connections involving a given object id"

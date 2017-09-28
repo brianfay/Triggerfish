@@ -90,6 +90,11 @@
    (get-in db [:menu :visibility])))
 
 (reg-sub
+ :menu-position
+ (fn [db _]
+   [(get-in db [:menu :x]) (get-in db [:menu :y])]))
+
+(reg-sub
  :current-menu
  (fn [db _]
    (get-in db [:menu :current-view])))
