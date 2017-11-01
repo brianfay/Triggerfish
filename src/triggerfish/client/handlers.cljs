@@ -256,20 +256,28 @@
     [x y]))
 
 (reg-event-db
+ :mouse-down-on-canvas
+ standard-interceptors
+ (fn [db [x y]]
+   (assoc db :mouse-down-on-canvas-pos [x y])))
+
+(reg-event-db
  :app-container-clicked
  standard-interceptors
  (fn [db [x y]]
-   (let [visible?            (get-in db [:menu :visibility])
-         current-view        (get-in db [:menu :current-view])
-         [scaled-x scaled-y] (translate-and-scale-points db x y)
-         menu-state          (-> (:menu db)
-                                 (assoc :current-view :main-menu)
-                                 (assoc :visibility (not visible?))
-                                 (assoc :x scaled-x)
-                                 (assoc :y scaled-y))]
-     (-> db
-         (update :menu #(merge % menu-state))
-         (assoc :obj-drop-zone [scaled-x scaled-y])))))
+   (if (= (:mouse-down-on-canvas-pos db) [x y])
+     (let [visible?            (get-in db [:menu :visibility])
+           current-view        (get-in db [:menu :current-view])
+           [scaled-x scaled-y] (translate-and-scale-points db x y)
+           menu-state          (-> (:menu db)
+                                   (assoc :current-view :main-menu)
+                                   (assoc :visibility (not visible?))
+                                   (assoc :x scaled-x)
+                                   (assoc :y scaled-y))]
+       (-> db
+           (update :menu #(merge % menu-state))
+           (assoc :obj-drop-zone [scaled-x scaled-y])))
+     db)))
 
 (defn get-object-connections [db obj-id]
   "Returns [in-id inlet-name] of all connections involving a given object id"
