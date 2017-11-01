@@ -308,6 +308,12 @@
               (update :connections #(apply dissoc % connections-to-remove)))})))
 
 (reg-event-db
+ :select-menu
+ standard-interceptors
+ (fn [db [displaying]]
+   (assoc-in db [:menu :current-view] displaying)))
+
+(reg-event-db
  :close-menu
  standard-interceptors
  (fn [db]

@@ -3,25 +3,41 @@
    [re-frame.core :refer [subscribe dispatch]]
    [triggerfish.client.views.controls :as ctl]))
 
-(defn object-li [obj-name selected-add-obj]
-  (let [selected? (= @selected-add-obj obj-name)]
-    [:div {
-         :class "add-obj"
-         :on-click (fn [e]
-                     (.stopPropagation e)
-                     (dispatch [:add-object obj-name]))}
-     [:p obj-name]]))
+(declare obj-selector menu-selector obj-inspector control-inspector main-menu)
 
-(defn obj-selector
-  "The menu that displays on app startup - displays a list of objects that can be added"
+(defn menu
+  "A menu that pops up on the canvas wherever the user taps"
   []
-  (let [obj-types     (subscribe [:obj-types])
-        selected-add-obj (subscribe [:selected-add-obj])]
+  (let [menu-visible? (subscribe [:menu-visibility])
+        menu-position (subscribe [:menu-position])
+        [x y]         @menu-position
+        displaying    (subscribe [:current-menu])]
     [:div
-     (map (fn [obj-name]
-            ^{:key (str "object-li: " obj-name)}
-            [object-li obj-name selected-add-obj])
-          @obj-types)]))
+     {:on-click (fn [ev] (.stopPropagation ev))
+      :style {:position  "fixed"
+              :left      x
+              :z-index   1
+              :top       y
+              :min-width 200
+              :background-color "#68749c"
+              :visibility (if @menu-visible? "visible" "hidden")}}
+     (condp = @displaying
+       :main-menu         [main-menu]
+       :obj-selector      [obj-selector]
+       :obj-inspector     [obj-inspector]
+       :control-inspector [control-inspector]
+       nil)]))
+
+(defn menu-header
+  [title]
+  [:h1 {:style {:text-align "center"}} title])
+
+(defn back-arrow
+  "An arrow that resets the menu back to the main menu that is gonna be kinda finicky because of the absolute positioning
+  but it was the easiest way I could get it to appear in place with title text for the menu"
+  []
+  [:div {:style {:position "absolute" :text-align "left" :font-size "2em" :padding-left "7px"}
+         :on-click (fn [e] (dispatch [:select-menu :main-menu]))} "\u2190"])
 
 (defn touch-controls
   "Interactive widgets for controlling an object"
@@ -35,16 +51,52 @@
           [ctl/control obj-id ctl-name])
         control-names)])
 
-(defn midi-control [obj-id ctl-name device-name [status-type channel first-data-byte]]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; menu components
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn main-menu
+  "Top-level navigation for the menu"
+  []
+  [:div
+   [:div {:style {:text-align "center" :font-size "36px"}} "\uD83D\uDC1F" "\uD83D\uDC20"]
+   [menu-selector "Objects"   :obj-selector]
+   [menu-selector "Buffers"   :buffer-manager]
+   [menu-selector "Save/Load" :save-load]])
+
+(defn- object-li [obj-name selected-add-obj]
+  (let [selected? (= @selected-add-obj obj-name)]
+    [:div {
+           :class "add-obj"
+           :on-click (fn [e]
+                       (.stopPropagation e)
+                       (dispatch [:add-object obj-name]))}
+     [:p obj-name]]))
+
+(defn obj-selector
+  "The menu that displays on app startup - displays a list of objects that can be added"
+  []
+  (let [obj-types     (subscribe [:obj-types])
+        selected-add-obj (subscribe [:selected-add-obj])]
+    [:div
+     [back-arrow]
+     [:div {:style {:text-align "center" :font-size "2em"}} "Objects"]
+     (map (fn [obj-name]
+            ^{:key (str "object-li: " obj-name)}
+            [object-li obj-name selected-add-obj])
+          @obj-types)]))
+
+(defn- midi-control [obj-id ctl-name device-name [status-type channel first-data-byte]]
   [:div {:class "midi-control"
          :on-click (fn [e] (dispatch [:subscribe-midi [obj-id ctl-name device-name status-type channel first-data-byte]]))}
    [:p (interpose " " [status-type channel first-data-byte])]])
 
-(defn midi-device [obj-id ctl-name [device-name ctl-list]]
+(defn- midi-device [obj-id ctl-name [device-name ctl-list]]
   [:div
    [:h2 device-name]
    (map (fn [ctl] ^{:key (str "midi-control-" ctl)} [midi-control obj-id ctl-name device-name ctl])
         ctl-list)])
+
 
 (defn control-inspector
   "Manage MIDI subscriptions for a specific control"
@@ -77,25 +129,9 @@
             :on-click (fn [e] (dispatch [:delete-object obj-id]))}
       "delete"]]))
 
-(defn menu
-  "A menu on the right-hand side of the screen that handles interactions like selecting object types or interacting with objects"
-  []
-  (let [menu-visible? (subscribe [:menu-visibility])
-        menu-position (subscribe [:menu-position])
-        [x y]         @menu-position
-        displaying    (subscribe [:current-menu])]
-    [:div
-     {:on-click (fn [ev] (.stopPropagation ev))
-      :style {:position  "fixed"
-              :left      x
-              :z-index   1
-              :top       y
-              :min-width 200
-              :background-color "#68749c"
-              :visibility (if @menu-visible? "visible" "hidden")}}
-     [:h1 {:style {:textAlign "center"}} "Add Object"]
-     (condp = @displaying
-       :main-menu         [obj-selector]
-       :obj-inspector     [obj-inspector]
-       :control-inspector [control-inspector]
-       nil)]))
+(defn menu-selector
+  [text destination]
+  [:div {:class "menu-selector"
+         :on-click (fn [e] (dispatch [:select-menu destination]))}
+   [:p text]])
+
