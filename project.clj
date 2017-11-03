@@ -15,7 +15,7 @@
                  [figwheel-sidecar "0.5.4-7"]
                  [com.cemerick/piggieback "0.2.1"]
                  [reagent "0.6.0-rc"]
-                 [re-frame "0.8.0"]]
+                 [re-frame "0.10.2"]]
 
   :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
 

@@ -2,7 +2,8 @@
   (:require
    [reagent.core :refer [create-class dom-node]]
    [triggerfish.client.utils.hammer :refer [add-pan add-pinch]]
-   [re-frame.core :refer [subscribe dispatch]])
+   [re-frame.core :refer [dispatch]]
+   [triggerfish.client.utils.helpers :refer [listen]])
   (:require-macros
    [triggerfish.client.utils.macros :refer [deftouchable]]))
 
@@ -33,8 +34,7 @@
     :reagent-render
     (fn [obj-id [outlet-name outlet-params]]
       (let [{:keys [type]}  outlet-params
-            selected-outlet (subscribe [:selected-outlet])
-            selected? (= [obj-id outlet-name type] @selected-outlet)]
+            selected? (= [obj-id outlet-name type] (listen [:selected-outlet]))]
         [:div {:class (if selected? "outlet selected-outlet" "outlet")
                :on-click (fn [e] (dispatch [:click-outlet obj-id outlet-name type]))}
          (str (name outlet-name) (when (= type :audio) "~"))]))}))
@@ -58,7 +58,7 @@
              [outlet obj-id out])
            (sort alphabetical-comparator outlets))])])
 
-(deftouchable object-impl [obj-id params]
+(deftouchable object-impl [obj-id]
   (add-pan ham-man
            (fn [ev]
              (.stopPropagation (.-srcEvent ev)) ;; without this, you can pan the camera while moving an object by using two fingers.
@@ -78,8 +78,8 @@
                (.stopPropagation (.-srcEvent ev)))
              (fn [ev]
                (.stopPropagation (.-srcEvent ev))))
-  (fn [obj-id params]
-    (let [params @params
+  (fn [obj-id]
+    (let [params (listen [:obj-params obj-id])
           {:keys [x-pos y-pos offset-x offset-y name]} params]
       [:div.object {:style {:position  "fixed"
                             :left      x-pos
@@ -97,5 +97,4 @@
       (dispatch [:register-object-width obj-id (.-offsetWidth (dom-node this))]))
     :reagent-render
     (fn [obj-id]
-      (let [params (subscribe [:obj-params obj-id])]
-        [object-impl obj-id params]))}))
+      [object-impl obj-id])}))

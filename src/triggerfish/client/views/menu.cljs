@@ -1,6 +1,7 @@
 (ns triggerfish.client.views.menu
   (:require
-   [re-frame.core :refer [subscribe dispatch]]
+   [re-frame.core :refer [dispatch]]
+   [triggerfish.client.utils.helpers :refer [listen]]
    [triggerfish.client.views.controls :as ctl]))
 
 (declare obj-selector menu-selector obj-inspector control-inspector main-menu)
@@ -8,10 +9,10 @@
 (defn menu
   "A menu that pops up on the canvas wherever the user taps"
   []
-  (let [menu-visible? (subscribe [:menu-visibility])
-        menu-position (subscribe [:menu-position])
-        [x y]         @menu-position
-        displaying    (subscribe [:current-menu])]
+  (let [menu-visible? (listen [:menu-visibility])
+        menu-position (listen [:menu-position])
+        [x y]         menu-position
+        displaying    (listen [:current-menu])]
     [:div
      {:on-click (fn [ev] (.stopPropagation ev))
       :style {:position  "fixed"
@@ -20,8 +21,8 @@
               :top       y
               :min-width 200
               :background-color "#68749c"
-              :visibility (if @menu-visible? "visible" "hidden")}}
-     (condp = @displaying
+              :visibility (if menu-visible? "visible" "hidden")}}
+     (condp = displaying
        :main-menu         [main-menu]
        :obj-selector      [obj-selector]
        :obj-inspector     [obj-inspector]
@@ -64,25 +65,22 @@
    [menu-selector "Buffers"   :buffer-manager]
    [menu-selector "Save/Load" :save-load]])
 
-(defn- object-li [obj-name selected-add-obj]
-  (let [selected? (= @selected-add-obj obj-name)]
-    [:div.add-obj {:on-click (fn [e]
-                               (.stopPropagation e)
-                               (dispatch [:add-object obj-name]))}
-     [:p obj-name]]))
+(defn- object-li [obj-name]
+  [:div.add-obj {:on-click (fn [e]
+                             (.stopPropagation e)
+                             (dispatch [:add-object obj-name]))}
+   [:p obj-name]])
 
 (defn obj-selector
   "The menu that displays on app startup - displays a list of objects that can be added"
   []
-  (let [obj-types     (subscribe [:obj-types])
-        selected-add-obj (subscribe [:selected-add-obj])]
-    [:div
-     [back-arrow]
-     [:div {:style {:text-align "center" :font-size "2em"}} "Objects"]
-     (map (fn [obj-name]
-            ^{:key (str "object-li: " obj-name)}
-            [object-li obj-name selected-add-obj])
-          @obj-types)]))
+  [:div
+   [back-arrow]
+   [:div {:style {:text-align "center" :font-size "2em"}} "Objects"]
+   (map (fn [obj-name]
+          ^{:key (str "object-li: " obj-name)}
+          [object-li obj-name])
+        (listen [:obj-types]))])
 
 (defn- midi-control [obj-id ctl-name device-name [status-type channel first-data-byte]]
   [:div.midi-control {:on-click (fn [e] (dispatch [:subscribe-midi [obj-id ctl-name device-name status-type channel first-data-byte]]))}
@@ -98,21 +96,20 @@
 (defn control-inspector
   "Manage MIDI subscriptions for a specific control"
   []
-  (let [fiddled (subscribe [:recently-fiddled])
-        inspected-ctl (subscribe [:inspected-control])
-        [obj-id ctl-name] @inspected-ctl]
+  (let [fiddled (listen [:recently-fiddled])
+        inspected-ctl (listen [:inspected-control])
+        [obj-id ctl-name] inspected-ctl]
     [:div
      [:h1 (str obj-id " " (name ctl-name))]
      [:div (map (fn [m]
                   ^{:key (str "midi-device-" (first m))}
                   [midi-device obj-id ctl-name m])
-                (filter some? @fiddled))]]))
+                (filter some? fiddled))]]))
 
 (defn obj-inspector
   "A display for interactions with a specific object - like setting controls, subscribing MIDI listeners, deleting the object"
   []
-  (let [obj (subscribe [:inspected-object])
-        {:keys [name obj-id control-names]} @obj]
+  (let [{:keys [name obj-id control-names]} (listen [:inspected-object])]
     [:div
      {:style {:display "flex"
               :height "100%"

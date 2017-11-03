@@ -1,6 +1,7 @@
 (ns triggerfish.client.views.controls
   (:require [reagent.core :refer [atom create-class dom-node]]
-            [re-frame.core :refer [subscribe dispatch]]
+            [re-frame.core :refer [dispatch]]
+            [triggerfish.client.utils.helpers :refer [listen]]
             [triggerfish.client.utils.hammer :refer [add-pan]])
   (:require-macros [triggerfish.client.utils.macros :refer [deftouchable]]))
 
@@ -33,7 +34,7 @@
              (let [ev-type (.-type ev)
                    delta-y (.-deltaY ev)]
                (condp = ev-type
-                 "panstart"  (dispatch [:start-moving-dial obj-id ctl-name @val delta-y])
+                 "panstart"  (dispatch [:start-moving-dial obj-id ctl-name val delta-y])
                  "panend"    (dispatch [:stop-moving-dial obj-id ctl-name delta-y])
                  "pancancel" (dispatch [:stop-moving-dial obj-id ctl-name delta-y])
                  ;;otherwise
@@ -42,18 +43,16 @@
   (fn [obj-id ctl-name val] [:canvas {:width "120px" :height "120px"}]))
 
 (defn dial [obj-id ctl-name {:keys [min max]}]
-  (let [node (atom nil)
-        val  (subscribe [:control-val obj-id ctl-name])]
+  (let [node (atom nil)]
     (create-class
      {:component-did-mount
       (fn [this] (reset! node (dom-node this))
-        (draw-dial (dom-node this) min max @val))
+        (draw-dial (dom-node this) min max (listen [:control-val obj-id ctl-name])))
       :component-did-update
-      (fn [this] (draw-dial @node min max @val))
+      (fn [this] (draw-dial @node min max (listen [:control-val obj-id ctl-name])))
       :reagent-render
       (fn [obj-id ctl-name params]
-        (deref val) ;;deref val to trigger update, even though dial-canvas derefs on its own
-        [dial-canvas obj-id ctl-name val])})))
+        [dial-canvas obj-id ctl-name (listen [:control-val obj-id ctl-name])])})))
 
 (def toggle-style-on {:width            40
                       :height           40
@@ -64,15 +63,15 @@
 (def toggle-style-off (assoc toggle-style-on :background-color "#433"))
 
 (defn toggle [obj-id ctl-name params]
-  (let [val (subscribe [:control-val obj-id ctl-name])]
-    [:div {:style    (if (pos? @val) toggle-style-on toggle-style-off)
+  (let [val (listen [:control-val obj-id ctl-name])]
+    [:div {:style    (if (pos? val) toggle-style-on toggle-style-off)
            :on-click (fn [e]
-                       (dispatch [:set-control obj-id ctl-name (* -1 @val)]))}
-     @val]))
+                       (dispatch [:set-control obj-id ctl-name (* -1 val)]))}
+     val]))
 
 (defn control [obj-id ctl-name]
-  (let [ctl-params (subscribe [:control-params obj-id ctl-name])
-        {:keys [type] :as params} @ctl-params]
+  (let [ctl-params (listen [:control-params obj-id ctl-name])
+        {:keys [type] :as params} ctl-params]
     [:div
      [:h3 {:on-click (fn [e] (dispatch [:inspect-control obj-id ctl-name]))} ctl-name]
      (condp = type
