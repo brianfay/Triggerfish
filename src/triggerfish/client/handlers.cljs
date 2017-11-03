@@ -210,6 +210,19 @@
  (fn [db [scale]]
    (assoc-in db [:zoom :scale] scale)))
 
+(reg-event-db
+ :zoom-camera-wheel
+ standard-interceptors
+ (fn [db [delta-y client-x client-y]]
+   (-> (if (neg? delta-y)
+         (update-in db [:zoom :scale] #(+ % 0.1))
+         (update-in db [:zoom :scale] #(if (> % 0.1)
+                                      (- % 0.1)
+                                      %)))
+       ;; (update-in [:pan :x-pos] (constantly client-x))
+       ;; (update-in [:pan :y-pos] (constantly client-x))
+       )))
+
 ;;Menu:
 
 (reg-fx

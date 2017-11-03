@@ -68,6 +68,7 @@ Can be translated and scaled for panning/zooming the patch"
            {:width  "100%"
             :height "100%"}
            :overflow "hidden"
+           :on-wheel      (fn [e] (dispatch [:zoom-camera-wheel (.-deltaY e) (.-clientX e) (.-clientY e)]))
            :on-mouse-down (fn [e] (dispatch [:mouse-down-on-canvas (.-clientX e) (.-clientY e)]))
            :on-click      (fn [e] (dispatch [:app-container-clicked (.-clientX e) (.-clientY e)]))}
      [patch-canvas]]))
