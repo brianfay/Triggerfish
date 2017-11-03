@@ -66,11 +66,9 @@
 
 (defn- object-li [obj-name selected-add-obj]
   (let [selected? (= @selected-add-obj obj-name)]
-    [:div {
-           :class "add-obj"
-           :on-click (fn [e]
-                       (.stopPropagation e)
-                       (dispatch [:add-object obj-name]))}
+    [:div.add-obj {:on-click (fn [e]
+                               (.stopPropagation e)
+                               (dispatch [:add-object obj-name]))}
      [:p obj-name]]))
 
 (defn obj-selector
@@ -87,8 +85,7 @@
           @obj-types)]))
 
 (defn- midi-control [obj-id ctl-name device-name [status-type channel first-data-byte]]
-  [:div {:class "midi-control"
-         :on-click (fn [e] (dispatch [:subscribe-midi [obj-id ctl-name device-name status-type channel first-data-byte]]))}
+  [:div.midi-control {:on-click (fn [e] (dispatch [:subscribe-midi [obj-id ctl-name device-name status-type channel first-data-byte]]))}
    [:p (interpose " " [status-type channel first-data-byte])]])
 
 (defn- midi-device [obj-id ctl-name [device-name ctl-list]]
@@ -124,14 +121,13 @@
                  {:text-align "center"}}
             [:div name]]
       [:hr]]
-    [touch-controls obj-id control-names]
-     [:div {:class "delete-button"
-            :on-click (fn [e] (dispatch [:delete-object obj-id]))}
+     [touch-controls obj-id control-names]
+     [:div.delete-button {:on-click
+                          (fn [e] (dispatch [:delete-object obj-id]))}
       "delete"]]))
 
 (defn menu-selector
   [text destination]
-  [:div {:class "menu-selector"
-         :on-click (fn [e] (dispatch [:select-menu destination]))}
+  [:div.menu-selector {:on-click (fn [e] (dispatch [:select-menu destination]))}
    [:p text]])
 

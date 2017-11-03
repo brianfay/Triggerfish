@@ -19,8 +19,7 @@
     :reagent-render
     (fn [obj-id [inlet-name inlet-params]]
       (let [{:keys [type]} inlet-params]
-        [:div {:class "inlet"
-               :on-click (fn [e] (dispatch [:click-inlet obj-id inlet-name type]))}
+        [:div.inlet {:on-click (fn [e] (dispatch [:click-inlet obj-id inlet-name type]))}
          (str (when (= type :audio) "~") (name inlet-name))]))}))
 
 (defn outlet [obj-id [outlet-name outlet-params]]
@@ -41,20 +40,19 @@
          (str (name outlet-name) (when (= type :audio) "~"))]))}))
 
 (defn obj-header [obj-id name]
-  [:div {:class "object-header"
-         :on-click (fn [e] (dispatch [:object-header-clicked obj-id]))}
+  [:div.object-header {:on-click (fn [e] (dispatch [:object-header-clicked obj-id]))}
    name])
 
 (defn obj-display [obj-id {:keys [outlets inlets]} as params]
-  [:div {:class "object-display"}
+  [:div.object-display
    (when (not-empty inlets)
-     [:div {:class "io-container"}
+     [:div.io-container
       (map (fn [in]
              ^{:key (str obj-id "inlet:" (first in))}
              [inlet obj-id in])
            (sort alphabetical-comparator inlets))])
    (when (not-empty outlets)
-     [:div {:class "io-container"}
+     [:div.io-container
       (map (fn [out]
              ^{:key (str obj-id "outlet:" (first out))}
              [outlet obj-id out])
@@ -83,11 +81,10 @@
   (fn [obj-id params]
     (let [params @params
           {:keys [x-pos y-pos offset-x offset-y name]} params]
-      [:div {:class "object"
-             :style {:position         "fixed"
-                     :left             x-pos
-                     :top              y-pos
-                     :transform        (str "translate3d(" offset-x "px, " offset-y "px, 0px)")}
+      [:div.object {:style {:position  "fixed"
+                            :left      x-pos
+                            :top       y-pos
+                            :transform (str "translate3d(" offset-x "px, " offset-y "px, 0px)")}
              :on-click (fn [e]
                          (.stopPropagation e))}
        [obj-header obj-id name]

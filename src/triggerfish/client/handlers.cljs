@@ -15,11 +15,6 @@
               :inspected-object  nil
               :inspected-control nil}})
 
-(defn assoc-if [m pred & kvs]
-  (if pred
-    (apply assoc (concat [m] kvs))
-    m))
-
 (defn inlet-connected?
   [db obj-id inlet-name]
   (not (empty? (filter #(= (first %) [obj-id inlet-name]) (:connections db)))))
